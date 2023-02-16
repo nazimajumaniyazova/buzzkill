@@ -2,14 +2,14 @@
 import {Player} from './Player'
 import {InputHandler} from './InputHandler'
 // import {UI} from './UI'
-// import {Enemy} from './Enemy'
+import { Angler1} from './Enemy'
 
 export class Game {
   // background: Background;
   player: Player;
   input: InputHandler;
   // ui: UI;
-  // enemies: Array<Enemy>
+  enemies: Array<Angler1>
   width: number; // ширина окна/поле canvas
   height: number; // высота  окна/поле canvas
   ammo: number; // патроны
@@ -34,7 +34,7 @@ export class Game {
     this.input = new InputHandler(this);
     // this.ui = new UI(this)
     this.keys = []
-    // this.enemies = []
+    this.enemies = []
     this.ammo = 20;
     this.maxAmmo = 50
     this.ammoTimer = 0
@@ -62,6 +62,10 @@ export class Game {
     }else {
       this.ammoTimer +=deltaTime
     }
+    //обработка врагов
+    this.enemies.forEach(enemy => {
+      enemy.update();
+    })
     // this.enemies.forEach(enemy => {
     //   enemy.update()
     //   console.log(this.checkCollision(this.player, enemy))
@@ -86,7 +90,7 @@ export class Game {
     //   })
     // })
     //enemy
-    // this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion)
+    this.enemies = this.enemies.filter(enemy => !enemy.markedForDeletion)
     // if(this.enemyTimer > this.enemyInterval && !this.gameOver) {
     //   this.addEnemy()
     //   this.enemyTimer = 0
@@ -98,21 +102,21 @@ export class Game {
     // this.background.draw(context)
     this.player.draw(context)
     // this.ui.draw(context)
-    // this.enemies.forEach(enemy => {
-    //   enemy.draw(context)
-    // })
+    this.enemies.forEach(enemy => {
+      enemy.draw(context)
+    })
   }
-  // addEnemy() {
-  //   const randomize = Math.random();
-  //   if( randomize < 0.3){
-  //     this.enemies.push(new Angler1(this))
-  //   }else if (randomize < 0.6){
-  //     this.enemies.push(new Angler2(this))
-  //   } else {
-  //     this.enemies.push(new Lucky(this))
-  //   }
-  //   //console.log(this.enemies)
-  // }
+  addEnemy() {
+    const randomize = Math.random();
+    if( randomize < 0.3){
+      this.enemies.push(new Angler1(this))
+    }else if (randomize < 0.6){
+      this.enemies.push(new Angler2(this))
+    } else {
+      this.enemies.push(new Lucky(this))
+    }
+    //console.log(this.enemies)
+  }
   // checkCollision(rect1, rect2) {
   // const res =  rect1.x < rect2.x + rect2.width && 
   //             rect1.x + rect1.width > rect2.x &&
