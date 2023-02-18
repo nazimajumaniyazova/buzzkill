@@ -9,10 +9,13 @@ export class Player {
   speedY: number
   maxSpeed: number;
   projectiles: Array<Projectile>
+  image: CanvasImageSource;
   constructor(game: Game){
     this.game = game;
-    this.width = 120;
-    this.height = 190;
+    this.width = 229 * 0.7;
+    this.height = 226 * 0.7;
+    this.image = new Image(this.width, this.height)
+    this.image.src = './catalog-img/female.png'
     this.x = 20
     this.y = 100
     this.speedY = 1 // вертикальное движение
@@ -35,7 +38,13 @@ export class Player {
     this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion)
   }
   draw(context: CanvasRenderingContext2D) {
-    context.fillRect(this.x, this.y, this.width, this.height);
+    context.strokeRect(this.x, this.y, this.width, this.height);
+    context.drawImage(
+      this.image, 
+      this.x, 
+      this.y, 
+      this.width, 
+      this.height)
     //рисуем патроны
     this.projectiles.forEach(projectile => {
       projectile.draw(context)
