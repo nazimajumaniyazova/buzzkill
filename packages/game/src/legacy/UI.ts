@@ -7,7 +7,7 @@ export class UI {
   constructor(game: Game){
     this.game = game;
     this.fontSize = 25;
-    this.fontFamily = 'Roboto';
+    this.fontFamily = 'Bangers';
     this.color = 'black';
   }
   draw(context: CanvasRenderingContext2D) {

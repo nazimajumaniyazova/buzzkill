@@ -38,13 +38,13 @@ export class Player {
     this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion)
   }
   draw(context: CanvasRenderingContext2D) {
-    context.strokeRect(this.x, this.y, this.width, this.height);
+    //context.strokeRect(this.x, this.y, this.width, this.height);
     context.drawImage(
       this.image, 
       this.x, 
       this.y, 
-      this.width, 
-      this.height)
+      this.width *0.8, 
+      this.height * 0.8)
     //рисуем патроны
     this.projectiles.forEach(projectile => {
       projectile.draw(context)
@@ -52,7 +52,7 @@ export class Player {
   }
   shootTop(){
     if(this.game.ammo > 0) {
-      this.projectiles.push(new Projectile(this.game, this.x, this.y)) 
+      this.projectiles.push(new Projectile(this.game, this.x + 105, this.y + 90)) 
     }
   }
 }

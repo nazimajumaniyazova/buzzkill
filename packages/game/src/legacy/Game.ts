@@ -4,7 +4,8 @@ import {InputHandler} from './InputHandler'
 import {UI} from './UI'
 import { Angler1} from './Enemy'
 import { Projectile } from './Projectile';
-
+// import { smokeExplostion} from './Explostion'
+import { smokeExplostion, fireExplostion} from './Explostion'
 export class Game {
   background: Background;
   player: Player;
@@ -26,6 +27,8 @@ export class Game {
   gameTimeLimit: number;
   speed: number;
   keys: Array<string> // название клавиш
+//  explotions: Array<smokeExplostion>
+  explotions: Array<smokeExplostion |  fireExplostion>
   constructor(width: number, height: number) {
     this.width = width;
     this.height = height;
@@ -44,10 +47,11 @@ export class Game {
     this.enemyInterval = 1000 // добавляем врагов каждые 1мс
     this.gameOver = false
     this.score = 0
-    this.winningScore = 10
+    this.winningScore = 110
     this.gameTime = 0;
     this.gameTimeLimit = 60000;
     this.speed = 1;
+    this.explotions = []
   }
   update(deltaTime: number) {
 
@@ -56,7 +60,9 @@ export class Game {
     this.background.update()
 
     //player
+
     this.player.update()
+
     // обновление патронов
 
     if(this.ammoTimer > this.ammoInterval) {
@@ -66,29 +72,31 @@ export class Game {
       this.ammoTimer +=deltaTime
     }
 
-    // this.enemies.forEach(enemy => {
-    //   enemy.update()
-    //   console.log(this.checkCollision(this.player, enemy))
-    //   if(this.checkCollision(this.player, enemy)) {
-    //     enemy.markedForDeletion = true;
-    //     if(enemy.type = 'lucky') {
-    //       this.player.enterPowerUp()
-    //     }else this.score--;
-    //   }
-      // this.player.projectiles.forEach(projectile => {
-      //   if(this.checkCollision(projectile, enemy)) {
-      //     enemy.lives--
-      //     projectile.markedForDeletion = true
-      //     if(enemy.lives <=0) {
-      //       enemy.markedForDeletion = true
-      //       if(!this.gameOver) this.score += enemy.score;
-      //       if(this.score > this.winningScore) {
-      //         this.gameOver = true;
-      //       }
-      //     }
-      //   }
-      // })
-    // })
+    this.enemies.forEach(enemy => {
+      enemy.update()
+      //console.log(this.checkCollision(this.player, enemy))
+      if(this.checkCollision(this.player, enemy)) {
+        enemy.markedForDeletion = true;
+        // if(enemy.type = 'lucky') {
+        //   this.player.enterPowerUp()
+        // }else this.score--;
+        this.score--;
+      }
+      this.player.projectiles.forEach(projectile => {
+        if(this.checkCollision(projectile, enemy)) {
+          enemy.lives--
+          projectile.markedForDeletion = true
+          if(enemy.lives <=0) {
+            enemy.markedForDeletion = true;
+            this.addExplotion(enemy)
+            if(!this.gameOver) this.score += enemy.score;
+            if(this.score > this.winningScore) {
+              this.gameOver = true;
+            }
+          }
+        }
+      })
+    })
 
     //обработка врагов
     
@@ -122,6 +130,9 @@ export class Game {
     } else {
       this.enemyTimer += deltaTime
     }
+    // обработка взрыва
+    this.explotions.forEach(explotion => explotion.update(deltaTime))
+    this.explotions = this.explotions.filter(explotion => !explotion.markForDeletion)
   }
   draw(context: CanvasRenderingContext2D) {
     this.background.draw(context)
@@ -130,17 +141,31 @@ export class Game {
     this.enemies.forEach(enemy => {
       enemy.draw(context)
     })
+    this.explotions.forEach(explotion => {
+      explotion.draw(context)
+    })
   }
   addEnemy() {
-    const randomize = Math.random();
-    if( randomize < 0.3){
-      this.enemies.push(new Angler1(this))
-    }else if (randomize < 0.6){
-      this.enemies.push(new Angler1(this))
-    } else {
-      this.enemies.push(new Angler1(this))
-    }
+    // const randomize = Math.random();
+    // if( randomize < 0.3){
+    //   this.enemies.push(new Angler1(this))
+    // }else if (randomize < 0.6){
+    //   this.enemies.push(new Angler1(this))
+    // } else {
+    //   this.enemies.push(new Angler1(this))
+    // }
+    this.enemies.push(new Angler1(this))
     //console.log(this.enemies)
+  }
+
+  addExplotion(enemy: Angler1) {
+    const randomize = Math.random();
+    if(randomize < 0.5) {
+      this.explotions.push(new smokeExplostion(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5))
+    }else {
+      this.explotions.push(new fireExplostion(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5))
+    }
+    //this.explotions.push(new smokeExplostion(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5))
   }
   checkCollision(rect1: Player | Projectile, rect2: Angler1) {
   const res =  rect1.x < rect2.x + rect2.width && 

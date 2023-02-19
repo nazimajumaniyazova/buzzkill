@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {Game} from './Game'
 export class Enemy {
   game: Game;
@@ -15,7 +16,8 @@ export class Enemy {
     this.markedForDeletion = false;
     this.frameX = 0
     this.frameY = 0
-    this.maxFrame = 5;
+    this.maxFrame = 37;
+  //  this.maxFrame = 12;
     this.frame = 0
   }
   update(width: number) {
@@ -30,8 +32,13 @@ export class Enemy {
        this.frameX =0
     }
   }
+  // imgDraw(context: CanvasRenderingContext2D,  imageURL: string, y: number, width: number, height: number,){
+  //   const image = new Image();
+  //   image.src = imageURL
+  //   image.onload = () => this.draw(context, image, y, width, height);
+  // }
   draw(context: CanvasRenderingContext2D,  image: CanvasImageSource, y: number, width: number, height: number,) {
-    context.fillStyle = 'white'
+    //context.clearRect(this.x, y, width, height);
     context.strokeRect(this.x, y, width /2, height/2)
     context.drawImage(
       image, 
@@ -44,7 +51,6 @@ export class Enemy {
       width /2, 
       height /2
     )
-    context.fillStyle = 'black'
     context.font = '20px Helvetica'
     context.fillText('2', this.x, y)
   }
@@ -61,15 +67,18 @@ export class Angler1 extends Enemy {
   score: number
   angle: number;
   angleSpeed: number;
+  imageLoad: boolean;
   // spriteWidth: number;
   // spriteHeight: number;
   curve: number
+//  imageURL: string;
   constructor(game: Game) {
     super(game)
-    this.width = 266
-    //  this.width = 228
-    // this.height = 169
-     this.height = 188
+    this.imageLoad = false;
+    this.width = 266;
+    this.height = 188;
+    //  this.width = 273
+    // this.height = 282
     // this.spriteWidth = 266;
     // this.spriteHeight = 188;
     // this.width = this.spriteWidth / 2; 
@@ -77,14 +86,23 @@ export class Angler1 extends Enemy {
     this.angle = 0
     this.angleSpeed = Math.random() * 0.2
     this.y = Math.random() * (this.game.height * 0.9 - this.height)
-  //  loadImage('./catalog-img/enemy2.png') as CanvasImageSource;;
-  //  this.image = new Image(this.width, this.height);
-    //this.image.src ='./catalog-img/enemy2.png'
+    // this.y = 0
+    //loadImage('./catalog-img/enemy2.png').then;
+    //this.image = new Image();
+    // if(!this.image) {
+    //   this.markedForDeletion = true
+    // }
+    //console.log(this.image)
+    // this.image.onload(() => {
+    //   this.imageLoad = true;
+    // })
+  //  this.image.src ='./catalog-img/enemy-3.png'
     this.image = document.querySelector('.angler1') as CanvasImageSource;
-    this.frameY = Math.floor(Math.random() * 3)
+    this.frameY = Math.floor(Math.random() * 2)
     this.lives = 2;
     this.score = this.lives
-    this.curve = Math.random() * 5;
+    this.curve = Math.random() * 1;
+    //this.imageURL = './catalog-img/enemy-3.png'
   }
   update(){
     super.update(this.width)
@@ -92,7 +110,6 @@ export class Angler1 extends Enemy {
     this.angle +=this.angleSpeed;
   }
   draw(context: CanvasRenderingContext2D): void {
-    context.fillStyle = 'white'
     super.draw(context, this.image, this.y, this.width, this.height)
   }
 }
