@@ -27,6 +27,7 @@ export class Game {
   gameTimeLimit: number;
   speed: number;
   keys: Array<string> // название клавиш
+  lives: number;
 //  explotions: Array<smokeExplostion>
   explotions: Array<smokeExplostion |  fireExplostion>
   constructor(width: number, height: number) {
@@ -52,6 +53,7 @@ export class Game {
     this.gameTimeLimit = 60000;
     this.speed = 1;
     this.explotions = []
+    this.lives = 5
   }
   update(deltaTime: number) {
 
@@ -104,6 +106,8 @@ export class Game {
       enemy.update();
       if(this.checkCollision(this.player, enemy)) {
         enemy.markedForDeletion = true;
+        this.lives--;
+        if(this.lives <= 0) this.gameOver = true;
         // if(enemy.type = 'lucky') {
         //   this.player.enterPowerUp()
         // }else this.score--;

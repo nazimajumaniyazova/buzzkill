@@ -31,6 +31,12 @@ export class Player {
       this.speedY = 0
     }
     this.y += this.speedY;
+    // обработка границ
+    if( this.y >this.game.height - this.height * 0.8) {
+      this.y = this.game.height - this.height * 0.8
+    }else if(this.y < - this.height*0.2) {
+      this.y = -this.height*0.2
+    }
     //обратобка патронов
     this.projectiles.forEach(projectile => {
       projectile.update();

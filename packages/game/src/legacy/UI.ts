@@ -4,18 +4,23 @@ export class UI {
   fontSize: number;
   fontFamily: string;
   color: string;
+  livesImage: CanvasImageSource
   constructor(game: Game){
     this.game = game;
     this.fontSize = 25;
     this.fontFamily = 'Bangers';
     this.color = 'black';
+    this.livesImage = document.querySelector('.heart') as CanvasImageSource;
   }
   draw(context: CanvasRenderingContext2D) {
     context.save()
     context.fillStyle = this.color;
     context.font = this.fontSize + 'px ' + this.fontFamily;
     context.fillText('Score: ' + this.game.score, 20, 40);
-
+    //lives
+    for(let i = 0; i< this.game.lives; i++) {
+      context.drawImage(this.livesImage, 25 * i + 25,95,25,25)
+    }
     //timer
     const formetedTime = (this.game.gameTime * 0.001).toFixed(1)
     context.fillText('Timer: ' + formetedTime, 20, 100)
