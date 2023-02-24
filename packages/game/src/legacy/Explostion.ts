@@ -1,5 +1,5 @@
 import {Game} from './Game';
-
+import sound from './smoke-bomb.wav';
 export class Explotion {
   game: Game;
   frameX: number;
@@ -7,7 +7,9 @@ export class Explotion {
   timer: number;
   interval: number
   markForDeletion: boolean;
-  maxFrame: number
+  maxFrame: number;
+  //sound: CanvasCaptureMediaStreamTrack;
+  sound: HTMLAudioElement;
   constructor(game: Game){
     this.game = game;
     this.frameX = 0;
@@ -15,9 +17,15 @@ export class Explotion {
     this.timer = 0;
     this.interval = 1000 / 30;
     this.markForDeletion = false;
-    this.maxFrame = 8
+    this.maxFrame = 8;
+    this.sound = new Audio()
+    this.sound.crossOrigin = 'anonymous';
+    // this.sound.src = './sounds/smoke-bomb.mp3';
+    this.sound.src = sound;
+
   }
   update(deltaTime: number) {
+    if(this.frameX ===0) this.sound.play()
     if(this.timer > this.interval){
       this.frameX++
       this.timer = 0

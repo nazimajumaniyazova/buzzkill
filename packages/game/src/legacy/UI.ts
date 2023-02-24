@@ -19,11 +19,11 @@ export class UI {
     context.fillText('Score: ' + this.game.score, 20, 40);
     //lives
     for(let i = 0; i< this.game.lives; i++) {
-      context.drawImage(this.livesImage, 25 * i + 25,95,25,25)
+      context.drawImage(this.livesImage, 25 * i + 125 ,20, 25, 25)
     }
     //timer
     const formetedTime = (this.game.gameTime * 0.001).toFixed(1)
-    context.fillText('Timer: ' + formetedTime, 20, 100)
+    context.fillText('Timer: ' + formetedTime, 20, 80)
     // game over
     if(this.game.gameOver) {
       context.textAlign = 'center';

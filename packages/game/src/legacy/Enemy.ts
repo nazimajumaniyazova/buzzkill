@@ -16,7 +16,7 @@ export class Enemy {
     this.markedForDeletion = false;
     this.frameX = 0
     this.frameY = 0
-    this.maxFrame = 37;
+    this.maxFrame = 12;
   //  this.maxFrame = 12;
     this.frame = 0
   }
@@ -75,10 +75,10 @@ export class Angler1 extends Enemy {
   constructor(game: Game) {
     super(game)
     this.imageLoad = false;
-    this.width = 266;
-    this.height = 188;
-    //  this.width = 273
-    // this.height = 282
+    // this.width = 266;
+    // this.height = 188;
+     this.width = 273
+    this.height = 282
     // this.spriteWidth = 266;
     // this.spriteHeight = 188;
     // this.width = this.spriteWidth / 2; 
