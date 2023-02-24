@@ -15,7 +15,11 @@ export class Player {
     this.width = 229 * 0.7;
     this.height = 226 * 0.7;
     this.image = new Image(this.width, this.height)
-    this.image.src = './catalog-img/female.png'
+    if(this.game.chosedHero === 'female') {
+      this.image.src = './catalog-img/female.png'
+    }else{
+      this.image.src = './catalog-img/male.png'
+    }
     this.x = 20
     this.y = 100
     this.speedY = 1 // вертикальное движение

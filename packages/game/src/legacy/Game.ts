@@ -28,9 +28,11 @@ export class Game {
   speed: number;
   keys: Array<string> // название клавиш
   lives: number;
+  chosedHero: string;
 //  explotions: Array<smokeExplostion>
   explotions: Array<smokeExplostion |  fireExplostion>
-  constructor(width: number, height: number) {
+  constructor(width: number, height: number, chosedHero: string) {
+    this.chosedHero = chosedHero
     this.width = width;
     this.height = height;
     this.background = new Background(this)
