@@ -31,9 +31,9 @@ export class Enemy {
        this.frameX =0
     }
   }
-  draw(context: CanvasRenderingContext2D,  image: HTMLImageElement , y: number, width: number, height: number,) {
+  draw(context: CanvasRenderingContext2D,  image: HTMLImageElement , y: number, width: number, height: number, lives: number) {
   //  console.log(image)
-    context.strokeRect(this.x, y, width /2, height/2)
+    // context.strokeRect(this.x, y, width /2, height/2)
     context.drawImage(
       image, 
       this.frameX * width, 
@@ -45,9 +45,9 @@ export class Enemy {
       width /2, 
       height /2
     )
-  //  context.drawImage(image, 0,0,width,height,this.x, y, width /2, height/2)
+    context.fillStyle = 'black'
     context.font = '20px Helvetica'
-    //context.fillText(`${this.game.enemyId}`, this.x, y)
+    context.fillText(`${lives}`, this.x, y)
   }
 }
 
@@ -56,7 +56,6 @@ export class Angler1 extends Enemy {
   width: number
   height: number
   y:number
-//  image:  CanvasImageSource;
   image: HTMLImageElement
   frameY: number;
   lives: number
@@ -73,9 +72,7 @@ export class Angler1 extends Enemy {
     this.angle = 0
     this.angleSpeed = Math.random() * 0.2
     this.y = Math.random() * (this.game.height * 0.9 - this.height)
-    //this.image =  document.querySelector('.angler1')!;
     this.image = new Image(this.width, this.height)
-  //  this.image.onload = this.onLoad
     this.frameY = Math.floor(Math.random() * 2)
     this.lives = 2;
     this.score = this.lives
@@ -90,14 +87,9 @@ export class Angler1 extends Enemy {
     super.update(this.width)
     this.y += this.curve * Math.sin(this.angle); //движение по синусу
     this.angle +=this.angleSpeed;
-  //s  this.image.src = './catalog-img/enemy-3.png'
   }
   draw(context: CanvasRenderingContext2D): void {
-  //  this.image.src = './catalog-img/enemy-3.png'
-    super.draw(context, this.image, this.y, this.width, this.height)
-  }
-  onLoad(){
-    console.log('loaded')
+    super.draw(context, this.image, this.y, this.width, this.height, this.lives)
   }
 }
 

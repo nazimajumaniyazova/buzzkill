@@ -3,7 +3,8 @@ import sound from '../sounds/smoke-bomb.wav';
 export class Explotion {
   game: Game;
   frameX: number;
-  spriteHeight: number;
+  height: number;
+  width: number;
   timer: number;
   interval: number
   markForDeletion: boolean;
@@ -12,7 +13,8 @@ export class Explotion {
   constructor(game: Game){
     this.game = game;
     this.frameX = 0;
-    this.spriteHeight = 200;
+    this.width = 200
+    this.height = 200;
     this.timer = 0;
     this.interval = 1000 / 30;
     this.markForDeletion = false;
@@ -22,7 +24,7 @@ export class Explotion {
 
   }
   update(deltaTime: number) {
-    if(this.frameX ===0) this.sound.play()
+    if(this.frameX === 0) this.sound.play()
     if(this.timer > this.interval){
       this.frameX++
       this.timer = 0
@@ -33,60 +35,57 @@ export class Explotion {
       this.markForDeletion = true;
     }
   }
-  draw(context: CanvasRenderingContext2D, image: CanvasImageSource, x: number, y: number, width: number) {
-    context.strokeRect(x, y, 200, 200)
+  draw(context: CanvasRenderingContext2D, image: CanvasImageSource, x: number, y: number) {
+    // context.strokeRect(x, y, 200, 200)
     context.drawImage(
       image, 
-      this.frameX * width,
+      this.frameX * this.width,
       0,
-      width,
-      this.spriteHeight,
+      this.width,
+      this.height,
       x, 
       y,
-      width,
-      this.spriteHeight)
+      this.width,
+      this.height
+    )
   }
 }
 
 export class smokeExplostion extends Explotion {
   x: number;
   y: number;
-  spriteWidth: number;
   image: CanvasImageSource
   constructor(game: Game,x:number,y:number){
     super(game)
     this.image = new Image(200,200)
     this.image.src = './catalog-img/smokeExplosion.png'
-    this.spriteWidth = 200;
-    this.x = x - this.spriteWidth * 0.5;
-    this.y = y  - this.spriteHeight * 0.5;
+    this.x = x - this.width * 0.5;
+    this.y = y  - this.height * 0.5;
   }
   update(deltaTime: number): void {
     super.update(deltaTime)
     this.x -= this.game.speed
   }
   draw(context: CanvasRenderingContext2D) {
-    super.draw(context, this.image, this.x, this.y, this.spriteWidth)
+    super.draw(context, this.image, this.x, this.y)
   }
 }
 export class fireExplostion extends Explotion {
   x: number;
   y: number;
-  spriteWidth: number;
   image: CanvasImageSource
   constructor(game: Game,x:number,y:number){
     super(game)
     this.image = new Image(200,200)
     this.image.src = './catalog-img/fireExplosion.png'
-    this.spriteWidth = 200;
-    this.x = x - this.spriteWidth * 0.5;
-    this.y = y  - this.spriteHeight * 0.5;
+    this.x = x - this.width * 0.5;
+    this.y = y  - this.height * 0.5;
   }
   update(deltaTime: number): void {
     super.update(deltaTime)
     this.x -= this.game.speed
   }
   draw(context: CanvasRenderingContext2D) {
-    super.draw(context, this.image, this.x, this.y, this.spriteWidth)
+    super.draw(context, this.image, this.x, this.y)
   }
 }
