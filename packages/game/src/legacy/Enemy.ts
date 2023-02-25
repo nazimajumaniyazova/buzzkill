@@ -9,6 +9,7 @@ export class Enemy {
   frameY: number
   maxFrame: number;
   frame: number;
+  liveProgress: number;
   constructor(game: Game) {
     this.game = game;
     this.x = this.game.width;
@@ -18,6 +19,7 @@ export class Enemy {
     this.frameY = 0
     this.frame = -1
     this.maxFrame = 12;
+    this.liveProgress = 50;
   }
   update(width: number) {
     this.x += this.speedX;
@@ -31,9 +33,9 @@ export class Enemy {
        this.frameX =0
     }
   }
-  draw(context: CanvasRenderingContext2D,  image: HTMLImageElement , y: number, width: number, height: number, lives: number) {
+  draw(context: CanvasRenderingContext2D,  image: HTMLImageElement , y: number, width: number, height: number, lives: number, score: number) {
   //  console.log(image)
-    // context.strokeRect(this.x, y, width /2, height/2)
+    //context.strokeRect(this.x, y, width /2, height/2)
     context.drawImage(
       image, 
       this.frameX * width, 
@@ -45,9 +47,14 @@ export class Enemy {
       width /2, 
       height /2
     )
-    context.fillStyle = 'black'
-    context.font = '20px Helvetica'
-    context.fillText(`${lives}`, this.x, y)
+    // context.fillStyle = 'black'
+    // context.font = '20px Helvetica'
+    // context.fillText(`${lives}`, this.x, y)
+
+    context.fillStyle = '#000';
+    context.strokeRect(this.x,y + 10, 50, 10);
+    context.fillStyle = '#48BF53'
+    context.fillRect(this.x, y + 10, ( 50  * lives)/ score , 10)
   }
 }
 
@@ -74,14 +81,10 @@ export class Angler1 extends Enemy {
     this.y = Math.random() * (this.game.height * 0.9 - this.height)
     this.image = new Image(this.width, this.height)
     this.frameY = Math.floor(Math.random() * 2)
-    this.lives = 2;
+    this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
     this.curve = Math.random() * 1;
     this.image.src = './catalog-img/enemy-3.png'
-    if(this.image.complete){
-    console.log('loaded')
-    this.game.enemyId++
-    }
   }
   update(){
     super.update(this.width)
@@ -89,7 +92,7 @@ export class Angler1 extends Enemy {
     this.angle +=this.angleSpeed;
   }
   draw(context: CanvasRenderingContext2D): void {
-    super.draw(context, this.image, this.y, this.width, this.height, this.lives)
+    super.draw(context, this.image, this.y, this.width, this.height, this.lives, this.score)
   }
 }
 

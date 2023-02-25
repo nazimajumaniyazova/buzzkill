@@ -36,6 +36,7 @@ export class Projectile {
     }
   }
   draw(context: CanvasRenderingContext2D) {
+    //context.strokeRect(this.x,this.y,this.width, this.height)
     context.drawImage(this.image, this.x, this.y)
   }
 }
