@@ -45,9 +45,10 @@ export class Game {
     this.ammoInterval = 200;
     this.enemyTimer = 0
     this.enemyInterval = 1000 // добавляем врагов каждые 1мс
+
     this.gameOver = false
     this.score = 0
-    this.winningScore = 110
+    this.winningScore = 1100
     this.gameTime = 0;
     this.gameTimeLimit = 60000;
     this.speed = 1;
@@ -133,6 +134,12 @@ export class Game {
       this.enemyTimer = 0
     } else {
       this.enemyTimer += deltaTime
+    }
+    if(this.gameTime > 10000) {
+      this.enemyInterval = this.enemyInterval - 200
+      if(this.enemyInterval <= 400){
+        this.enemyInterval = 400;
+      }
     }
   }
   draw(context: CanvasRenderingContext2D) {

@@ -69,11 +69,9 @@ export class Enemy1 extends Enemy {
   score: number
   angle: number;
   angleSpeed: number;
-  imageLoad: boolean;
   curve: number
   constructor(game: Game) {
     super(game)
-    this.imageLoad = false;
     this.width = 273
     this.height = 282
     this.angle = 0
@@ -106,11 +104,9 @@ export class Enemy2 extends Enemy {
   score: number
   angle: number;
   angleSpeed: number;
-  imageLoad: boolean;
   curve: number
   constructor(game: Game) {
     super(game)
-    this.imageLoad = false;
     this.width = 253
     this.height = 207
     this.angle = 0
@@ -142,11 +138,9 @@ export class Enemy3 extends Enemy {
   score: number
   angle: number;
   angleSpeed: number;
-  imageLoad: boolean;
   curve: number
   constructor(game: Game) {
     super(game)
-    this.imageLoad = false;
     this.width = 266
     this.height = 207
     this.angle = 0
