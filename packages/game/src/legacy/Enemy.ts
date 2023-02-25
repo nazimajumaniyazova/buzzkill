@@ -16,9 +16,8 @@ export class Enemy {
     this.markedForDeletion = false;
     this.frameX = 0
     this.frameY = 0
+    this.frame = -1
     this.maxFrame = 12;
-  //  this.maxFrame = 12;
-    this.frame = 0
   }
   update(width: number) {
     this.x += this.speedX;
@@ -32,18 +31,13 @@ export class Enemy {
        this.frameX =0
     }
   }
-  // imgDraw(context: CanvasRenderingContext2D,  imageURL: string, y: number, width: number, height: number,){
-  //   const image = new Image();
-  //   image.src = imageURL
-  //   image.onload = () => this.draw(context, image, y, width, height);
-  // }
-  draw(context: CanvasRenderingContext2D,  image: CanvasImageSource, y: number, width: number, height: number,) {
-    //context.clearRect(this.x, y, width, height);
+  draw(context: CanvasRenderingContext2D,  image: HTMLImageElement , y: number, width: number, height: number,) {
+  //  console.log(image)
     context.strokeRect(this.x, y, width /2, height/2)
     context.drawImage(
       image, 
       this.frameX * width, 
-      this.frameY * height,
+      0,
       width,
       height, 
       this.x, 
@@ -51,8 +45,9 @@ export class Enemy {
       width /2, 
       height /2
     )
+  //  context.drawImage(image, 0,0,width,height,this.x, y, width /2, height/2)
     context.font = '20px Helvetica'
-    context.fillText('2', this.x, y)
+    //context.fillText(`${this.game.enemyId}`, this.x, y)
   }
 }
 
@@ -61,56 +56,48 @@ export class Angler1 extends Enemy {
   width: number
   height: number
   y:number
-  image:  CanvasImageSource;
+//  image:  CanvasImageSource;
+  image: HTMLImageElement
   frameY: number;
   lives: number
   score: number
   angle: number;
   angleSpeed: number;
   imageLoad: boolean;
-  // spriteWidth: number;
-  // spriteHeight: number;
   curve: number
-//  imageURL: string;
   constructor(game: Game) {
     super(game)
     this.imageLoad = false;
-    // this.width = 266;
-    // this.height = 188;
-     this.width = 273
+    this.width = 273
     this.height = 282
-    // this.spriteWidth = 266;
-    // this.spriteHeight = 188;
-    // this.width = this.spriteWidth / 2; 
-    // this.height = this.spriteHeight / 2; 
     this.angle = 0
     this.angleSpeed = Math.random() * 0.2
     this.y = Math.random() * (this.game.height * 0.9 - this.height)
-    // this.y = 0
-    //loadImage('./catalog-img/enemy2.png').then;
-    //this.image = new Image();
-    // if(!this.image) {
-    //   this.markedForDeletion = true
-    // }
-    //console.log(this.image)
-    // this.image.onload(() => {
-    //   this.imageLoad = true;
-    // })
-  //  this.image.src ='./catalog-img/enemy-3.png'
-    this.image = document.querySelector('.angler1') as CanvasImageSource;
+    //this.image =  document.querySelector('.angler1')!;
+    this.image = new Image(this.width, this.height)
+  //  this.image.onload = this.onLoad
     this.frameY = Math.floor(Math.random() * 2)
     this.lives = 2;
     this.score = this.lives
     this.curve = Math.random() * 1;
-    //this.imageURL = './catalog-img/enemy-3.png'
+    this.image.src = './catalog-img/enemy-3.png'
+    if(this.image.complete){
+    console.log('loaded')
+    this.game.enemyId++
+    }
   }
   update(){
     super.update(this.width)
     this.y += this.curve * Math.sin(this.angle); //движение по синусу
     this.angle +=this.angleSpeed;
+  //s  this.image.src = './catalog-img/enemy-3.png'
   }
   draw(context: CanvasRenderingContext2D): void {
+  //  this.image.src = './catalog-img/enemy-3.png'
     super.draw(context, this.image, this.y, this.width, this.height)
+  }
+  onLoad(){
+    console.log('loaded')
   }
 }
 

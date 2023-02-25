@@ -29,6 +29,7 @@ export class Game {
   keys: Array<string> // название клавиш
   lives: number;
   chosedHero: string;
+  enemyId: number;
 //  explotions: Array<smokeExplostion>
   explotions: Array<smokeExplostion |  fireExplostion>
   constructor(width: number, height: number, chosedHero: string) {
@@ -55,7 +56,8 @@ export class Game {
     this.gameTimeLimit = 60000;
     this.speed = 1;
     this.explotions = []
-    this.lives = 5
+    this.lives = 5;
+    this.enemyId = 0;
   }
   update(deltaTime: number) {
 
