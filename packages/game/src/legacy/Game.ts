@@ -2,7 +2,7 @@ import {Background} from './Background'
 import {Player} from './Player'
 import {InputHandler} from './InputHandler'
 import {UI} from './UI'
-import { Angler1} from './Enemy'
+import { Enemy1, Enemy2, Enemy3 } from './Enemy'
 import { Projectile } from './Projectile';
 import { smokeExplostion, fireExplostion} from './Explostion'
 export class Game {
@@ -10,7 +10,7 @@ export class Game {
   player: Player;
   input: InputHandler;
   ui: UI;
-  enemies: Array<Angler1>
+  enemies: Array<Enemy1 | Enemy2 | Enemy3 >
   width: number; // ширина окна/поле canvas
   height: number; // высота  окна/поле canvas
   ammo: number; // патроны
@@ -28,7 +28,6 @@ export class Game {
   keys: Array<string> // название клавиш
   lives: number;
   chosedHero: string;
-  enemyId: number;
   explotions: Array<smokeExplostion |  fireExplostion>
   constructor(width: number, height: number, chosedHero: string) {
     this.chosedHero = chosedHero
@@ -54,7 +53,6 @@ export class Game {
     this.speed = 1;
     this.explotions = []
     this.lives = 5;
-    this.enemyId = 0;
   }
   update(deltaTime: number) {
 
@@ -149,19 +147,17 @@ export class Game {
     })
   }
   addEnemy() {
-    // const randomize = Math.random();
-    // if( randomize < 0.3){
-    //   this.enemies.push(new Angler1(this))
-    // }else if (randomize < 0.6){
-    //   this.enemies.push(new Angler1(this))
-    // } else {
-    //   this.enemies.push(new Angler1(this))
-    // }
-    this.enemies.push(new Angler1(this))
-    //console.log(this.enemies)
+    const randomize = Math.random();
+    if( randomize < 0.3){
+      this.enemies.push(new Enemy1(this))
+    }else if (randomize < 0.6){
+      this.enemies.push(new Enemy2(this))
+    } else {
+      this.enemies.push(new Enemy3(this))
+    }
   }
 
-  addExplotion(enemy: Angler1) {
+  addExplotion(enemy: Enemy1 | Enemy2 | Enemy3 ) {
     const randomize = Math.random();
     if(randomize < 0.5) {
       this.explotions.push(new smokeExplostion(
@@ -175,7 +171,7 @@ export class Game {
     }
 
   }
-  checkCollision(rect1: Player | Projectile, rect2: Angler1) {
+  checkCollision(rect1: Player | Projectile, rect2: Enemy1 | Enemy2 | Enemy3) {
   const res =  rect1.x < rect2.x + rect2.width && 
               rect1.x + rect1.width > rect2.x &&
               rect1.y < rect2.y + rect2.height &&
