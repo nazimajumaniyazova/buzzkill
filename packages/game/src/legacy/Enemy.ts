@@ -13,7 +13,7 @@ export class Enemy {
   constructor(game: Game) {
     this.game = game;
     this.x = this.game.width;
-    this.speedX = Math.random() * -1.5 - 0.5;
+    this.speedX = Math.random() * -3 - 1;
     this.markedForDeletion = false;
     this.frameX = 0
     this.frameY = 0
@@ -75,13 +75,13 @@ export class Enemy1 extends Enemy {
     this.width = 273
     this.height = 282
     this.angle = 0
-    this.angleSpeed = Math.random() * 0.2
-    this.y = Math.random() * (this.game.height * 0.9 - this.height)
+    this.angleSpeed = Math.random() * 0.5
+    this.y = Math.random() * (this.game.height -this.height * 0.8)
     this.image = new Image(this.width, this.height)
     this.frameY = Math.floor(Math.random() * 2)
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
-    this.curve = Math.random() * 1;
+    this.curve = Math.random() * 2;
     this.image.src = './catalog-img/enemy-1.png'
   }
   update(){
@@ -110,13 +110,13 @@ export class Enemy2 extends Enemy {
     this.width = 253
     this.height = 207
     this.angle = 0
-    this.angleSpeed = Math.random() * 0.2
-    this.y = Math.random() * (this.game.height * 0.9 - this.height)
+    this.angleSpeed = Math.random() * 0.5
+    this.y = Math.random() * (this.game.height  - this.height * 0.8)
     this.image = new Image(this.width, this.height)
     this.frameY = Math.floor(Math.random() * 2)
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
-    this.curve = Math.random() * 1;
+    this.curve = Math.random() * 2 +0.5;
     this.image.src = './catalog-img/enemy-2.png'
   }
   update(){
@@ -144,13 +144,13 @@ export class Enemy3 extends Enemy {
     this.width = 266
     this.height = 207
     this.angle = 0
-    this.angleSpeed = Math.random() * 0.2
-    this.y = Math.random() * (this.game.height * 0.9 - this.height)
+    this.angleSpeed = Math.random() * 0.5
+    this.y = Math.random() * (this.game.height  - this.height * 0.8)
     this.image = new Image(this.width, this.height)
     this.frameY = Math.floor(Math.random() * 2)
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
-    this.curve = Math.random() * 1;
+    this.curve = Math.random() * 2 + 0.5;
     this.image.src = './catalog-img/enemy-3.png'
   }
   update(){
