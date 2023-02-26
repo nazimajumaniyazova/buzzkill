@@ -116,7 +116,7 @@ export class Enemy2 extends Enemy {
     this.frameY = Math.floor(Math.random() * 2)
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
-    this.curve = Math.random() * 2 +0.5;
+    this.curve = Math.random() * 2;
     this.image.src = './catalog-img/enemy-2.png'
   }
   update(){
@@ -150,7 +150,7 @@ export class Enemy3 extends Enemy {
     this.frameY = Math.floor(Math.random() * 2)
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
-    this.curve = Math.random() * 2 + 0.5;
+    this.curve = Math.random() * 2;
     this.image.src = './catalog-img/enemy-3.png'
   }
   update(){

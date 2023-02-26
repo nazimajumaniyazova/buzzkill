@@ -44,7 +44,7 @@ export class Game {
     this.ammoTimer = 0
     this.ammoInterval = 200;
     this.enemyTimer = 0
-    this.enemyInterval = 1000 // добавляем врагов каждые 1мс
+    this.enemyInterval = 1500 // добавляем врагов каждые 1мс
 
     this.gameOver = false
     this.score = 0
@@ -80,10 +80,14 @@ export class Game {
       enemy.update()
       if(this.checkCollision(this.player, enemy)) {
         enemy.markedForDeletion = true;
+        this.lives--;
+        if(this.lives <=0){
+          this.gameOver = true;
+        }
         // if(enemy.type = 'lucky') {
         //   this.player.enterPowerUp()
         // }else this.score--;
-        this.score--;
+        //this.score--;
       }
       this.player.projectiles.forEach(projectile => {
         if(this.checkCollision(projectile, enemy)) {

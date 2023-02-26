@@ -3,15 +3,16 @@ import {Layer} from './Layer'
 export class Background {
   game: Game;
   image: CanvasImageSource;
-  layer: Layer;
+  layer1: Layer;
   layers: Array<Layer>
+  hight: number;
   constructor(game: Game){
     this.game = game;
     this.image = new Image();
-    this.image.src ='./catalog-img/bg-3.jpg'
-    this.image.blur()
-    this.layer = new Layer(this.game, this.image, 1)
-    this.layers = [this.layer]
+    this.image.src ='./catalog-img/bg-15.jpg'
+    this.hight = 221;
+    this.layer1 = new Layer(this.game, this.image, 1, this.game.height)
+    this.layers = [this.layer1]
   }
   update(){
     this.layers.forEach(layer =>{
