@@ -2,11 +2,11 @@ import {Background} from './Background'
 import {Player} from './Player'
 import {InputHandler} from './InputHandler'
 import {UI} from './UI'
-import { Enemy1, Enemy2, Enemy3 } from './Enemy'
+import { Enemy1, Enemy2, Enemy3, EnemyNight1, EnemyNight2, EnemyNight3 } from './Enemy'
 import { Projectile } from './Projectile';
 import { smokeExplostion, fireExplostion} from './Explostion'
 import sound from '../sounds/pain-sound.wav';
-import { gameVolume as volume} from '../type/settingModal'
+import { gameVolume as volume, dayTime} from '../type/settingModal'
 export class Game {
   background: Background;
   player: Player;
@@ -84,7 +84,7 @@ export class Game {
     }
 
     this.enemies.forEach(enemy => {
-      enemy.update()
+      enemy.update(deltaTime)
       if(this.checkCollision(this.player, enemy)) {
         this.playerEnemyCollisionSound.volume = this.gameVolume;
         this.playerEnemyCollisionSound.play()
@@ -169,13 +169,24 @@ export class Game {
   }
   addEnemy() {
     const randomize = Math.random();
-    if( randomize < 0.3){
-      this.enemies.push(new Enemy1(this))
-    }
-    else if (randomize < 0.6){
-      this.enemies.push(new Enemy2(this))
-    } else {
-      this.enemies.push(new Enemy3(this))
+    if(dayTime === 'dayTime') {
+      if( randomize < 0.3){
+        this.enemies.push(new Enemy1(this))
+      }
+      else if (randomize < 0.6){
+        this.enemies.push(new Enemy2(this))
+      } else {
+        this.enemies.push(new Enemy3(this))
+      }
+    }else {
+      if( randomize < 0.3){
+        this.enemies.push(new EnemyNight1(this))
+      }
+      else if (randomize < 0.6){
+        this.enemies.push(new EnemyNight2(this))
+      } else {
+        this.enemies.push(new EnemyNight3(this))
+      }
     }
   }
 

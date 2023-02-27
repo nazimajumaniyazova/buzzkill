@@ -1,4 +1,5 @@
 import {Game} from './Game'
+import { dayTime} from '../type/settingModal'
 export class UI {
   game: Game;
   fontSize: number;
@@ -9,7 +10,11 @@ export class UI {
     this.game = game;
     this.fontSize = 25;
     this.fontFamily = 'Bangers';
-    this.color = 'black';
+    if(dayTime === 'dayTime'){
+      this.color = 'black';
+    }else{
+      this.color = 'white'
+    }
     this.livesImage = document.querySelector('.heart') as CanvasImageSource;
   }
   draw(context: CanvasRenderingContext2D) {
