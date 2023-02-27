@@ -25,7 +25,7 @@ export class Player {
     this.x = 20
     this.y = 100
     this.speedY = 1 // вертикальное движение
-    this.maxSpeed = 3; // на сколько пикселем двигаем при нажатии
+    this.maxSpeed = 4; // на сколько пикселем двигаем при нажатии
     this.projectiles = [];
   }
   update() {
@@ -50,7 +50,7 @@ export class Player {
     this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion)
   }
   draw(context: CanvasRenderingContext2D) {
-    context.strokeRect(this.x, this.y, this.width, this.height);
+  //  context.strokeRect(this.x, this.y, this.width, this.height);
     context.drawImage(
       this.image, 
       this.x, 

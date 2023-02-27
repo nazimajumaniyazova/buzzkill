@@ -35,7 +35,7 @@ export class Enemy {
   }
   draw(context: CanvasRenderingContext2D,  image: HTMLImageElement , y: number, width: number, height: number, lives: number, score: number) {
   //  console.log(image)
-    context.strokeRect(this.x, y, width*0.5, height*0.5)
+    //context.strokeRect(this.x, y, width*0.5, height*0.5)
     context.drawImage(
       image, 
       this.frameX * width, 
