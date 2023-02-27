@@ -65,7 +65,7 @@ export class Game {
   update(deltaTime: number) {
     this.gameVolume = +volume;
     if(!this.gameOver) this.gameTime += deltaTime;
-    if(this.gameTime > this.gameTimeLimit) this.gameOver = true
+  //  if(this.gameTime > this.gameTimeLimit) this.gameOver = true
     this.background.update()
 
     //player

@@ -27,8 +27,8 @@ export class UI {
       context.drawImage(this.livesImage, 25 * i + this.game.width - 150,20, 25, 25)
     }
     //timer
-    const formetedTime = (this.game.gameTime * 0.001).toFixed(1)
-    context.fillText('Timer: ' + formetedTime, 20, 80)
+    // const formetedTime = (this.game.gameTime * 0.001).toFixed(1)
+    // context.fillText('Timer: ' + formetedTime, 20, 80)
     // game over
     if(this.game.gameOver) {
       context.textAlign = 'center';
