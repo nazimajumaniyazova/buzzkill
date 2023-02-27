@@ -24,7 +24,7 @@ export class UI {
     context.fillText('Score: ' + this.game.score, 20, 40);
     //lives
     for(let i = 0; i< this.game.lives; i++) {
-      context.drawImage(this.livesImage, 25 * i + 125 ,20, 25, 25)
+      context.drawImage(this.livesImage, 25 * i + this.game.width - 150,20, 25, 25)
     }
     //timer
     const formetedTime = (this.game.gameTime * 0.001).toFixed(1)
@@ -38,7 +38,7 @@ export class UI {
         message1 = 'You Win!'
         message2 = 'Well done!'
       }else {
-        message1 = 'You lose!'
+        message1 = 'You lost!'
         message2 = 'Try again next time'
       }
       context.font = '50px ' + this.fontFamily;
