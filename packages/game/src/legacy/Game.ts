@@ -48,7 +48,7 @@ export class Game {
     this.ammoTimer = 0
     this.ammoInterval = 200;
     this.enemyTimer = 0
-    this.enemyInterval = 15000 // добавляем врагов каждые 1мс
+    this.enemyInterval = 1500 // добавляем врагов каждые 1мс
 
     this.gameOver = false
     this.score = 0
