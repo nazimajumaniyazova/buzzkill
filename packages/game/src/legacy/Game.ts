@@ -6,6 +6,7 @@ import { Enemy1, Enemy2, Enemy3 } from './Enemy'
 import { Projectile } from './Projectile';
 import { smokeExplostion, fireExplostion} from './Explostion'
 import sound from '../sounds/pain-sound.wav';
+import { gameVolume as volume} from '../type/settingModal'
 export class Game {
   background: Background;
   player: Player;
@@ -31,6 +32,7 @@ export class Game {
   chosedHero: string;
   explotions: Array<smokeExplostion |  fireExplostion>
   playerEnemyCollisionSound: HTMLAudioElement;
+  gameVolume: number
   constructor(width: number, height: number, chosedHero: string) {
     this.chosedHero = chosedHero
     this.width = width;
@@ -58,9 +60,10 @@ export class Game {
     this.lives = 5;
     this.playerEnemyCollisionSound = new Audio()
     this.playerEnemyCollisionSound.src = sound
+    this.gameVolume = +volume;
   }
   update(deltaTime: number) {
-
+    this.gameVolume = +volume;
     if(!this.gameOver) this.gameTime += deltaTime;
     if(this.gameTime > this.gameTimeLimit) this.gameOver = true
     this.background.update()
@@ -83,6 +86,7 @@ export class Game {
     this.enemies.forEach(enemy => {
       enemy.update()
       if(this.checkCollision(this.player, enemy)) {
+        this.playerEnemyCollisionSound.volume = this.gameVolume;
         this.playerEnemyCollisionSound.play()
         this.addExplotion(enemy)
         enemy.markedForDeletion = true;

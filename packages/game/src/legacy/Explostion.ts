@@ -24,6 +24,7 @@ export class Explotion {
 
   }
   update(deltaTime: number) {
+    this.sound.volume = this.game.gameVolume
     if(this.frameX === 0) this.sound.play()
     if(this.timer > this.interval){
       this.frameX++

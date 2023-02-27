@@ -26,6 +26,7 @@ export class Projectile {
     this.sound.src = sound;
   }
   update() {
+    this.sound.volume = this.game.gameVolume
     if(this.x === this.xInitialPosition){
       this.sound.play()
     }
