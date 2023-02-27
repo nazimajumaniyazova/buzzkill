@@ -12,18 +12,20 @@ export class Player {
   image: CanvasImageSource;
   constructor(game: Game){
     this.game = game;
-    this.width = 229 * 0.7;
-    this.height = 226 * 0.7;
-    this.image = new Image(this.width, this.height)
+    this.image = new Image()
     if(this.game.chosedHero === 'female') {
+      this.width = 172 *0.8
+      this.height = 212 *0.7
       this.image.src = './catalog-img/female.png'
     }else{
+      this.width = 229 *0.7
+      this.height = 226 *0.7
       this.image.src = './catalog-img/male.png'
     }
     this.x = 20
     this.y = 100
     this.speedY = 1 // вертикальное движение
-    this.maxSpeed = 2; // на сколько пикселем двигаем при нажатии
+    this.maxSpeed = 3; // на сколько пикселем двигаем при нажатии
     this.projectiles = [];
   }
   update() {
@@ -48,13 +50,13 @@ export class Player {
     this.projectiles = this.projectiles.filter(projectile => !projectile.markedForDeletion)
   }
   draw(context: CanvasRenderingContext2D) {
-    //context.strokeRect(this.x, this.y, this.width, this.height);
+    context.strokeRect(this.x, this.y, this.width, this.height);
     context.drawImage(
       this.image, 
       this.x, 
       this.y, 
-      this.width *0.8, 
-      this.height * 0.8)
+      this.width, 
+      this.height)
     //рисуем патроны
     this.projectiles.forEach(projectile => {
       projectile.draw(context)

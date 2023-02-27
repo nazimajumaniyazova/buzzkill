@@ -35,7 +35,7 @@ export class Enemy {
   }
   draw(context: CanvasRenderingContext2D,  image: HTMLImageElement , y: number, width: number, height: number, lives: number, score: number) {
   //  console.log(image)
-    //context.strokeRect(this.x, y, width /2, height/2)
+    context.strokeRect(this.x, y, width*0.5, height*0.5)
     context.drawImage(
       image, 
       this.frameX * width, 
@@ -44,8 +44,8 @@ export class Enemy {
       height, 
       this.x, 
       y, 
-      width /2, 
-      height /2
+      width *0.5, 
+      height *0.5
     )
     // context.fillStyle = 'black'
     // context.font = '20px Helvetica'
@@ -62,6 +62,8 @@ export class Enemy {
 export class Enemy1 extends Enemy {
   width: number
   height: number
+  realWidth: number;
+  realHeight: number;
   y:number
   image: HTMLImageElement
   frameY: number;
@@ -72,8 +74,10 @@ export class Enemy1 extends Enemy {
   curve: number
   constructor(game: Game) {
     super(game)
-    this.width = 273
-    this.height = 282
+    this.realHeight = 273
+    this.realWidth = 273
+    this.width = this.realHeight * 0.5
+    this.height = this.realWidth * 0.5
     this.angle = 0
     this.angleSpeed = Math.random() * 0.5
     this.y = Math.random() * (this.game.height -this.height * 0.8)
@@ -90,11 +94,13 @@ export class Enemy1 extends Enemy {
     this.angle +=this.angleSpeed;
   }
   draw(context: CanvasRenderingContext2D): void {
-    super.draw(context, this.image, this.y, this.width, this.height, this.lives, this.score)
+    super.draw(context, this.image, this.y, this.realWidth, this.realHeight, this.lives, this.score)
   }
 }
 
 export class Enemy2 extends Enemy {
+  realWidth: number;
+  realHeight: number;
   width: number
   height: number
   y:number
@@ -107,8 +113,10 @@ export class Enemy2 extends Enemy {
   curve: number
   constructor(game: Game) {
     super(game)
-    this.width = 253
-    this.height = 207
+    this.realHeight = 207
+    this.realWidth = 253
+    this.width = this.realWidth *0.5
+    this.height = this.realHeight *0.5
     this.angle = 0
     this.angleSpeed = Math.random() * 0.5
     this.y = Math.random() * (this.game.height  - this.height * 0.8)
@@ -125,10 +133,12 @@ export class Enemy2 extends Enemy {
     this.angle +=this.angleSpeed;
   }
   draw(context: CanvasRenderingContext2D): void {
-    super.draw(context, this.image, this.y, this.width, this.height, this.lives, this.score)
+    super.draw(context, this.image, this.y, this.realWidth, this.realHeight, this.lives, this.score)
   }
 }
 export class Enemy3 extends Enemy {
+  realWidth: number;
+  realHeight: number;
   width: number
   height: number
   y:number
@@ -141,8 +151,10 @@ export class Enemy3 extends Enemy {
   curve: number
   constructor(game: Game) {
     super(game)
-    this.width = 266
-    this.height = 207
+    this.realHeight = 207
+    this.realWidth = 266
+    this.width = this.realWidth * 0.5
+    this.height = this.realHeight * 0.5
     this.angle = 0
     this.angleSpeed = Math.random() * 0.5
     this.y = Math.random() * (this.game.height  - this.height * 0.8)
@@ -159,6 +171,6 @@ export class Enemy3 extends Enemy {
     this.angle +=this.angleSpeed;
   }
   draw(context: CanvasRenderingContext2D): void {
-    super.draw(context, this.image, this.y, this.width, this.height, this.lives, this.score)
+    super.draw(context, this.image, this.y, this.realWidth, this.realHeight, this.lives, this.score)
   }
 }

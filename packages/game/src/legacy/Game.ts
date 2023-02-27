@@ -44,7 +44,7 @@ export class Game {
     this.ammoTimer = 0
     this.ammoInterval = 200;
     this.enemyTimer = 0
-    this.enemyInterval = 1500 // добавляем врагов каждые 1мс
+    this.enemyInterval = 15000 // добавляем врагов каждые 1мс
 
     this.gameOver = false
     this.score = 0
@@ -161,7 +161,8 @@ export class Game {
     const randomize = Math.random();
     if( randomize < 0.3){
       this.enemies.push(new Enemy1(this))
-    }else if (randomize < 0.6){
+    }
+    else if (randomize < 0.6){
       this.enemies.push(new Enemy2(this))
     } else {
       this.enemies.push(new Enemy3(this))
