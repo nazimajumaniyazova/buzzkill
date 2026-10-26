@@ -1,0 +1,40 @@
+name: Bug report
+description: Something does not work as intended
+labels: ['type: bug']
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the game
+        2. Press ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happens instead. Attach a screenshot or GIF if you can.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser and version, operating system, device, screen size
+      placeholder: Chrome 131, Windows 11, 1920x1080
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Game version or commit
+      placeholder: v0.1.0 or a commit SHA
