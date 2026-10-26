@@ -1,0 +1,27 @@
+name: Feature request
+description: Propose a change or a new capability
+labels: ['type: feature']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard, missing or annoying today, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How could it work? Mention alternatives you considered.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: A checklist that tells us when the issue is done.
+      value: |
+        - [ ]
+    validations:
+      required: true

@@ -1,0 +1,27 @@
+{
+  "name": "buzzkill",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Buzzkill — a side-scrolling Canvas shooter in TypeScript. Defend the city from an alien insect swarm, day and night.",
+  "license": "MIT",
+  "author": "Nazima Jumaniyazova",
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@commitlint/types": "^21.2.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-packagejson": "^3.0.3"
+  },
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24"
+  }
+}
