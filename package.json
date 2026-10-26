@@ -7,9 +7,12 @@
   "author": "Nazima Jumaniyazova",
   "type": "module",
   "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --filter=@buzzkill/web",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
@@ -18,7 +21,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
-    "prettier-plugin-packagejson": "^3.0.3"
+    "prettier-plugin-packagejson": "^3.0.3",
+    "turbo": "catalog:"
   },
   "packageManager": "pnpm@12.15.0",
   "engines": {

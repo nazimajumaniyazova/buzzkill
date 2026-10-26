@@ -1,0 +1,4 @@
+{
+  "extends": "@buzzkill/config/tsconfig.base.json",
+  "include": ["src"]
+}

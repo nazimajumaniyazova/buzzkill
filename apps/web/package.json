@@ -1,0 +1,28 @@
+{
+  "name": "@buzzkill/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Buzzkill web application: the React shell around the game canvas",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@buzzkill/engine": "workspace:*",
+    "@buzzkill/game": "workspace:*",
+    "@buzzkill/ui": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@buzzkill/config": "workspace:*",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}
