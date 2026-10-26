@@ -1,0 +1,19 @@
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.ogg binary
+*.mp3 binary
+*.wav binary
+*.woff binary
+*.woff2 binary
+
+# Generated files
+pnpm-lock.yaml linguist-generated
+CHANGELOG.md linguist-generated
