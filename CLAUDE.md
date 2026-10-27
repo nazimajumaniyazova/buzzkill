@@ -60,3 +60,5 @@ Vite consumes it directly, so there is no per-package build step.
 - `docs/learning-log.md` — the owner's learning log and STAR stories (filled in by the owner)
 - `.github/` — issue forms, pull request template, CODEOWNERS, workflows
 - `.husky/` — git hooks (`pre-commit` runs lint-staged, `commit-msg` runs commitlint)
+- `release-please-config.json`, `.release-please-manifest.json` — release automation (ADR-0011);
+  `CHANGELOG.md` is generated from it and never edited by hand
