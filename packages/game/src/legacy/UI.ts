@@ -1,31 +1,30 @@
-import {Game} from './Game'
-import { dayTime} from '../type/settingModal'
+import type {Game} from './Game'
 export class UI {
   game: Game;
   fontSize: number;
   fontFamily: string;
   color: string;
-  livesImage: CanvasImageSource
   constructor(game: Game){
     this.game = game;
     this.fontSize = 25;
     this.fontFamily = 'Bangers';
-    if(dayTime === 'dayTime'){
+    if(this.game.settings.mode === 'day'){
       this.color = 'black';
     }else{
       this.color = 'white'
     }
-    this.livesImage = document.querySelector('.heart') as CanvasImageSource;
   }
   draw(context: CanvasRenderingContext2D) {
     context.save()
     context.fillStyle = this.color;
     context.font = this.fontSize + 'px ' + this.fontFamily;
     context.fillText('Score: ' + this.game.score, 20, 40);
-    //lives
+    //lives: the heart image came from the old page markup; a glyph stands in until stage 6
+    context.fillStyle = '#d7263d';
     for(let i = 0; i< this.game.lives; i++) {
-      context.drawImage(this.livesImage, 25 * i + this.game.width - 150,20, 25, 25)
+      context.fillText('♥', 25 * i + this.game.width - 150, 42)
     }
+    context.fillStyle = this.color;
     //timer
     // const formetedTime = (this.game.gameTime * 0.001).toFixed(1)
     // context.fillText('Timer: ' + formetedTime, 20, 80)

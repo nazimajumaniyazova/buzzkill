@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {Game} from './Game'
+ 
+import ghostSprite from './assets/enemy_bat_2.png'
+import batSprite from './assets/enemy_bat_3.png'
+import ravenSprite from './assets/enemy_raven.png'
+import enemy2Sprite from './assets/enemy-2.png'
+import enemy3Sprite from './assets/enemy-3.png'
+import type {Game} from './Game'
+import { placeholderSprite } from './placeholders'
 export class Enemy {
   game: Game;
   x: number;
@@ -121,7 +127,8 @@ export class Enemy1 extends Enemy {
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
     this.curve = Math.random() * 2;
-    this.image.src = './catalog-img/enemy-1.png'
+    // enemy-1.png was drawn by another team member; a solid-colour sprite sheet until stage 6.
+    this.image.src = placeholderSprite(this.maxFrame + 1, this.realWidth, this.realHeight, '#c0392b')
   }
   update(deltaTime: number){
     super.update(this.width)
@@ -160,7 +167,7 @@ export class Enemy2 extends Enemy {
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
     this.curve = Math.random() * 2;
-    this.image.src = './catalog-img/enemy-2.png'
+    this.image.src = enemy2Sprite
   }
   update(deltaTime: number){
     super.update(this.width)
@@ -198,7 +205,7 @@ export class Enemy3 extends Enemy {
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
     this.curve = Math.random() * 2;
-    this.image.src = './catalog-img/enemy-3.png'
+    this.image.src = enemy3Sprite
   }
   update(deltaTime: number){
     super.update(this.width)
@@ -237,7 +244,7 @@ export class EnemyNight1 extends Enemy {
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
     this.curve = Math.random() * 2;
-    this.image.src = './catalog-img/enemy_bat_3.png'
+    this.image.src = batSprite
   }
   update(deltaTime: number){
     super.update(this.width, deltaTime)
@@ -275,7 +282,7 @@ export class EnemyNight2 extends Enemy {
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
     this.curve = Math.random() * 2;
-    this.image.src = './catalog-img/enemy_raven.png'
+    this.image.src = ravenSprite
   }
   update(deltaTime: number){
     super.update(this.width, deltaTime)
@@ -313,7 +320,7 @@ export class EnemyNight3 extends Enemy {
     this.lives = Math.floor(Math.random() * 5 + 1);
     this.score = this.lives
     this.curve = Math.random() * 2;
-    this.image.src = './catalog-img/enemy_bat_2.png'
+    this.image.src = ghostSprite
   }
   update(deltaTime: number){
     super.update(this.width)

@@ -1,5 +1,6 @@
-import {Game} from './Game'
-import sound from '../sounds/bullet-sound.wav';
+import sound from './assets/bullet-sound.wav';
+import projectileSprite from './assets/projectile.png';
+import type {Game} from './Game'
 export class Projectile {
   game: Game;
   x: number;
@@ -21,7 +22,7 @@ export class Projectile {
     this.speed = 4;
     this.markedForDeletion = false;
     this.image = new Image(this.width, this.height);
-    this.image.src = './catalog-img/projectile.png'
+    this.image.src = projectileSprite
     this.sound = new Audio()
     this.sound.src = sound;
   }
