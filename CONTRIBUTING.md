@@ -74,3 +74,15 @@ Closes #12
 Significant decisions are recorded in `docs/adr/` (context, options, decision, consequences).
 Decisions marked for the owner in the project plan are taken by the owner; contributors and AI
 agents prepare the ADR draft with options and a recommendation, then wait.
+
+## Releases
+
+Releases follow Semantic Versioning and the milestones of the project plan (v0.1 Playable, v0.2
+Polished, and so on). release-please (ADR-0011) keeps a pull request titled `chore(release): x.y.z`
+open against `main`: it accumulates the changelog from the Conventional Commits merged since the last
+release and bumps `version` in `package.json`. Merging that pull request creates the tag `vx.y.z` and
+the GitHub Release; nothing is released by hand and `CHANGELOG.md` is never edited by hand. Until 1.0,
+breaking changes bump the minor version.
+
+The action runs with the workflow's own `GITHUB_TOKEN`. Tags it creates do not trigger other
+workflows, which is fine: production deploys come from the merge commit on `main`.
