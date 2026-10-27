@@ -14,10 +14,12 @@ pnpm install        # also installs the git hooks
 pnpm dev            # web app on http://localhost:5173
 pnpm build          # every package, through Turborepo
 pnpm typecheck      # tsc --noEmit in every package
+pnpm lint           # ESLint, Stylelint, Sherif, Knip, dependency-cruiser, CSpell
 pnpm format:check   # Prettier
 ```
 
-`pnpm lint` and `pnpm test` arrive with their tooling and are documented here when they land.
+`pnpm lint` runs ESLint, Stylelint, Sherif, Knip, dependency-cruiser and CSpell; `pnpm lint:fix`
+applies the autofixes. `pnpm test` arrives with the test tooling.
 
 ## Workflow: GitHub Flow
 

@@ -28,7 +28,7 @@ the tag and the GitHub Release.
 
 A fast CLI that renders `CHANGELOG.md` from commit history using a template.
 
-- Pros: fully customisable output; works locally and in CI; no bot.
+- Pros: fully customizable output; works locally and in CI; no bot.
 - Cons: version bump, tagging and the GitHub Release are separate steps that we have to script
   ourselves in `release.yml`; another binary in the toolchain.
 

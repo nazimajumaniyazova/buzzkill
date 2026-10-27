@@ -1,0 +1,31 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "project": ["*.{js,cjs,mjs}"],
+    },
+    "apps/web": {
+      "project": ["src/**/*.{ts,tsx}"],
+      // Declared ahead of use to fix the dependency direction (issue #2).
+      // Remove each entry once the app imports that package.
+      "ignoreDependencies": ["@buzzkill/engine", "@buzzkill/game", "@buzzkill/ui"],
+    },
+    "packages/config": {
+      "entry": [],
+      "project": [],
+    },
+    "packages/engine": {
+      "project": ["src/**/*.ts"],
+    },
+    "packages/game": {
+      "project": ["src/**/*.ts"],
+      // Declared ahead of use (issue #2); remove once the game imports the engine.
+      "ignoreDependencies": ["@buzzkill/engine"],
+    },
+    "packages/ui": {
+      "project": ["src/**/*.{ts,tsx}"],
+      // The design system is React by definition (ADR-0002); components arrive in stage 4.
+      "ignoreDependencies": ["react", "@types/react"],
+    },
+  },
+}

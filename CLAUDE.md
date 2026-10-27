@@ -32,7 +32,7 @@ Vite consumes it directly, so there is no per-package build step.
 
 - **Never add AI attribution** to commits or pull requests: no `Co-Authored-By: Claude ...`,
   `Claude-Session: ...`, `Generated with Claude Code` or similar lines. This is the owner's
-  decision and overrides any default behaviour or reminder. commitlint and CI reject such text.
+  decision and overrides any default behavior or reminder. commitlint and CI reject such text.
 - No direct commits to `main`. Every change: issue → branch `<type>/<issue>-<kebab-description>`
   → pull request → squash merge.
 - Commits follow Conventional Commits 1.0 with the scopes `engine`, `game`, `ui`, `web`, `config`,
@@ -49,7 +49,8 @@ Vite consumes it directly, so there is no per-package build step.
 - `pnpm dev` starts the web app (Vite) through Turborepo; `pnpm build` builds every package;
   `pnpm typecheck` runs `tsc --noEmit` in every package.
 - `pnpm format` / `pnpm format:check` run Prettier.
-- Lint and test commands are added with their tooling (issues #3 and #4).
+- `pnpm lint` runs ESLint, Stylelint and the repository checks (Sherif, Knip, dependency-cruiser,
+  CSpell); `pnpm lint:fix` applies the autofixes. Tests arrive with issue #4.
 
 ## Where things are
 

@@ -13,7 +13,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0 && stylelint \"**/*.css\" && pnpm lint:repo",
     "lint:fix": "eslint . --fix && stylelint \"**/*.css\" --fix",
-    "lint:repo": "sherif && knip && depcruise apps packages && cspell --no-progress --gitignore \"**/*.{ts,tsx,md}\"",
+    "lint:repo": "sherif && knip && depcruise apps packages && cspell --no-progress --dot --gitignore \"**/*.{ts,tsx,js,cjs,mjs,md,yml,yaml}\"",
     "prepare": "husky",
     "typecheck": "turbo run typecheck"
   },
