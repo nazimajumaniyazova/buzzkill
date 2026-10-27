@@ -1,6 +1,6 @@
 {
   "name": "buzzkill",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Buzzkill — a side-scrolling Canvas shooter in TypeScript. Defend the city from an alien insect swarm, day and night.",
   "license": "MIT",
