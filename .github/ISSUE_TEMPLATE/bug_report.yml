@@ -15,13 +15,13 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: Expected behaviour
+      label: Expected behavior
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
-      label: Actual behaviour
+      label: Actual behavior
       description: What happens instead. Attach a screenshot or GIF if you can.
     validations:
       required: true

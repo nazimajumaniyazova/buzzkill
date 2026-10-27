@@ -16,3 +16,20 @@ catalog:
   # Language. TypeScript 7 (the native compiler) is released, but typescript-eslint
   # supports only < 6.1 at the time of writing, so the repository stays on 6.0.x.
   typescript: ~6.0.3
+  # Linting. ESLint 9 is end-of-life (last release 9.39.5, deprecated on npm), so ESLint 10
+  # is used even though eslint-plugin-react and eslint-plugin-jsx-a11y have not updated
+  # their declared peer range yet; see peerDependencyRules below.
+  eslint: ^10.13.0
+  '@eslint/js': ^10.0.1
+
+peerDependencyRules:
+  allowedVersions:
+    # Both plugins work with ESLint 10 (verified by running the full lint); their package.json
+    # peer range just stops at 9. Remove once upstream publishes a release that lists 10.
+    'eslint-plugin-react>eslint': '10'
+    'eslint-plugin-jsx-a11y>eslint': '10'
+
+# pnpm blocks dependency install scripts by default; each allowed one is listed with its reason.
+allowBuilds:
+  # Native resolver used by eslint-plugin-import-x; the postinstall picks the platform binary.
+  unrs-resolver: true

@@ -1,0 +1,14 @@
+Buzzkill
+Jumaniyazova
+Nazima
+Supabase
+autosquash
+commitlint
+depcruise
+nvmrc
+subfolders
+typecheck
+typechecks
+unrs
+vite
+vitejs
