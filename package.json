@@ -15,7 +15,11 @@
     "lint:fix": "eslint . --fix && stylelint \"**/*.css\" --fix",
     "lint:repo": "sherif && knip && depcruise apps packages && cspell --no-progress --dot --gitignore \"**/*.{ts,tsx,js,cjs,mjs,md,yml,yaml}\"",
     "prepare": "husky",
-    "typecheck": "turbo run typecheck"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "typecheck": "turbo run typecheck typecheck:root",
+    "typecheck:root": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
@@ -23,6 +27,8 @@
     "@commitlint/types": "^21.2.3",
     "@eslint/compat": "^2.1.1",
     "@eslint/js": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "@vitest/eslint-plugin": "catalog:",
     "cspell": "^10.4.0",
     "dependency-cruiser": "^18.7.0",
     "eslint": "catalog:",
@@ -33,6 +39,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-simple-import-sort": "^14.0.0",
+    "eslint-plugin-testing-library": "catalog:",
     "globals": "^17.13.0",
     "husky": "^9.1.7",
     "knip": "^6.43.0",
@@ -46,7 +53,8 @@
     "stylelint-declaration-strict-value": "^1.12.1",
     "turbo": "catalog:",
     "typescript": "catalog:",
-    "typescript-eslint": "^8.72.0"
+    "typescript-eslint": "^8.72.0",
+    "vitest": "catalog:"
   },
   "packageManager": "pnpm@12.15.0",
   "engines": {

@@ -12,6 +12,8 @@
   },
   "devDependencies": {
     "@buzzkill/config": "workspace:*",
-    "typescript": "catalog:"
+    "@fast-check/vitest": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

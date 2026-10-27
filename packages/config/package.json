@@ -5,9 +5,23 @@
   "description": "Shared TypeScript and tooling configuration for the Buzzkill workspace",
   "type": "module",
   "exports": {
-    "./tsconfig.base.json": "./tsconfig.base.json"
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./vitest": "./vitest/index.ts",
+    "./vitest/setup-jsdom": "./vitest/setup-jsdom.ts"
   },
   "files": [
-    "tsconfig.base.json"
-  ]
+    "tsconfig.base.json",
+    "vitest"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@testing-library/jest-dom": "catalog:",
+    "vitest": "catalog:",
+    "vitest-axe": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
 }
