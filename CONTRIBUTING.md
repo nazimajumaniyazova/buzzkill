@@ -15,11 +15,13 @@ pnpm dev            # web app on http://localhost:5173
 pnpm build          # every package, through Turborepo
 pnpm typecheck      # tsc --noEmit in every package
 pnpm lint           # ESLint, Stylelint, Sherif, Knip, dependency-cruiser, CSpell
+pnpm test           # Vitest, all projects; pnpm test:coverage adds coverage
 pnpm format:check   # Prettier
 ```
 
 `pnpm lint` runs ESLint, Stylelint, Sherif, Knip, dependency-cruiser and CSpell; `pnpm lint:fix`
-applies the autofixes. `pnpm test` arrives with the test tooling.
+applies the autofixes. `pnpm test` runs every Vitest project; `pnpm test:coverage` enforces the
+80% thresholds of `engine` and `game`.
 
 ## Workflow: GitHub Flow
 
