@@ -16,7 +16,16 @@ import { configs as tsConfigs } from 'typescript-eslint';
 const reactFiles = ['apps/web/**/*.{ts,tsx}', 'packages/ui/**/*.{ts,tsx}'];
 
 export default defineConfig([
-  globalIgnores(['**/dist', '**/coverage', '**/.turbo', '**/storybook-static', '**/*.gen.ts']),
+  globalIgnores([
+    '**/dist',
+    '**/coverage',
+    '**/.turbo',
+    '**/storybook-static',
+    '**/*.gen.ts',
+    // Imported as is from the team project; quarantined until it is made to compile (#27)
+    // and replaced by the refactored engine (#42).
+    'packages/game/src/legacy/**',
+  ]),
 
   js.configs.recommended,
   tsConfigs.strictTypeChecked,

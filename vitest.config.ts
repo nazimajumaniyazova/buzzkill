@@ -19,6 +19,8 @@ export default defineConfig({
         '**/*.d.ts',
         // React bootstrap: finds #root and renders. It runs only in a browser and holds no logic.
         'apps/web/src/main.tsx',
+        // Imported legacy code, quarantined until #27 / #42.
+        'packages/game/src/legacy/**',
       ],
       // The engine and the simulation are pure logic and must stay well covered. The React
       // shell and the design system get thresholds once they have components (stages 4 and 5).

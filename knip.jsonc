@@ -19,6 +19,8 @@
     },
     "packages/game": {
       "project": ["src/**/*.ts"],
+      // Imported legacy code, quarantined until #27 / #42.
+      "ignore": ["src/legacy/**"],
       // Declared ahead of use (issue #2); remove once the game imports the engine.
       "ignoreDependencies": ["@buzzkill/engine"],
     },
