@@ -9,7 +9,7 @@ export default defineConfig({
     projects: ['packages/*', 'apps/*', '!packages/config'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html', 'lcov'],
+      reporter: ['text', 'html', 'lcov', 'json-summary', 'json'],
       include: ['packages/*/src/**', 'apps/*/src/**'],
       exclude: [
         '**/*.stories.tsx',
