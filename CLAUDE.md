@@ -24,9 +24,38 @@ pnpm workspaces + Turborepo (ADR-0001). Shared dependency versions live in the `
   nothing about the game.
 - `packages/config` (`@buzzkill/config`): shared `tsconfig.base.json` and tool presets.
 
-The dependency direction is declared in each `package.json` and will also be enforced by
-dependency-cruiser (issue #3). Packages export TypeScript source (`"exports": "./src/index.ts"`);
-Vite consumes it directly, so there is no per-package build step.
+The dependency direction is declared in each `package.json` and enforced by dependency-cruiser in
+`pnpm lint:repo` (`engine` standalone, `game` → `engine` only, `ui` standalone, no deep imports, no
+cycles). Packages export TypeScript source (`"exports": "./src/index.ts"`); Vite consumes it
+directly, so there is no per-package build step. `docs/architecture.md` has the C4 diagrams and the
+runtime data flow.
+
+## Code standards
+
+- **TypeScript.** `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` and
+  `noImplicitOverride` come from `@buzzkill/config/tsconfig.base.json`. No `any`; `as` only with a
+  comment that justifies it; no `!` non-null assertions. Discriminated unions for states and events,
+  `satisfies` for configs, branded types where confusion is dangerous (`Seconds` vs `Milliseconds`).
+  Enums are banned; use unions or `as const` objects.
+- **Boundaries.** The public API of a package is its `src/index.ts`; deep imports between packages
+  are forbidden.
+- **Design.** Composition over inheritance; entities are data (an enemy config is an object, not a
+  class); dependencies arrive through constructors or factories, never through module singletons or
+  globals; game rules (collisions, damage, score, difficulty) are pure functions; side effects
+  (render, audio, network, storage) stay at the edges behind interfaces.
+- **Determinism.** Randomness only through the injected seeded RNG, time only through the tick
+  counter or the `dt` passed in. `packages/game` has no DOM lib, and ESLint bans `Math.random`,
+  `Date.now`, `performance.now` and transcendental `Math` functions there.
+- **Hot loop.** No allocations per frame (object pools, reused vectors); plain `for` loops instead of
+  `forEach`/`map`/`filter` with closures over large collections; no DOM layout reads during a frame.
+- **Errors.** Expected failures (network, storage, asset loading) are returned as typed results and
+  shown to the user; unexpected ones reach an error boundary and are logged.
+- **Security.** No `innerHTML` or `insertAdjacentHTML` with data (ESLint bans them), JSX only;
+  nicknames and anything from the server are untrusted; secrets only in git-ignored env files.
+- **CSS.** Colors and spacing only through design tokens (`var(--…)`); Stylelint enforces it outside
+  `packages/ui/src/tokens`.
+- **Documentation.** JSDoc on the public API of each package; comments explain why, not what;
+  a significant decision becomes an ADR in `docs/adr/`.
 
 ## Rules that always apply
 
@@ -56,6 +85,7 @@ Vite consumes it directly, so there is no per-package build step.
 
 ## Where things are
 
+- `docs/architecture.md` — C4 context and container diagrams, dependency rules, runtime data flow
 - `docs/adr/` — Architecture Decision Records and their template
 - `docs/learning-log.md` — the owner's learning log and STAR stories (filled in by the owner)
 - `.github/` — issue forms, pull request template, CODEOWNERS, workflows

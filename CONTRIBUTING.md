@@ -2,7 +2,9 @@
 
 Buzzkill is a solo portfolio project, but it is run like a team repository: every change goes
 through an issue, a short-lived branch and a reviewed pull request. This page is the short
-version of the rules; the tooling enforces most of them.
+version of the rules; the tooling enforces most of them. For the map of the packages and the
+runtime data flow read [docs/architecture.md](docs/architecture.md); for the reasoning behind the
+structure read the [ADRs](docs/adr/README.md).
 
 ## Getting started
 
