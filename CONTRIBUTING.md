@@ -74,3 +74,11 @@ Closes #12
 Significant decisions are recorded in `docs/adr/` (context, options, decision, consequences).
 Decisions marked for the owner in the project plan are taken by the owner; contributors and AI
 agents prepare the ADR draft with options and a recommendation, then wait.
+
+## Dependencies
+
+Renovate opens update pull requests every Monday, grouped by tool (eslint, vitest, react, …), and
+merges minor and patch updates of dev tooling itself once CI is green. New releases are proposed only
+after three days in the wild. Major updates, and every TypeScript update, wait for a review. Do not
+edit `pnpm-lock.yaml` by hand; `pnpm install` keeps it in sync with the catalog in
+`pnpm-workspace.yaml`.
