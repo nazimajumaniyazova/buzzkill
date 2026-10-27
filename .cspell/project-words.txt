@@ -2,8 +2,10 @@ Buzzkill
 Jumaniyazova
 Nazima
 Supabase
+Turborepo
 autosquash
 commitlint
+davelosert
 depcruise
 jsdom
 nvmrc
