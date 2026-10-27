@@ -1,0 +1,73 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    ":semanticCommitTypeAll(chore)",
+    ":semanticCommitScope(deps)"
+  ],
+  "timezone": "Asia/Tashkent",
+  "schedule": ["before 6am on monday"],
+  "configMigration": true,
+  "rangeStrategy": "bump",
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
+  "labels": ["type: chore", "area: infra"],
+  "commitMessageTopic": "{{depName}}",
+  "prConcurrentLimit": 5,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"]
+  },
+  "vulnerabilityAlerts": {
+    "labels": ["type: security", "area: infra"],
+    "schedule": ["at any time"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "Minor and patch updates of dev tooling merge themselves once CI is green",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "GitHub Actions digest and minor bumps merge themselves once CI is green",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "automergeStrategy": "squash"
+    },
+    {
+      "description": "typescript-eslint supports a bounded TypeScript range; TypeScript majors need a decision",
+      "matchDepNames": ["typescript"],
+      "matchUpdateTypes": ["major", "minor"],
+      "automerge": false
+    },
+    {
+      "groupName": "eslint",
+      "matchPackageNames": ["eslint", "@eslint/**", "eslint-**", "!eslint-plugin-storybook"]
+    },
+    {
+      "groupName": "typescript-eslint",
+      "matchPackageNames": ["typescript-eslint", "@typescript-eslint/**"]
+    },
+    {
+      "groupName": "vitest",
+      "matchPackageNames": ["vitest", "@vitest/**", "vitest-axe"]
+    },
+    {
+      "groupName": "testing-library",
+      "matchPackageNames": ["@testing-library/**"]
+    },
+    {
+      "groupName": "storybook",
+      "matchPackageNames": ["storybook", "@storybook/**", "eslint-plugin-storybook"]
+    },
+    {
+      "groupName": "react",
+      "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"]
+    }
+  ]
+}

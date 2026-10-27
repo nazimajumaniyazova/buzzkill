@@ -86,3 +86,11 @@ breaking changes bump the minor version.
 
 The action runs with the workflow's own `GITHUB_TOKEN`. Tags it creates do not trigger other
 workflows, which is fine: production deploys come from the merge commit on `main`.
+
+## Dependencies
+
+Renovate opens update pull requests every Monday, grouped by tool (eslint, vitest, react, …), and
+merges minor and patch updates of dev tooling itself once CI is green. New releases are proposed only
+after three days in the wild. Major updates, and every TypeScript update, wait for a review. Do not
+edit `pnpm-lock.yaml` by hand; `pnpm install` keeps it in sync with the catalog in
+`pnpm-workspace.yaml`.
