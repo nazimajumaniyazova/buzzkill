@@ -77,7 +77,13 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: ['node_modules'] },
-    exclude: { path: ['(^|/)(dist|coverage|storybook-static|\\.turbo)/'] },
+    exclude: {
+      path: [
+        '(^|/)(dist|coverage|storybook-static|\\.turbo)/',
+        // Imported legacy code, quarantined until #27 / #42.
+        '^packages/game/src/legacy/',
+      ],
+    },
     tsPreCompilationDeps: true,
     enhancedResolveOptions: {
       exportsFields: ['exports'],

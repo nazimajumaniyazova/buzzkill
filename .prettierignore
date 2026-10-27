@@ -5,3 +5,5 @@ storybook-static
 pnpm-lock.yaml
 CHANGELOG.md
 **/*.gen.ts
+# Imported legacy code, quarantined until #27 / #42
+packages/game/src/legacy
