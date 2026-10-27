@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@buzzkill/config": "workspace:*",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

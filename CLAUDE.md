@@ -50,7 +50,9 @@ Vite consumes it directly, so there is no per-package build step.
   `pnpm typecheck` runs `tsc --noEmit` in every package.
 - `pnpm format` / `pnpm format:check` run Prettier.
 - `pnpm lint` runs ESLint, Stylelint and the repository checks (Sherif, Knip, dependency-cruiser,
-  CSpell); `pnpm lint:fix` applies the autofixes. Tests arrive with issue #4.
+  CSpell); `pnpm lint:fix` applies the autofixes.
+- `pnpm test` runs every Vitest project once; `pnpm test:watch` watches; `pnpm test:coverage` adds
+  v8 coverage with 80% thresholds for `engine` and `game`.
 
 ## Where things are
 

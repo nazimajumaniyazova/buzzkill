@@ -5,6 +5,7 @@ Supabase
 autosquash
 commitlint
 depcruise
+jsdom
 nvmrc
 subfolders
 typecheck
@@ -12,3 +13,4 @@ typechecks
 unrs
 vite
 vitejs
+vitest

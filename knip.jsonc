@@ -24,8 +24,6 @@
     },
     "packages/ui": {
       "project": ["src/**/*.{ts,tsx}"],
-      // The design system is React by definition (ADR-0002); components arrive in stage 4.
-      "ignoreDependencies": ["react", "@types/react"],
     },
   },
 }
