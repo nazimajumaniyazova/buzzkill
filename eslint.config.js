@@ -1,5 +1,6 @@
 import { fixupConfigRules } from '@eslint/compat';
 import js from '@eslint/js';
+import vitest from '@vitest/eslint-plugin';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import prettier from 'eslint-config-prettier';
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
@@ -8,6 +9,7 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import testingLibrary from 'eslint-plugin-testing-library';
 import globals from 'globals';
 import { configs as tsConfigs } from 'typescript-eslint';
 
@@ -29,7 +31,7 @@ export default defineConfig([
       // Resolves workspace packages through their `exports` to TypeScript source.
       'import-x/resolver-next': [
         createTypeScriptImportResolver({
-          project: ['apps/*/tsconfig.json', 'packages/*/tsconfig.json'],
+          project: ['tsconfig.json', 'apps/*/tsconfig.json', 'packages/*/tsconfig.json'],
           noWarnOnMultipleProjects: true,
         }),
       ],
@@ -135,6 +137,23 @@ export default defineConfig([
       'react/no-danger': 'error',
       'react/jsx-no-useless-fragment': 'error',
     },
+  },
+
+  // Tests: Vitest rules everywhere, Testing Library rules where components are rendered.
+  {
+    files: ['**/*.test.{ts,tsx}'],
+    extends: [vitest.configs.recommended],
+    rules: {
+      // Property-based tests from @fast-check/vitest are declared as test.prop([...])(name, fn).
+      'vitest/no-standalone-expect': [
+        'error',
+        { additionalTestBlockFunctions: ['test.prop', 'it.prop'] },
+      ],
+    },
+  },
+  {
+    files: ['**/*.test.tsx'],
+    extends: [testingLibrary.configs['flat/react']],
   },
 
   prettier, // always last: turns off formatting rules that Prettier owns

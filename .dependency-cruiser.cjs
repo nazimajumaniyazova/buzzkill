@@ -68,6 +68,8 @@ module.exports = {
           '(^|/)\\.[^/]+\\.(js|cjs|mjs|ts|json)$',
           '\\.config\\.[jt]s$',
           '/src/index\\.ts$',
+          // Tests and benchmarks are entry points: nothing imports them by design.
+          '\\.(test|bench)\\.[jt]sx?$',
         ],
       },
       to: {},
