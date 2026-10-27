@@ -1,6 +1,11 @@
 # Buzzkill
 
+[![CI](https://github.com/nazimajumaniyazova/buzzkill/actions/workflows/ci.yml/badge.svg)](https://github.com/nazimajumaniyazova/buzzkill/actions/workflows/ci.yml)
+
 A side-scrolling Canvas shooter in TypeScript. Defend the city from an alien insect swarm, day and night.
+
+**Play:** <https://buzzkill-nazimajumaniyazovas-projects.vercel.app>. Production is deployed from `main`
+on Vercel; every pull request gets its own preview deployment.
 
 Started as a team project at RS School: https://github.com/nazimajumaniyazova/shooting-game.
 The game engine was written by me; since then the project has been rebuilt and extended solo.
