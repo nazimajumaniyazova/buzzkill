@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+
+# One version of each shared dependency for the whole repository (ADR-0001).
+catalog:
+  # UI framework (ADR-0002)
+  react: ^19.3.1
+  react-dom: ^19.3.1
+  '@types/react': ^19.3.0
+  '@types/react-dom': ^19.3.0
+  # Build and orchestration
+  vite: ^8.3.5
+  '@vitejs/plugin-react': ^6.1.2
+  turbo: ^2.11.10
+  # Language. TypeScript 7 (the native compiler) is released, but typescript-eslint
+  # supports only < 6.1 at the time of writing, so the repository stays on 6.0.x.
+  typescript: ~6.0.3

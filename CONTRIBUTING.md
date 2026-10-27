@@ -11,11 +11,13 @@ Requirements: Node.js 24 LTS (see `.nvmrc`) and pnpm. The exact pnpm version is 
 
 ```bash
 pnpm install        # also installs the git hooks
+pnpm dev            # web app on http://localhost:5173
+pnpm build          # every package, through Turborepo
+pnpm typecheck      # tsc --noEmit in every package
 pnpm format:check   # Prettier
 ```
 
-The workspace commands (`pnpm dev`, `pnpm build`, `pnpm test`, `pnpm lint`, `pnpm typecheck`)
-arrive with the application scaffold and are documented here as they land.
+`pnpm lint` and `pnpm test` arrive with their tooling and are documented here when they land.
 
 ## Workflow: GitHub Flow
 

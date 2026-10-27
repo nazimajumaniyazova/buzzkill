@@ -1,0 +1,20 @@
+{
+  "name": "@buzzkill/game",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Buzzkill game domain: entities, systems, rules and levels as data. Depends only on the engine; no DOM, no React.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@buzzkill/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@buzzkill/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

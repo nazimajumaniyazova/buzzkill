@@ -9,6 +9,25 @@ Buzzkill is a side-scrolling Canvas shooter in TypeScript. It started as an RS S
 Turborepo monorepo with a React shell. Architecture decisions live in `docs/adr/`; read the accepted
 ones before changing the structure. The staged project plan is owned by the repository owner.
 
+## Workspace
+
+pnpm workspaces + Turborepo (ADR-0001). Shared dependency versions live in the `catalog` of
+`pnpm-workspace.yaml`; packages reference them as `"catalog:"`.
+
+- `apps/web` (`@buzzkill/web`): the React shell (ADR-0002): screens, menus, HUD, settings.
+  May depend on `game`, `engine` and `ui`.
+- `packages/engine` (`@buzzkill/engine`): reusable 2D engine: loop, input, assets, audio,
+  collisions, object pools. Depends on nothing in the repository and never on React.
+- `packages/game` (`@buzzkill/game`): the game domain: entities, systems, rules, levels as data.
+  Depends only on `engine`. No DOM: its `tsconfig.json` has no DOM lib, so it stays headless.
+- `packages/ui` (`@buzzkill/ui`): design system: tokens, themes, accessible components. Knows
+  nothing about the game.
+- `packages/config` (`@buzzkill/config`): shared `tsconfig.base.json` and tool presets.
+
+The dependency direction is declared in each `package.json` and will also be enforced by
+dependency-cruiser (issue #3). Packages export TypeScript source (`"exports": "./src/index.ts"`);
+Vite consumes it directly, so there is no per-package build step.
+
 ## Rules that always apply
 
 - **Never add AI attribution** to commits or pull requests: no `Co-Authored-By: Claude ...`,
@@ -27,9 +46,10 @@ ones before changing the structure. The staged project plan is owned by the repo
 ## Commands
 
 - `pnpm install` installs dependencies and the git hooks (`prepare` runs Husky).
+- `pnpm dev` starts the web app (Vite) through Turborepo; `pnpm build` builds every package;
+  `pnpm typecheck` runs `tsc --noEmit` in every package.
 - `pnpm format` / `pnpm format:check` run Prettier.
-- Workspace commands (`dev`, `build`, `test`, `lint`, `typecheck`) are added with the scaffold and
-  documented here when they land.
+- Lint and test commands are added with their tooling (issues #3 and #4).
 
 ## Where things are
 
