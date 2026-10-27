@@ -1,5 +1,7 @@
-import {Game} from './Game';
-import sound from '../sounds/smoke-bomb.wav';
+import fireSprite from './assets/fireExplosion.png';
+import sound from './assets/smoke-bomb.wav';
+import smokeSprite from './assets/smokeExplosion.png';
+import type {Game} from './Game';
 export class Explotion {
   game: Game;
   frameX: number;
@@ -59,7 +61,7 @@ export class smokeExplostion extends Explotion {
   constructor(game: Game,x:number,y:number){
     super(game)
     this.image = new Image(200,200)
-    this.image.src = './catalog-img/smokeExplosion.png'
+    this.image.src = smokeSprite
     this.x = x - this.width * 0.5;
     this.y = y  - this.height * 0.5;
   }
@@ -78,7 +80,7 @@ export class fireExplostion extends Explotion {
   constructor(game: Game,x:number,y:number){
     super(game)
     this.image = new Image(200,200)
-    this.image.src = './catalog-img/fireExplosion.png'
+    this.image.src = fireSprite
     this.x = x - this.width * 0.5;
     this.y = y  - this.height * 0.5;
   }

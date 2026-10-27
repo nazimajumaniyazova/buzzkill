@@ -1,4 +1,5 @@
-import {Game} from './Game'
+import type {Game} from './Game'
+import { placeholderSprite } from './placeholders'
 import {Projectile} from './Projectile'
 export class Player {
   game: Game
@@ -8,19 +9,20 @@ export class Player {
   y: number;
   speedY: number
   maxSpeed: number;
-  projectiles: Array<Projectile>
+  projectiles: Projectile[]
   image: CanvasImageSource;
   constructor(game: Game){
     this.game = game;
     this.image = new Image()
+    // female.png and male.png were drawn by another team member; solid colours until stage 6.
     if(this.game.chosedHero === 'female') {
       this.width = 172 *0.8
       this.height = 212 *0.7
-      this.image.src = './catalog-img/female.png'
+      this.image.src = placeholderSprite(1, 172, 212, '#e07aa5')
     }else{
       this.width = 229 *0.7
       this.height = 226 *0.7
-      this.image.src = './catalog-img/male.png'
+      this.image.src = placeholderSprite(1, 229, 226, '#3b7dd8')
     }
     this.x = 20
     this.y = 100
