@@ -1,0 +1,5 @@
+dist
+coverage
+.turbo
+storybook-static
+node_modules
