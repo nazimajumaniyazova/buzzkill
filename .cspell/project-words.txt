@@ -9,6 +9,7 @@ davelosert
 deadzone
 depcruise
 googleapis
+hitbox
 hypot
 jsdom
 Jumaniyazova
