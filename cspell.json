@@ -19,6 +19,6 @@
     "CHANGELOG.md",
     ".husky",
     ".cspell",
-    "packages/game/src/legacy"
+    "packages/game/src/legacy/*.ts"
   ]
 }
