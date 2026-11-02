@@ -1,10 +1,17 @@
-import type { JSX } from 'react';
+import { type JSX, useState } from 'react';
+
+import { GameCanvas } from './GameCanvas';
+import { type StartChoice, StartScreen } from './StartScreen';
 
 /**
- * Application shell. For now it renders only the full-screen canvas the game
- * engine will draw into; menus, HUD and settings arrive with the design system.
- * The text inside the canvas is its accessible fallback content.
+ * Application shell: the start screen until the player presses Play, then the game canvas.
+ * The state machine of stage 5 (menu, playing, paused, game over) replaces this boolean switch.
  */
 export function App(): JSX.Element {
-  return <canvas className="game-canvas">Buzzkill game screen</canvas>;
+  const [choice, setChoice] = useState<StartChoice | null>(null);
+
+  if (choice === null) {
+    return <StartScreen onStart={setChoice} />;
+  }
+  return <GameCanvas hero={choice.hero} settings={choice.settings} />;
 }

@@ -49,7 +49,11 @@ module.exports = {
       severity: 'error',
       comment: 'Other packages are used only through their public entry (src/index.ts).',
       from: { path: '^(apps|packages)/([^/]+)/' },
-      to: { path: '^packages/(?!$2/)[^/]+/src/(?!index\\.ts$)' },
+      // The legacy entry (index.ts and its hand-written public.d.ts) is a declared subpath
+      // export of @buzzkill/game until #42 removes the folder.
+      to: {
+        path: '^packages/(?!$2/)[^/]+/src/(?!index\\.ts$)(?!legacy/(index\\.ts|public\\.d\\.ts)$)',
+      },
     },
     {
       name: 'not-to-test',

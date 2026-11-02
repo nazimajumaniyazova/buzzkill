@@ -1,3 +1,12 @@
+:root {
+  /* Temporary values; the design-system tokens of stage 4 replace them. */
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 32px;
+  --color-overlay: rgb(0 0 0 / 65%);
+  --color-overlay-text: white;
+}
+
 html,
 body,
 #root {
@@ -6,11 +15,45 @@ body,
 }
 
 body {
-  overflow: hidden;
+  font-family: system-ui, sans-serif;
+}
+
+.start-screen {
+  display: grid;
+  gap: var(--space-md);
+  justify-items: center;
+  align-content: center;
+  min-height: 100%;
+  padding: var(--space-lg);
+  text-align: center;
+}
+
+.start-screen fieldset {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.start-screen label {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
 }
 
 .game-canvas {
+  position: fixed;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.game-over {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  gap: var(--space-md);
+  place-content: center;
+  color: var(--color-overlay-text);
+  text-align: center;
+  background-color: var(--color-overlay);
 }
