@@ -43,6 +43,9 @@ export default defineConfig([
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/explicit-module-boundary-types': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      // The workspace bans the `!` non-null assertion (CLAUDE.md); an `as` assertion next to a
+      // comment that states the invariant is the accepted form, and this rule would demand `!`.
+      '@typescript-eslint/non-nullable-type-assertion-style': 'off',
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
       'import-x/no-cycle': 'error',
