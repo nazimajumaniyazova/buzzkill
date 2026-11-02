@@ -40,11 +40,11 @@ body {
 }
 
 .game-canvas {
+  /* The engine sets the size; auto margins center the letterboxed canvas in the window. */
   position: fixed;
   inset: 0;
   display: block;
-  width: 100%;
-  height: 100%;
+  margin: auto;
 }
 
 .game-over {

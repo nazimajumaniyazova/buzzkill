@@ -10,6 +10,8 @@ googleapis
 hypot
 jsdom
 Jumaniyazova
+letterbox
+letterboxed
 miniplex
 Nazima
 nvmrc

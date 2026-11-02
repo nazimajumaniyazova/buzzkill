@@ -2,6 +2,15 @@
  * Public API of the engine package. Everything the game or the app may use is
  * exported from here; deep imports into `src/` are not allowed.
  */
+export {
+  applyCanvasFit,
+  type CanvasFit,
+  type CanvasFitOptions,
+  type CanvasLike,
+  computeCanvasFit,
+  fitContain,
+  type Size,
+} from './canvas/fit-canvas';
 export { type Aabb, aabbOverlaps, boxesOverlap } from './collision/aabb';
 export {
   createSpatialHash,
