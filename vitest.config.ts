@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     // Every package and app is a Vitest project with its own environment; see
     // packages/config/vitest for the presets. The config package has no tests.
-    projects: ['packages/*', 'apps/*', '!packages/config'],
+    projects: ['packages/*', 'apps/*', '!packages/config', 'packages/game/vitest.legacy.config.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary', 'json'],
