@@ -2,6 +2,12 @@
  * Public API of the engine package. Everything the game or the app may use is
  * exported from here; deep imports into `src/` are not allowed.
  */
+export { type Aabb, aabbOverlaps, boxesOverlap } from './collision/aabb';
+export {
+  createSpatialHash,
+  type SpatialHash,
+  type SpatialHashOptions,
+} from './collision/spatial-hash';
 export { type BrowserHostGlobals, createBrowserHost } from './loop/browser-host';
 export {
   createFixedTimestep,

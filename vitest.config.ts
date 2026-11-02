@@ -16,6 +16,7 @@ export default defineConfig({
         '**/*.gen.ts',
         '**/index.ts',
         '**/*.test.{ts,tsx}',
+        '**/*.bench.ts',
         '**/*.d.ts',
         // React bootstrap: finds #root and renders. It runs only in a browser and holds no logic.
         'apps/web/src/main.tsx',

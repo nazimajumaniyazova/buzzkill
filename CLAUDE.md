@@ -82,6 +82,7 @@ runtime data flow.
   CSpell); `pnpm lint:fix` applies the autofixes.
 - `pnpm test` runs every Vitest project once; `pnpm test:watch` watches; `pnpm test:coverage` adds
   v8 coverage with 80% thresholds for `engine` and `game`.
+- `pnpm bench` runs the Vitest benchmarks (`*.bench.ts`) once; each prints a comparison table.
 
 ## Where things are
 
