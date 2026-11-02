@@ -1,6 +1,6 @@
 # ADR-0009: Determinism and replays
 
-- **Status:** Proposed (awaiting owner decision)
+- **Status:** Accepted
 - **Date:** 2026-11-02
 - **Deciders:** Nazima Jumaniyazova
 
@@ -75,7 +75,7 @@ remove.
 
 ## Decision
 
-_Pending owner decision._
+Option A: fixed 60 Hz ticks, floating point with restricted math, `sfc32` seeded through `splitmix32`. Decided by the owner on 2026-11-02.
 
 ## Consequences
 

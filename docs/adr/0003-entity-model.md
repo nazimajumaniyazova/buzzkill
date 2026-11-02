@@ -2,7 +2,7 @@
 
 # ADR-0003: Entity model of the simulation
 
-- **Status:** Proposed (awaiting owner decision)
+- **Status:** Accepted
 - **Date:** 2026-11-02
 - **Deciders:** Nazima Jumaniyazova
 
@@ -67,7 +67,7 @@ of conventions to remember.
 
 ## Decision
 
-_Pending owner decision._
+Option A: a hand-written, minimal ECS-lite. Decided by the owner on 2026-11-02.
 
 ## Consequences
 

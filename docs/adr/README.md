@@ -13,9 +13,9 @@ continue from 0010.
 | [0002](0002-ui-shell.md)                | UI shell framework                      | Accepted |
 | [0010](0010-hosting-and-previews.md)    | Hosting, production and preview deploys | Accepted |
 | [0011](0011-changelog-and-releases.md)  | Changelog generation and release flow   | Accepted |
-| [0003](0003-entity-model.md)            | Entity model of the simulation          | Proposed |
-| [0004](0004-rendering.md)               | Rendering technology                    | Proposed |
-| [0009](0009-determinism-and-replays.md) | Determinism and replays                 | Proposed |
+| [0003](0003-entity-model.md)            | Entity model of the simulation          | Accepted |
+| [0004](0004-rendering.md)               | Rendering technology                    | Accepted |
+| [0009](0009-determinism-and-replays.md) | Determinism and replays                 | Accepted |
 
 ## Template
 

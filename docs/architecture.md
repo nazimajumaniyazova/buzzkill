@@ -45,7 +45,7 @@ flowchart TB
     ui["packages/ui (@buzzkill/ui)<br/>design system: tokens, themes, components"]
     game["packages/game (@buzzkill/game)<br/>simulation: entities, systems, rules, levels as data"]
     engine["packages/engine (@buzzkill/engine)<br/>loop, input, assets, audio, collisions, pools, RNG"]
-    canvas[(Canvas 2D and Web Audio)]
+    canvas[(WebGL via PixiJS, Web Audio)]
     storage[(localStorage<br/>settings, achievements)]:::planned
   end
 

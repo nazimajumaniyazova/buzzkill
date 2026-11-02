@@ -1,6 +1,7 @@
 Buzzkill
 Jumaniyazova
 Nazima
+Spritesheet
 Supabase
 Turborepo
 autosquash

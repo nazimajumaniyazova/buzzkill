@@ -1,6 +1,6 @@
 # ADR-0004: Rendering technology
 
-- **Status:** Proposed (awaiting owner decision)
+- **Status:** Accepted
 - **Date:** 2026-11-02
 - **Deciders:** Nazima Jumaniyazova
 
@@ -32,7 +32,7 @@ A scene graph on WebGL/WebGPU with automatic sprite batching, particle container
 culling.
 
 - Pros: proven performance headroom far beyond this game; particles and filters for free; large
-  community.
+  community; a renderer that most hiring teams recognize.
 - Cons: 100–200 kB gzip even with modular imports, a large part of the budget for a game this
   size; a second object model (display objects) next to the ECS world that must be kept in sync
   every frame; the library owns texture loading and the render loop, which fights the engine's own
@@ -48,24 +48,34 @@ Instanced quads, one draw call per atlas, GPU-side transforms.
 
 ## Recommendation
 
-**Option A**, behind the `Renderer` interface. Measure first: the stage 9 budgets and the particle
-load of stage 7 decide whether a GPU renderer is ever needed. The interface keeps that door open
-without paying for it now, and the ADR-0008 experiment (worker + `OffscreenCanvas`) applies to
-Canvas 2D unchanged.
-
-Trigger to revisit: frame time above 8 ms on the reference desktop, or below 60 FPS on the throttled
-phone, after offscreen pre-rendering, batching by atlas and culling are in place.
+Option A behind the `Renderer` interface, measuring first, with a trigger to revisit (frame time
+above 8 ms on the reference desktop or below 60 FPS on the throttled phone after offscreen
+pre-rendering, batching and culling).
 
 ## Decision
 
-_Pending owner decision._
+**Option B: PixiJS.** Decided by the owner on 2026-11-02, against the recommendation above.
+Owner's rationale: _to be written by the owner in this section before the ADR is merged._
 
 ## Consequences
 
-- `packages/engine/src/render/` holds the `Renderer` interface and the Canvas 2D implementation;
-  nothing in `packages/game` imports the implementation.
-- Sprites are addressed by atlas and frame index; the asset loader produces atlases (stage 6
-  pipeline).
-- `devicePixelRatio` and resizing are handled in the renderer, not in entities.
-- Benchmarks measure render cost separately from simulation cost so a regression points at one
-  side.
+- `pixi.js` (v8) is a dependency of `packages/engine` only. `packages/game` and `apps/web` never
+  import it; dependency-cruiser gets a rule for that, and the simulation keeps compiling without
+  the DOM lib.
+- The engine still exposes a `Renderer` interface. The PixiJS implementation keeps one pooled
+  `Sprite` per entity id and copies position, frame and visibility from the world after each
+  simulated tick, with interpolation. The ECS world stays the source of truth; display objects are
+  a render cache that can be rebuilt from it.
+- PixiJS owns the WebGL/WebGPU context, `resolution` (device pixel ratio) and resizing. The
+  engine's fixed-step loop (ADR-0009) owns time: the PixiJS `Ticker` is not used as a clock.
+- Assets: PixiJS `Assets` and its `Spritesheet` format are the atlas format; the stage 6 pipeline
+  emits it, and the engine's loader wraps it with progress reporting and typed manifests.
+- Bundle: PixiJS lives in the lazily loaded game chunk, not in the shell. The stage 9 budget gets a
+  separate line for the game chunk, measured when the renderer exists; modular imports are
+  mandatory.
+- Determinism (ADR-0009) is unaffected because the simulation never reads anything from PixiJS.
+- PixiJS v8 has no Canvas 2D fallback: browsers without WebGL get the existing "unsupported"
+  message instead of the game.
+- Trigger to revisit: if the game chunk exceeds its stage 9 budget or the sync between world and
+  display objects becomes the hot spot, option A is the fallback and the `Renderer` interface is
+  the seam.
