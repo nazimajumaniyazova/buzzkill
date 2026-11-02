@@ -6,7 +6,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./legacy": "./src/legacy/index.ts"
+    "./legacy": {
+      "types": "./src/legacy/public.d.ts",
+      "default": "./src/legacy/index.ts"
+    }
   },
   "scripts": {
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/legacy/tsconfig.json"
