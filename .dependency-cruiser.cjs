@@ -10,9 +10,11 @@ module.exports = {
     {
       name: 'no-circular',
       severity: 'error',
-      comment: 'Circular dependencies make modules impossible to reason about or test alone.',
+      comment:
+        'Circular dependencies make modules impossible to reason about or test alone. ' +
+        'Cycles made only of type imports do not exist at runtime and are allowed.',
       from: {},
-      to: { circular: true },
+      to: { circular: true, viaOnly: { dependencyTypesNot: ['type-only'] } },
     },
     {
       name: 'not-to-unresolvable',
@@ -78,11 +80,7 @@ module.exports = {
   options: {
     doNotFollow: { path: ['node_modules'] },
     exclude: {
-      path: [
-        '(^|/)(dist|coverage|storybook-static|\\.turbo)/',
-        // Imported legacy code, quarantined until #27 / #42.
-        '^packages/game/src/legacy/',
-      ],
+      path: ['(^|/)(dist|coverage|storybook-static|\\.turbo)/'],
     },
     tsPreCompilationDeps: true,
     enhancedResolveOptions: {

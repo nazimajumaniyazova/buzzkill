@@ -1,18 +1,18 @@
+import sound from './assets/pain-sound.wav';
 import {Background} from './Background'
-import {Player} from './Player'
-import {InputHandler} from './InputHandler'
-import {UI} from './UI'
 import { Enemy1, Enemy2, Enemy3, EnemyNight1, EnemyNight2, EnemyNight3 } from './Enemy'
-import { Projectile } from './Projectile';
-import { smokeExplostion, fireExplostion} from './Explostion'
-import sound from '../sounds/pain-sound.wav';
-import { gameVolume as volume, dayTime} from '../type/settingModal'
+import { fireExplostion,smokeExplostion} from './Explostion'
+import {InputHandler} from './InputHandler'
+import {Player} from './Player'
+import type { Projectile } from './Projectile';
+import type { GameSettings } from './settings'
+import {UI} from './UI'
 export class Game {
   background: Background;
   player: Player;
   input: InputHandler;
   ui: UI;
-  enemies: Array<Enemy1 | Enemy2 | Enemy3 >
+  enemies: (Enemy1 | Enemy2 | Enemy3)[]
   width: number; // ширина окна/поле canvas
   height: number; // высота  окна/поле canvas
   ammo: number; // патроны
@@ -27,14 +27,16 @@ export class Game {
   gameTime: number;
   gameTimeLimit: number;
   speed: number;
-  keys: Array<string> // название клавиш
+  keys: string[] // название клавиш
   lives: number;
   chosedHero: string;
-  explotions: Array<smokeExplostion |  fireExplostion>
+  explotions: (smokeExplostion |  fireExplostion)[]
   playerEnemyCollisionSound: HTMLAudioElement;
   gameVolume: number
-  constructor(width: number, height: number, chosedHero: string) {
+  settings: GameSettings
+  constructor(width: number, height: number, chosedHero: string, settings: GameSettings) {
     this.chosedHero = chosedHero
+    this.settings = settings
     this.width = width;
     this.height = height;
     this.background = new Background(this)
@@ -60,10 +62,10 @@ export class Game {
     this.lives = 5;
     this.playerEnemyCollisionSound = new Audio()
     this.playerEnemyCollisionSound.src = sound
-    this.gameVolume = +volume;
+    this.gameVolume = settings.volume;
   }
   update(deltaTime: number) {
-    this.gameVolume = +volume;
+    this.gameVolume = this.settings.volume;
     if(!this.gameOver) this.gameTime += deltaTime;
   //  if(this.gameTime > this.gameTimeLimit) this.gameOver = true
     this.background.update()
@@ -169,7 +171,7 @@ export class Game {
   }
   addEnemy() {
     const randomize = Math.random();
-    if(dayTime === 'dayTime') {
+    if(this.settings.mode === 'day') {
       if( randomize < 0.3){
         this.enemies.push(new Enemy1(this))
       }

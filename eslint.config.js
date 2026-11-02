@@ -16,16 +16,7 @@ import { configs as tsConfigs } from 'typescript-eslint';
 const reactFiles = ['apps/web/**/*.{ts,tsx}', 'packages/ui/**/*.{ts,tsx}'];
 
 export default defineConfig([
-  globalIgnores([
-    '**/dist',
-    '**/coverage',
-    '**/.turbo',
-    '**/storybook-static',
-    '**/*.gen.ts',
-    // Imported as is from the team project; quarantined until it is made to compile (#27)
-    // and replaced by the refactored engine (#42).
-    'packages/game/src/legacy/**',
-  ]),
+  globalIgnores(['**/dist', '**/coverage', '**/.turbo', '**/storybook-static', '**/*.gen.ts']),
 
   js.configs.recommended,
   tsConfigs.strictTypeChecked,
@@ -126,6 +117,20 @@ export default defineConfig([
         ),
         { object: 'Date', property: 'now', message: 'Simulation time is the tick counter.' },
       ],
+    },
+  },
+
+  // The 2023 engine imported from the team project (packages/game/src/legacy). It is DOM-bound
+  // and predates the standards above, so until #42 replaces it, it is linted without type
+  // information and without the headless rules of the game package.
+  {
+    files: ['packages/game/src/legacy/**/*.ts'],
+    extends: [tsConfigs.disableTypeChecked],
+    languageOptions: { globals: globals.browser },
+    rules: {
+      'no-restricted-globals': 'off',
+      'no-restricted-properties': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
     },
   },
 
