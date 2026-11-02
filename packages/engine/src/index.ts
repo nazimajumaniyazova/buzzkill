@@ -18,6 +18,33 @@ export {
   type SpatialHashOptions,
 } from './collision/spatial-hash';
 export { createEventBus, type EventBus, type EventListener } from './events/event-bus';
+export {
+  type ActionInput,
+  createActionInput,
+  type InputSnapshot,
+  isActionDown,
+} from './input/action-input';
+export {
+  type AxisBinding,
+  createGamepadSource,
+  type GamepadBindings,
+  type GamepadLike,
+  type GamepadSource,
+  type GamepadSourceOptions,
+} from './input/gamepad';
+export {
+  createKeyboardSource,
+  type KeyBindings,
+  type KeyboardEventLike,
+  type KeyboardSource,
+  type KeyboardTarget,
+  rebindKey,
+} from './input/keyboard';
+export {
+  attachPointerButton,
+  type PointerEventLike,
+  type PointerTarget,
+} from './input/pointer-button';
 export { type BrowserHostGlobals, createBrowserHost } from './loop/browser-host';
 export {
   createFixedTimestep,
