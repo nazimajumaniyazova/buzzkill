@@ -26,11 +26,16 @@ vi.mock('@buzzkill/game/legacy', () => ({
 const settings = { mode: 'day', volume: 0.3 } as const;
 const context = { clearRect: vi.fn() };
 
-/** Runs one animation frame per timer tick so tests can await the next frame. */
+/**
+ * Runs one animation frame per timer tick so tests can await the next frame. Timestamps grow by
+ * 20 ms, a value exact in floating point, so every frame after the first yields at least one tick.
+ */
 function installFrameLoop(): void {
+  let timeMs = 0;
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback): number => {
     return window.setTimeout(() => {
-      callback(16);
+      timeMs += 20;
+      callback(timeMs);
     }, 0);
   });
   vi.stubGlobal('cancelAnimationFrame', (handle: number): void => {
