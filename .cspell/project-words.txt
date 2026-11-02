@@ -4,12 +4,17 @@ Nazima
 Supabase
 Turborepo
 autosquash
+bitecs
 commitlint
 davelosert
 depcruise
 googleapis
+hypot
 jsdom
+miniplex
 nvmrc
+scroller
+splitmix
 subfolders
 typecheck
 typechecks
