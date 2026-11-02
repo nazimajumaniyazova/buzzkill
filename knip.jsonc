@@ -8,7 +8,7 @@
       "project": ["src/**/*.{ts,tsx}"],
       // Declared ahead of use to fix the dependency direction (issue #2).
       // Remove each entry once the app imports that package.
-      "ignoreDependencies": ["@buzzkill/engine", "@buzzkill/game", "@buzzkill/ui"],
+      "ignoreDependencies": ["@buzzkill/engine", "@buzzkill/ui"],
     },
     "packages/config": {
       "entry": [],
