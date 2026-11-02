@@ -1,5 +1,8 @@
 import { boxesOverlap } from './aabb';
 
+// Vitest serves imports through getters; a local alias keeps that overhead out of the hot loop.
+const overlap = boxesOverlap;
+
 /**
  * Broad-phase collision detection on a uniform grid. Every inserted box is registered in each
  * cell it touches; a query or a pair walk only compares boxes that share a cell, so the cost
@@ -158,7 +161,7 @@ export function createSpatialHash(options: SpatialHashOptions): SpatialHash {
             seenIn[id] = queryStamp;
             const slot = id * 4;
             if (
-              boxesOverlap(
+              overlap(
                 x,
                 y,
                 width,
@@ -195,16 +198,7 @@ export function createSpatialHash(options: SpatialHashOptions): SpatialHash {
             const bx = boxes[sb] as number;
             const by = boxes[sb + 1] as number;
             if (
-              !boxesOverlap(
-                ax,
-                ay,
-                aw,
-                ah,
-                bx,
-                by,
-                boxes[sb + 2] as number,
-                boxes[sb + 3] as number,
-              )
+              !overlap(ax, ay, aw, ah, bx, by, boxes[sb + 2] as number, boxes[sb + 3] as number)
             ) {
               continue;
             }

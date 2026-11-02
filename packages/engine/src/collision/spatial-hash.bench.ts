@@ -4,6 +4,9 @@ import { createRng } from '../math/rng';
 import { boxesOverlap } from './aabb';
 import { createSpatialHash } from './spatial-hash';
 
+// Vitest serves imports through getters; a local alias keeps that overhead out of the hot loop.
+const overlap = boxesOverlap;
+
 /**
  * Broad-phase cost at the entity counts of ADR-0003 (50 / 200 / 1000): the spatial hash, including
  * re-inserting every box as a tick would, against the naive all-pairs loop. Run with `pnpm bench`.
@@ -31,7 +34,7 @@ function naivePairs(boxes: Float64Array, count: number, out: number[]): number {
   for (let a = 0; a < count; a += 1) {
     for (let b = a + 1; b < count; b += 1) {
       if (
-        boxesOverlap(
+        overlap(
           boxes[a * 4] as number,
           boxes[a * 4 + 1] as number,
           boxes[a * 4 + 2] as number,
@@ -53,7 +56,8 @@ function naivePairs(boxes: Float64Array, count: number, out: number[]): number {
 
 describe('broad phase', () => {
   for (const count of [50, 200, 1000]) {
-    test(`${String(count)} boxes`, async ({ bench }) => {
+    // The naive loop at 1000 boxes needs a while; the timeout leaves room for a loaded machine.
+    test(`${String(count)} boxes`, { timeout: 180_000 }, async ({ bench }) => {
       const boxes = makeBoxes(count);
       const hash = createSpatialHash({ cellSize: 64, capacity: count });
       const out: number[] = [];
