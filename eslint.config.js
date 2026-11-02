@@ -124,7 +124,7 @@ export default defineConfig([
   // and predates the standards above, so until #42 replaces it, it is linted without type
   // information and without the headless rules of the game package.
   {
-    files: ['packages/game/src/legacy/**/*.ts'],
+    files: ['packages/game/src/legacy/*.ts'],
     extends: [tsConfigs.disableTypeChecked],
     languageOptions: { globals: globals.browser },
     rules: {
