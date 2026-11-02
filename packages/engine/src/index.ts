@@ -1,6 +1,7 @@
 /**
- * Public API of the engine package. Everything the game or the app may use is
- * exported from here; deep imports into `src/` are not allowed.
+ * Headless public API of the engine package: compiles without the DOM lib, so the game and the
+ * server can import it. The DOM adapters are in `@buzzkill/engine/browser`. Deep imports into
+ * `src/` are not allowed.
  */
 export {
   applyCanvasFit,
@@ -26,26 +27,10 @@ export {
 } from './input/action-input';
 export {
   type AxisBinding,
-  createGamepadSource,
   type GamepadBindings,
-  type GamepadLike,
-  type GamepadSource,
-  type GamepadSourceOptions,
-} from './input/gamepad';
-export {
-  createKeyboardSource,
   type KeyBindings,
-  type KeyboardEventLike,
-  type KeyboardSource,
-  type KeyboardTarget,
   rebindKey,
-} from './input/keyboard';
-export {
-  attachPointerButton,
-  type PointerEventLike,
-  type PointerTarget,
-} from './input/pointer-button';
-export { type BrowserHostGlobals, createBrowserHost } from './loop/browser-host';
+} from './input/bindings';
 export {
   createFixedTimestep,
   type FixedTimestep,

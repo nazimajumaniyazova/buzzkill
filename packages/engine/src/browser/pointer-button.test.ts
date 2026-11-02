@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createActionInput } from './action-input';
+import { createActionInput } from '../input/action-input';
 import { attachPointerButton, type PointerEventLike, type PointerTarget } from './pointer-button';
 
 const ACTIONS = ['moveUp', 'fire'] as const;

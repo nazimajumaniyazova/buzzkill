@@ -1,0 +1,5 @@
+{
+  // The DOM adapters are the only part of the engine compiled with the DOM lib.
+  "extends": "@buzzkill/config/tsconfig.base.json",
+  "include": ["./**/*.ts"]
+}

@@ -1,4 +1,10 @@
 {
   "extends": "@buzzkill/config/tsconfig.base.json",
-  "include": ["src", "vitest.config.ts"]
+  "compilerOptions": {
+    // Headless by construction: no DOM lib, like packages/game. The browser adapters in
+    // src/browser have their own tsconfig with the DOM lib.
+    "lib": ["ES2023"]
+  },
+  "include": ["src", "vitest.config.ts"],
+  "exclude": ["src/browser"]
 }

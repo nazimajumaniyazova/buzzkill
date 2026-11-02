@@ -1,4 +1,4 @@
-import type { ActionInput } from './action-input';
+import type { ActionInput } from '../input/action-input';
 
 /** The part of a `PointerEvent` the source reads. */
 export interface PointerEventLike {

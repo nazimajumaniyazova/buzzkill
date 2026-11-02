@@ -2,13 +2,14 @@
   "name": "@buzzkill/engine",
   "version": "0.0.0",
   "private": true,
-  "description": "Reusable 2D game engine: loop, input, assets, audio, collisions, object pools. Knows nothing about the game or React.",
+  "description": "Reusable 2D game engine: loop, input, collisions, object pools, RNG. Headless main entry plus a browser entry for DOM adapters. Knows nothing about the game or React.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./browser": "./src/browser/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/browser/tsconfig.json"
   },
   "devDependencies": {
     "@buzzkill/config": "workspace:*",

@@ -1,9 +1,5 @@
-import {
-  applyCanvasFit,
-  computeCanvasFit,
-  createBrowserHost,
-  createGameLoop,
-} from '@buzzkill/engine';
+import { applyCanvasFit, computeCanvasFit, createGameLoop } from '@buzzkill/engine';
+import { createBrowserHost } from '@buzzkill/engine/browser';
 import { Game, type GameSettings, type LegacyHero } from '@buzzkill/game/legacy';
 import { type JSX, useEffect, useRef, useState } from 'react';
 
