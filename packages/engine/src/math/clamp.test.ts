@@ -1,7 +1,7 @@
 import { fc, test } from '@fast-check/vitest';
 import { describe, expect } from 'vitest';
 
-import { clamp } from './math';
+import { clamp } from './clamp';
 
 const finite = fc.double({ noNaN: true, noDefaultInfinity: true });
 

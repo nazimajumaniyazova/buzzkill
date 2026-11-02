@@ -17,4 +17,6 @@ export {
   type GameLoopOptions,
   type GameLoopStatus,
 } from './loop/game-loop';
-export { clamp } from './math';
+export { clamp } from './math/clamp';
+export { createRng, type Rng, type RngState } from './math/rng';
+export { cos, sin } from './math/trig';
