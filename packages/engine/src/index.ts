@@ -8,6 +8,7 @@ export {
   type SpatialHash,
   type SpatialHashOptions,
 } from './collision/spatial-hash';
+export { createEventBus, type EventBus, type EventListener } from './events/event-bus';
 export { type BrowserHostGlobals, createBrowserHost } from './loop/browser-host';
 export {
   createFixedTimestep,
@@ -26,3 +27,4 @@ export {
 export { clamp } from './math/clamp';
 export { createRng, type Rng, type RngState } from './math/rng';
 export { cos, sin } from './math/trig';
+export { createPool, type Pool, type PoolOptions } from './pool/object-pool';
