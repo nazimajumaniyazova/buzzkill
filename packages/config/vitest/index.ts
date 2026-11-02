@@ -27,6 +27,9 @@ export function jsdomProject(name: string): ProjectConfig {
       environment: 'jsdom',
       include: ['src/**/*.test.{ts,tsx}'],
       setupFiles: ['@buzzkill/config/vitest/setup-jsdom'],
+      // Testing Library registers its automatic DOM cleanup only when `afterEach` is a global;
+      // without it, renders pile up across the tests of a file. Tests still import from vitest.
+      globals: true,
     },
   });
 }
