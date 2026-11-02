@@ -54,28 +54,37 @@ pre-rendering, batching and culling).
 
 ## Decision
 
-**Option B: PixiJS.** Decided by the owner on 2026-11-02, against the recommendation above.
-Owner's rationale: _to be written by the owner in this section before the ADR is merged._
+**Option A: Canvas 2D behind a `Renderer` interface in `packages/engine`.** Decided by the owner on
+2026-11-02, following the recommendation. The deciding arguments: the game is tens of sprites, far
+below the point where `drawImage` becomes the bottleneck; a renderer with no dependency keeps the
+whole bundle inside the stage 9 budget without a separate line for a library; and the engine keeps
+ownership of time, assets and the render loop, which ADR-0009 needs anyway. PixiJS remains the
+documented next step if the measurements of stage 9 say so.
+
+History: this ADR was first accepted on 2026-11-02 with option B (PixiJS). The owner reconsidered the
+same day, before any renderer code existed, and chose the recommended option; the original decision
+text is in the git history of PR #52.
 
 ## Consequences
 
-- `pixi.js` (v8) is a dependency of `packages/engine` only. `packages/game` and `apps/web` never
-  import it; dependency-cruiser gets a rule for that, and the simulation keeps compiling without
-  the DOM lib.
-- The engine still exposes a `Renderer` interface. The PixiJS implementation keeps one pooled
-  `Sprite` per entity id and copies position, frame and visibility from the world after each
-  simulated tick, with interpolation. The ECS world stays the source of truth; display objects are
-  a render cache that can be rebuilt from it.
-- PixiJS owns the WebGL/WebGPU context, `resolution` (device pixel ratio) and resizing. The
-  engine's fixed-step loop (ADR-0009) owns time: the PixiJS `Ticker` is not used as a clock.
-- Assets: PixiJS `Assets` and its `Spritesheet` format are the atlas format; the stage 6 pipeline
-  emits it, and the engine's loader wraps it with progress reporting and typed manifests.
-- Bundle: PixiJS lives in the lazily loaded game chunk, not in the shell. The stage 9 budget gets a
-  separate line for the game chunk, measured when the renderer exists; modular imports are
-  mandatory.
-- Determinism (ADR-0009) is unaffected because the simulation never reads anything from PixiJS.
-- PixiJS v8 has no Canvas 2D fallback: browsers without WebGL get the existing "unsupported"
-  message instead of the game.
-- Trigger to revisit: if the game chunk exceeds its stage 9 budget or the sync between world and
-  display objects becomes the hot spot, option A is the fallback and the `Renderer` interface is
-  the seam.
+- `packages/engine/src/render/` holds the `Renderer` interface and its only implementation,
+  `Canvas2DRenderer`. The interface is the seam: the simulation never calls `drawImage`, and a
+  future WebGL renderer replaces one file.
+- `packages/game` never touches the renderer. It compiles without the DOM lib and exposes the world
+  state for drawing; `apps/web` wires the loop, the renderer and the canvas element together.
+- Rendering reads the world after the last simulated tick and interpolates between the previous and
+  the current tick for smooth motion at any refresh rate (ADR-0009). It never writes to the world,
+  so determinism is unaffected.
+- Sprite atlases are one PNG plus a typed JSON manifest of frames, produced by the stage 6 asset
+  pipeline and loaded by the engine's loader with progress reporting. No third-party atlas format.
+- Performance techniques belong to the renderer and are measured, not assumed: the parallax
+  background is pre-rendered to an offscreen canvas once per level, draw calls are grouped by
+  atlas, off-screen entities are culled, coordinates are rounded to integers before drawing, and
+  the backing store follows `devicePixelRatio` up to a cap (issue #37).
+- No new dependency: the shell stays within its 150 kB gzip budget and the game chunk contains only
+  the engine and the simulation. The `OffscreenCanvas` experiment of ADR-0008 stays possible
+  because Canvas 2D is available in workers.
+- Browsers where `getContext('2d')` returns `null` get the existing "unsupported" message.
+- Trigger to revisit: frame time above 8 ms on the reference desktop or below 60 FPS on the 4x
+  throttled phone after pre-rendering, batching and culling are in place (stage 9 benchmarks). The
+  superseding ADR evaluates option B behind the same `Renderer` interface.
