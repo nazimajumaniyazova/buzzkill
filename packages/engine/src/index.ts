@@ -18,6 +18,17 @@ export {
   type LoadProgress,
 } from './assets/loader';
 export {
+  type AudioBufferSourceLike,
+  type AudioContextLike,
+  type AudioMixer,
+  type AudioMixerOptions,
+  type AudioNodeLike,
+  type AudioParamLike,
+  createAudioMixer,
+  type GainNodeLike,
+  type VolumeGroup,
+} from './audio/mixer';
+export {
   applyCanvasFit,
   type CanvasFit,
   type CanvasFitOptions,

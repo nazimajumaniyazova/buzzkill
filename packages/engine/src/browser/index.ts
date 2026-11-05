@@ -4,6 +4,7 @@
  * without the DOM lib so that the game and the server can import it.
  */
 export { type BrowserAssetDecoderOptions, createBrowserAssetDecoders } from './asset-decoders';
+export { type AudioContextGlobals, createBrowserAudioContext } from './audio-context';
 export { type BrowserHostGlobals, createBrowserHost } from './browser-host';
 export {
   createGamepadSource,
