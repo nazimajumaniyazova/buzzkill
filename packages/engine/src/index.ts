@@ -19,6 +19,7 @@ export {
   type SpatialHashOptions,
 } from './collision/spatial-hash';
 export { createEventBus, type EventBus, type EventListener } from './events/event-bus';
+export { createFnv1a, type Fnv1a } from './hash/fnv1a';
 export {
   type ActionInput,
   createActionInput,
