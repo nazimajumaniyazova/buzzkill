@@ -8,6 +8,9 @@ import {
 import { GAME_ACTIONS, type GameAction } from '../actions';
 import type { GameMode } from '../config/enemies';
 import { type HeroId, WORLD } from '../config/rules';
+import type { Replay } from '../replay/format';
+import { createReplayRecorder } from '../replay/recorder';
+import { type RunResult, runResultOf } from '../replay/result';
 import type { GameStatus } from '../simulation/rules';
 import { createSimulation } from '../simulation/simulation';
 import type { GameState } from '../simulation/state';
@@ -58,6 +61,8 @@ export interface CreateGameOptions {
   readonly settings: GameSettings;
   /** 32-bit seed of the run. A replay stores it, so it is a number, not an RNG object. */
   readonly seed: number;
+  /** The build of `@buzzkill/game` that runs, written into the replay. */
+  readonly gameVersion: string;
   /** Input over `GAME_ACTIONS` in that order; the caller attaches the keyboard, touch and pads. */
   readonly input: ActionInput<GameAction>;
   /** Frame scheduling: `createBrowserHost()` in the browser, a fake in tests. */
@@ -83,6 +88,13 @@ export interface Game {
   subscribe(listener: (hud: GameHud) => void): () => void;
   /** The current HUD values; the same object until one of them changes. */
   getHud(): GameHud;
+  /**
+   * The replay of the run so far: every simulated tick until the run ended. `simulate` with it
+   * gives the same result as `result()`.
+   */
+  replay(): Replay;
+  /** The result at the tick the run was won or lost, or at the current tick while it goes on. */
+  result(): RunResult;
 }
 
 /**
@@ -102,6 +114,15 @@ export function createGame(options: CreateGameOptions): Game {
     );
   }
   const pauseBit = input.bit('pause');
+  const recorder = createReplayRecorder({
+    gameVersion: options.gameVersion,
+    seed: options.seed,
+    heroId: settings.heroId,
+    mode: settings.mode,
+  });
+  /** The input of the tick being simulated, reused: a tick allocates nothing. */
+  const tickInput = { down: 0, pressed: 0 };
+  let finalResult: RunResult | null = null;
 
   const simulation = createSimulation({
     seed: options.seed,
@@ -154,7 +175,21 @@ export function createGame(options: CreateGameOptions): Game {
           pause();
           return;
         }
-        simulation.step(snapshot);
+        if (state.status !== 'playing') {
+          // The run ended in the previous tick, so the state is still the one `simulate` stops
+          // at. The world then moves on for the picture, but nothing more is recorded.
+          finalResult ??= runResultOf(state);
+          simulation.step(tickInput);
+          return;
+        }
+        // Only the down mask is recorded, so `pressed` is derived from it here exactly as
+        // `simulate` derives it from the replay. The input's own `pressed` would differ after a
+        // pause, whose tick is sampled but not simulated.
+        const down = snapshot.down & ~pauseBit;
+        tickInput.pressed = down & ~tickInput.down;
+        tickInput.down = down;
+        recorder.recordInput(state.tick + 1, down);
+        simulation.step(tickInput);
       },
       render(alpha) {
         // Once per frame rather than once per tick: a frame can run several ticks.
@@ -206,6 +241,12 @@ export function createGame(options: CreateGameOptions): Game {
     },
     getHud() {
       return hud;
+    },
+    replay() {
+      return recorder.replay();
+    },
+    result() {
+      return finalResult ?? runResultOf(state);
     },
   };
 }

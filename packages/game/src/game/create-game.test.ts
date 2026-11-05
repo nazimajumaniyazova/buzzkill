@@ -1,8 +1,12 @@
 import { type ActionInput, createActionInput, type GameLoopHost } from '@buzzkill/engine';
+import { fc, test } from '@fast-check/vitest';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GAME_ACTIONS, type GameAction } from '../actions';
 import { RULES } from '../config/rules';
+import { deserializeReplay, type Replay, serializeReplay } from '../replay/format';
+import type { RunResult } from '../replay/result';
+import { simulate } from '../replay/simulate';
 import { createSimulation } from '../simulation/simulation';
 import {
   createGame,
@@ -61,6 +65,7 @@ function setup(seed = 1): Setup {
   const game = createGame({
     settings: { heroId: 'male', mode: 'day' },
     seed,
+    gameVersion: 'test',
     input,
     host: fake.host,
     renderer: { render },
@@ -305,6 +310,7 @@ describe('createGame', () => {
       createGame({
         settings: { heroId: 'female', mode: 'night' },
         seed: 1,
+        gameVersion: 'test',
         input,
         host: fake.host,
         renderer: { render: vi.fn() },
@@ -312,4 +318,99 @@ describe('createGame', () => {
       }),
     ).toThrow(/GAME_ACTIONS in order/);
   });
+});
+
+/** What `simulate` makes of the game's replay after a JSON round trip, as the server would. */
+function replayAsServer(game: Game): RunResult {
+  const parsed = deserializeReplay(serializeReplay(game.replay()));
+  if (!parsed.ok) {
+    throw new Error(parsed.error);
+  }
+  return simulate(parsed.replay, { maxTicks: game.result().ticks });
+}
+
+describe('createGame replays', () => {
+  it('records a replay that simulate plays to the same result, pauses and taps included', () => {
+    const s = setup(5);
+    s.game.start();
+    s.fake.frame();
+
+    s.input.press('moveDown', 'key:ArrowDown');
+    runUntilTick(s, 40);
+    // A tap: pressed and released between two ticks still counts as one shot.
+    s.input.press('fire', 'key:Space');
+    s.input.release('fire', 'key:Space');
+    runUntilTick(s, 60);
+    // Fire and pause in the same tick: the pause wins and that tick is not simulated.
+    s.input.press('fire', 'key:Space');
+    s.input.press('pause', 'key:Escape');
+    while (!s.game.getHud().paused) {
+      s.fake.frame();
+    }
+    s.input.release('pause', 'key:Escape');
+    s.input.release('moveDown', 'key:ArrowDown');
+    s.game.resume();
+    runUntilTick(s, 300);
+
+    const replay: Replay = s.game.replay();
+    expect(replay).toMatchObject({ gameVersion: 'test', seed: 5, heroId: 'male', mode: 'day' });
+    expect(replay.inputs.length).toBeLessThan(12);
+    expect(replayAsServer(s.game)).toEqual(s.game.result());
+  });
+
+  it('keeps the result of the tick the run ended, while the world moves on', () => {
+    const s = setup(1);
+    s.game.start();
+    s.fake.frame();
+    while (s.game.getHud().status === 'playing') {
+      s.fake.frame();
+    }
+    const ended = s.game.result();
+    const replayAtEnd = s.game.replay();
+
+    for (let i = 0; i < 120; i += 1) {
+      s.fake.frame();
+    }
+
+    expect(ended.status).toBe('lost');
+    expect(s.view().tick).toBeGreaterThan(ended.ticks);
+    expect(s.game.result()).toEqual(ended);
+    expect(s.game.replay()).toEqual(replayAtEnd);
+    expect(simulate(replayAtEnd, { maxTicks: 60 * 60 * 10 })).toEqual(ended);
+  });
+
+  const step = fc.oneof(
+    fc.record({
+      kind: fc.constantFrom('press' as const, 'release' as const),
+      action: fc.constantFrom('moveUp' as const, 'moveDown' as const, 'fire' as const),
+      frames: fc.integer({ min: 0, max: 30 }),
+    }),
+    fc.record({ kind: fc.constant('pause' as const), frames: fc.integer({ min: 0, max: 5 }) }),
+  );
+
+  test.prop([fc.nat({ max: 0xff_ff_ff_ff }), fc.array(step, { maxLength: 60 })])(
+    'gives simulate the same hash for any play through the browser path',
+    (seed, steps) => {
+      const s = setup(seed);
+      s.game.start();
+      s.fake.frame();
+      for (const action of steps) {
+        if (action.kind === 'pause') {
+          s.input.press('pause', 'key:Escape');
+          s.fake.frame();
+          s.input.release('pause', 'key:Escape');
+          s.game.resume();
+        } else if (action.kind === 'press') {
+          s.input.press(action.action, `key:${action.action}`);
+        } else {
+          s.input.release(action.action, `key:${action.action}`);
+        }
+        for (let i = 0; i < action.frames; i += 1) {
+          s.fake.frame();
+        }
+      }
+
+      expect(replayAsServer(s.game)).toEqual(s.game.result());
+    },
+  );
 });

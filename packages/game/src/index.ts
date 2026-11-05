@@ -29,6 +29,23 @@ export {
   type GameSound,
   type GameView,
 } from './game/create-game';
+export {
+  deserializeReplay,
+  MAX_REPLAY_CHANGES,
+  parseReplay,
+  type Replay,
+  REPLAY_ACTION_MASK,
+  REPLAY_FORMAT_VERSION,
+  type ReplayParseResult,
+  serializeReplay,
+} from './replay/format';
+export {
+  createReplayRecorder,
+  type ReplayRecorder,
+  type ReplayRecorderOptions,
+} from './replay/recorder';
+export { hashGameState, type RunResult } from './replay/result';
+export { simulate, type SimulateOptions } from './replay/simulate';
 export { animationFrame, parallaxOffset } from './simulation/presentation';
 export { type GameStatus } from './simulation/rules';
 export { createSimulation, type Simulation, type SimulationOptions } from './simulation/simulation';

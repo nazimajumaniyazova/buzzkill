@@ -1,0 +1,23 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden replays > day, male hero gives the pinned result 1`] = `
+{
+  "hash": "ef2428a6",
+  "level": 1,
+  "livesLeft": 0,
+  "score": 46,
+  "status": "lost",
+  "ticks": 1891,
+}
+`;
+
+exports[`golden replays > night, female hero gives the pinned result 1`] = `
+{
+  "hash": "29bb8f41",
+  "level": 1,
+  "livesLeft": 0,
+  "score": 60,
+  "status": "lost",
+  "ticks": 2144,
+}
+`;

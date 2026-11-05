@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/legacy/tsconfig.json"
   },
   "dependencies": {
-    "@buzzkill/engine": "workspace:*"
+    "@buzzkill/engine": "workspace:*",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@buzzkill/config": "workspace:*",
