@@ -3,6 +3,7 @@
  * `navigator` and DOM events. Everything else is in the headless main entry, which compiles
  * without the DOM lib so that the game and the server can import it.
  */
+export { type BrowserAssetDecoderOptions, createBrowserAssetDecoders } from './asset-decoders';
 export { type BrowserHostGlobals, createBrowserHost } from './browser-host';
 export {
   createGamepadSource,
