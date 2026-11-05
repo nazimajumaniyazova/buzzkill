@@ -59,9 +59,10 @@ module.exports = {
       comment: 'Other packages are used only through their public entry (src/index.ts).',
       from: { path: '^(apps|packages)/([^/]+)/' },
       // Declared subpath exports: the engine's browser entry, and the legacy entry of
-      // @buzzkill/game (index.ts and its hand-written public.d.ts) until #42 removes it.
+      // @buzzkill/game (index.ts and its hand-written public.d.ts) with its art, until #42
+      // moves the art to apps/web and removes the rest.
       to: {
-        path: '^packages/(?!$2/)[^/]+/src/(?!index\\.ts$)(?!browser/index\\.ts$)(?!legacy/(index\\.ts|public\\.d\\.ts)$)',
+        path: '^packages/(?!$2/)[^/]+/src/(?!index\\.ts$)(?!browser/index\\.ts$)(?!legacy/(index\\.ts|public\\.d\\.ts)$)(?!legacy/assets/[^/]+\\.(png|wav)$)',
       },
     },
     {

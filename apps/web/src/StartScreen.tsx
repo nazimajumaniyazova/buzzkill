@@ -1,22 +1,24 @@
-import type { GameSettings, LegacyHero } from '@buzzkill/game/legacy';
+import type { GameMode, HeroId } from '@buzzkill/game';
 import { type JSX, type SubmitEvent, useId, useState } from 'react';
 
-/** What the player picked on the start screen; everything the legacy game needs to begin. */
+/** What the player picked on the start screen. */
 export interface StartChoice {
-  hero: LegacyHero;
-  settings: GameSettings;
+  readonly heroId: HeroId;
+  readonly mode: GameMode;
+  /** Volume of the sound effects, from 0 (muted) to 1. */
+  readonly volume: number;
 }
 
 interface StartScreenProps {
   onStart: (choice: StartChoice) => void;
 }
 
-const HEROES: readonly { id: LegacyHero; name: string }[] = [
+const HEROES: readonly { id: HeroId; name: string }[] = [
   { id: 'male', name: 'Mike' },
   { id: 'female', name: 'Julie' },
 ];
 
-const MODES: readonly { id: GameSettings['mode']; name: string }[] = [
+const MODES: readonly { id: GameMode; name: string }[] = [
   { id: 'day', name: 'Day' },
   { id: 'night', name: 'Night' },
 ];
@@ -27,13 +29,13 @@ const MODES: readonly { id: GameSettings['mode']; name: string }[] = [
  */
 export function StartScreen({ onStart }: StartScreenProps): JSX.Element {
   const titleId = useId();
-  const [hero, setHero] = useState<LegacyHero>('male');
-  const [mode, setMode] = useState<GameSettings['mode']>('day');
+  const [hero, setHero] = useState<HeroId>('male');
+  const [mode, setMode] = useState<GameMode>('day');
   const [volume, setVolume] = useState(0.3);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
-    onStart({ hero, settings: { mode, volume } });
+    onStart({ heroId: hero, mode, volume });
   };
 
   return (
@@ -91,7 +93,7 @@ export function StartScreen({ onStart }: StartScreenProps): JSX.Element {
         />
       </label>
 
-      <p>Controls: arrow up and arrow down to move, Space to shoot.</p>
+      <p>Controls: arrow up and arrow down to move, Space to shoot, Escape to pause.</p>
 
       <button type="submit">Play</button>
     </form>

@@ -30,8 +30,9 @@ describe('StartScreen', () => {
 
     expect(onStart).toHaveBeenCalledTimes(1);
     expect(onStart).toHaveBeenCalledWith({
-      hero: 'female',
-      settings: { mode: 'night', volume: 0.7 },
+      heroId: 'female',
+      mode: 'night',
+      volume: 0.7,
     });
   });
 
