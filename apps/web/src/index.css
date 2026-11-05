@@ -47,7 +47,41 @@ body {
   margin: auto;
 }
 
-.game-over {
+.screen {
+  display: grid;
+  gap: var(--space-md);
+  place-content: center;
+  min-height: 100%;
+  padding: var(--space-lg);
+  text-align: center;
+}
+
+.hud {
+  position: fixed;
+  inset: var(--space-md) var(--space-md) auto;
+  pointer-events: none;
+  color: var(--color-overlay-text);
+  text-shadow: 0 1px 2px black;
+}
+
+.hud dl {
+  display: flex;
+  gap: var(--space-lg);
+  margin: 0;
+}
+
+.hud dl div {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.hud dd {
+  margin: 0;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+
+.overlay {
   position: fixed;
   inset: 0;
   display: grid;
@@ -56,4 +90,10 @@ body {
   color: var(--color-overlay-text);
   text-align: center;
   background-color: var(--color-overlay);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
 }

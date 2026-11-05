@@ -9,7 +9,8 @@
     "./legacy": {
       "types": "./src/legacy/public.d.ts",
       "default": "./src/legacy/index.ts"
-    }
+    },
+    "./legacy/assets/*": "./src/legacy/assets/*"
   },
   "scripts": {
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/legacy/tsconfig.json"
