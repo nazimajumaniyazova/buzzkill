@@ -70,6 +70,10 @@ Closes #12
 - Aim for at most ~400 changed lines, excluding lock files and generated code.
 - Unfinished work is a Draft PR. Review your own diff on GitHub before asking for review.
 - Review comments are addressed with new commits; the history is not rewritten after review.
+- The simulation is deterministic (ADR-0009), so its results are pinned: the golden replays in
+  `packages/game/fixtures/replays/` and the scenarios in `packages/game/src/replay/`. A change
+  that moves any of their scores, ticks or hashes says why under How and updates them with
+  `pnpm vitest -u`. An unexplained change is a bug.
 
 ## Architecture decisions
 
