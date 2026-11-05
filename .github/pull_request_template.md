@@ -29,6 +29,7 @@ Closes #
 ## Checklist
 
 - [ ] Tests added or updated
+- [ ] Golden replays and pinned scenarios unchanged, or every change explained under How
 - [ ] `pnpm typecheck` and `pnpm lint` pass
 - [ ] Documentation updated where relevant (README, ADR, CLAUDE.md)
 - [ ] Accessibility checked for UI changes
