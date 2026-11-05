@@ -4,6 +4,20 @@
  * `src/` are not allowed.
  */
 export {
+  type AssetDecoders,
+  type AssetEntry,
+  type AssetFailure,
+  type AssetFailureReason,
+  type AssetKind,
+  AssetLoadError,
+  type AssetLoadResult,
+  type AssetManifest,
+  loadAssets,
+  type LoadAssetsOptions,
+  type LoadedAssets,
+  type LoadProgress,
+} from './assets/loader';
+export {
   applyCanvasFit,
   type CanvasFit,
   type CanvasFitOptions,
@@ -50,3 +64,18 @@ export { clamp } from './math/clamp';
 export { createRng, type Rng, type RngState } from './math/rng';
 export { cos, sin } from './math/trig';
 export { createPool, type Pool, type PoolOptions } from './pool/object-pool';
+export {
+  createGridAtlas,
+  type FrameRect,
+  type GridAtlasOptions,
+  type SpriteAtlas,
+} from './render/atlas';
+export {
+  type Canvas2DRendererOptions,
+  type Context2DLike,
+  createCanvas2DRenderer,
+  type Renderer,
+  type RenderStats,
+  type SpriteOptions,
+  type TextStyle,
+} from './render/renderer';
