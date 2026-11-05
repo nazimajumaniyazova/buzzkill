@@ -1,3 +1,4 @@
+import codspeedPlugin from '@codspeed/vitest-plugin';
 import { configDefaults, defineProject } from 'vitest/config';
 
 type ProjectConfig = ReturnType<typeof defineProject>;
@@ -15,9 +16,12 @@ export interface ProjectOverrides {
 /**
  * Vitest project for headless packages (engine, game): Node environment, no DOM.
  * Coverage thresholds live in the root config because Vitest collects coverage globally.
+ * The CodSpeed plugin measures the `*.bench.ts` files of these packages in CI (ADR-0012);
+ * anywhere else Vitest benchmarks run as usual.
  */
 export function nodeProject(name: string, overrides: ProjectOverrides = {}): ProjectConfig {
   return defineProject({
+    plugins: [codspeedPlugin()],
     test: {
       name,
       environment: 'node',

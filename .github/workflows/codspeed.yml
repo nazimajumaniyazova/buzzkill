@@ -1,0 +1,44 @@
+name: CodSpeed
+
+# Benchmarks of the engine and the game, compared with main on every pull request (ADR-0012).
+# CodSpeed runs them under CPU simulation, so the shared runner's noise does not reach the result;
+# a regression beyond the project's threshold fails the "CodSpeed Performance Analysis" check.
+
+on:
+  # Runs on main record the baseline that pull requests are compared with.
+  push:
+    branches: [main]
+  pull_request:
+  # Lets CodSpeed backfill a baseline for older commits.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # OpenID Connect: CodSpeed authenticates the upload without a stored token.
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: 0
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  benchmarks:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js, pnpm and dependencies
+        uses: ./.github/actions/setup
+
+      - name: Run benchmarks under CodSpeed
+        uses: CodSpeedHQ/action@821a40cd6c80e3cfe387caf55668287addd808da # v5.5.0
+        with:
+          mode: simulation
+          run: pnpm exec vitest bench --run

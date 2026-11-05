@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@codspeed/vitest-plugin": "catalog:",
     "@testing-library/jest-dom": "catalog:",
     "vitest": "catalog:",
     "vitest-axe": "catalog:"

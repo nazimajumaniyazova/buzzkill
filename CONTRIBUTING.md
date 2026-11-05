@@ -18,12 +18,15 @@ pnpm build          # every package, through Turborepo
 pnpm typecheck      # tsc --noEmit in every package
 pnpm lint           # ESLint, Stylelint, Sherif, Knip, dependency-cruiser, CSpell
 pnpm test           # Vitest, all projects; pnpm test:coverage adds coverage
+pnpm bench          # benchmarks of the engine and the game
 pnpm format:check   # Prettier
 ```
 
 `pnpm lint` runs ESLint, Stylelint, Sherif, Knip, dependency-cruiser and CSpell; `pnpm lint:fix`
 applies the autofixes. `pnpm test` runs every Vitest project; `pnpm test:coverage` enforces the
-80% thresholds of `engine` and `game`.
+80% thresholds of `engine` and `game`. `pnpm bench` runs the `*.bench.ts` files; in CI, CodSpeed
+runs them on every pull request and fails the check when one gets slower than its threshold
+(ADR-0012).
 
 ## Workflow: GitHub Flow
 

@@ -16,6 +16,7 @@ continue from 0010.
 | [0003](0003-entity-model.md)            | Entity model of the simulation          | Accepted |
 | [0004](0004-rendering.md)               | Rendering technology                    | Accepted |
 | [0009](0009-determinism-and-replays.md) | Determinism and replays                 | Accepted |
+| [0012](0012-benchmarks-in-ci.md)        | Benchmarks in CI                        | Accepted |
 
 ## Template
 
