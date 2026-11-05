@@ -4,6 +4,7 @@ AZERTY
 bitecs
 bryc
 Buzzkill
+codspeed
 commitlint
 davelosert
 deadzone
