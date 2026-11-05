@@ -11,7 +11,7 @@ export interface GamepadLike {
 
 export interface GamepadSourceOptions<A extends string> {
   readonly bindings: GamepadBindings<A>;
-  /** Defaults to `navigator.getGamepads()`. */
+  /** Defaults to `navigator.getGamepads()`, or to no pads where that API is missing or blocked. */
   readonly getGamepads?: () => readonly (GamepadLike | null)[];
   /** How far a stick must move, in (0, 1], before its direction counts. Default 0.5. */
   readonly deadzone?: number;
@@ -74,7 +74,7 @@ export function createGamepadSource<A extends string>(
       `createGamepadSource: deadzone must be in (0, 1], got ${String(deadzone)}`,
     );
   }
-  const getGamepads = options.getGamepads ?? (() => navigator.getGamepads());
+  const getGamepads = options.getGamepads ?? browserGamepads;
   let controls = compile(options.bindings);
   // Pads seen in the previous poll and in the current one; swapped instead of reallocated.
   let known = new Set<number>();
@@ -144,4 +144,21 @@ export function createGamepadSource<A extends string>(
       known.clear();
     },
   };
+}
+
+const NO_PADS: readonly (GamepadLike | null)[] = [];
+
+/**
+ * The browser's pads. The API is missing in some environments and throws `SecurityError` where a
+ * permissions policy blocks it (an embedding iframe); both mean that no pad can be used.
+ */
+function browserGamepads(): readonly (GamepadLike | null)[] {
+  if (typeof navigator === 'undefined' || typeof navigator.getGamepads !== 'function') {
+    return NO_PADS;
+  }
+  try {
+    return navigator.getGamepads();
+  } catch {
+    return NO_PADS;
+  }
 }

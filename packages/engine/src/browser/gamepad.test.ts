@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createActionInput } from '../input/action-input';
 import { type GamepadBindings } from '../input/bindings';
@@ -172,5 +172,32 @@ describe('createGamepadSource', () => {
   it('rejects a deadzone outside (0, 1]', () => {
     expect(() => setup([], 0)).toThrow(RangeError);
     expect(() => setup([], 1.5)).toThrow(RangeError);
+  });
+
+  it('sees no pads where the Gamepad API is missing or blocked', () => {
+    const input = createActionInput(['fire'] as const);
+    const bindings = { buttons: { fire: [0] } };
+
+    vi.stubGlobal('navigator', {});
+    try {
+      expect(() => {
+        createGamepadSource(input, { bindings }).poll();
+      }).not.toThrow();
+      vi.stubGlobal('navigator', {
+        getGamepads: () => {
+          throw new Error('SecurityError');
+        },
+      });
+      expect(() => {
+        createGamepadSource(input, { bindings }).poll();
+      }).not.toThrow();
+      vi.stubGlobal('navigator', {
+        getGamepads: () => [{ index: 0, connected: true, axes: [], buttons: [{ pressed: true }] }],
+      });
+      createGamepadSource(input, { bindings }).poll();
+      expect(input.isHeld('fire')).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
