@@ -1,0 +1,121 @@
+/**
+ * Enemy kinds as data (#38). The 2023 code had six classes, `Enemy1..3` for day and
+ * `EnemyNight1..3` for night, that differed only in the numbers collected here. A kind is now one
+ * object; the spawn system reads it, and day and night are two lists, not two class families.
+ *
+ * Units follow the simulation: lengths in world pixels, speeds in pixels per tick, times in ticks
+ * at 60 Hz. The 2023 code moved enemies once per animation frame, which at 60 Hz is the same
+ * number per tick.
+ */
+
+/**
+ * A uniform random range from `min` to `max`. A roll just below 1 can round to exactly `max`, so
+ * treat both ends as reachable.
+ */
+export interface Range {
+  readonly min: number;
+  readonly max: number;
+}
+
+/** An inclusive range of whole numbers. */
+export interface IntRange {
+  readonly min: number;
+  readonly max: number;
+}
+
+export interface EnemyConfig {
+  /** Stable name, used for the sprite and in tests; never shown to players. */
+  readonly id: string;
+  /** Relative spawn chance within its set. */
+  readonly weight: number;
+  /** Collision box, from the top-left corner of the entity. */
+  readonly hitbox: { readonly width: number; readonly height: number };
+  /** Horizontal speed to the left, in pixels per tick. */
+  readonly speed: Range;
+  /** Hits it takes; also its score when destroyed. */
+  readonly lives: IntRange;
+  /** Vertical wave: `y += amplitude * sin(angle)` with `angle += angleSpeed` every tick. */
+  readonly wave: { readonly amplitude: Range; readonly angleSpeed: Range };
+  /** Drawing data for the renderer; the simulation never reads it. */
+  readonly sprite: {
+    /** Asset name of the sprite sheet (stage 6 pipeline). */
+    readonly sheet: string;
+    readonly frameWidth: number;
+    readonly frameHeight: number;
+    readonly frames: number;
+    /** Ticks each frame stays on screen. */
+    readonly frameTicks: number;
+  };
+}
+
+/** Numbers every 2023 enemy shared: `Math.random() * -3 - 1.5`, `floor(random * 5 + 1)` and so on. */
+const SHARED = {
+  speed: { min: 1.5, max: 4.5 },
+  lives: { min: 1, max: 5 },
+  wave: { amplitude: { min: 0, max: 2 }, angleSpeed: { min: 0, max: 0.5 } },
+} as const;
+
+/**
+ * The hitbox was half the sprite frame for every kind but `EnemyNight3`, whose full-size box
+ * was twice as large as its drawing; it is half the frame here like the others.
+ */
+function halfFrame(frameWidth: number, frameHeight: number) {
+  return { width: frameWidth * 0.5, height: frameHeight * 0.5 };
+}
+
+export const DAY_ENEMIES = [
+  {
+    id: 'day-1',
+    weight: 3,
+    hitbox: halfFrame(273, 273),
+    ...SHARED,
+    sprite: { sheet: 'enemy-day-1', frameWidth: 273, frameHeight: 273, frames: 13, frameTicks: 1 },
+  },
+  {
+    id: 'day-2',
+    weight: 3,
+    hitbox: halfFrame(253, 207),
+    ...SHARED,
+    sprite: { sheet: 'enemy-2', frameWidth: 253, frameHeight: 207, frames: 13, frameTicks: 1 },
+  },
+  {
+    id: 'day-3',
+    weight: 4,
+    hitbox: halfFrame(266, 207),
+    ...SHARED,
+    sprite: { sheet: 'enemy-3', frameWidth: 266, frameHeight: 207, frames: 13, frameTicks: 1 },
+  },
+] as const satisfies readonly EnemyConfig[];
+
+export const NIGHT_ENEMIES = [
+  {
+    id: 'night-bat',
+    weight: 3,
+    hitbox: halfFrame(266, 188),
+    ...SHARED,
+    // The 2023 bat and raven flapped on a 25 to 50 ms timer, about two ticks per frame.
+    sprite: { sheet: 'enemy_bat_3', frameWidth: 266, frameHeight: 188, frames: 6, frameTicks: 2 },
+  },
+  {
+    id: 'night-raven',
+    weight: 3,
+    hitbox: halfFrame(271, 194),
+    ...SHARED,
+    sprite: { sheet: 'enemy_raven', frameWidth: 271, frameHeight: 194, frames: 6, frameTicks: 2 },
+  },
+  {
+    id: 'night-ghost',
+    weight: 4,
+    hitbox: halfFrame(238, 167),
+    ...SHARED,
+    sprite: { sheet: 'enemy_bat_2', frameWidth: 238, frameHeight: 167, frames: 7, frameTicks: 1 },
+  },
+] as const satisfies readonly EnemyConfig[];
+
+export type GameMode = 'day' | 'night';
+
+/** The enemy set of each mode. */
+export const ENEMY_SETS: Readonly<Record<GameMode, readonly EnemyConfig[]>> = {
+  day: DAY_ENEMIES,
+  night: NIGHT_ENEMIES,
+};

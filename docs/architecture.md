@@ -138,14 +138,14 @@ flowchart LR
 
 Stage 1 (foundation) is about the repository, not the game. The diagrams above show the target.
 
-| Container         | Today                                                                                                                                                              |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `apps/web`        | Start screen (hero, day or night, volume); the legacy game runs on the engine loop                                                                                 |
-| `packages/engine` | Fixed-step loop (#33); seeded RNG, deterministic trig, AABB + spatial hash, pools, event bus, canvas fit (#37); action input for keyboard, touch and gamepad (#34) |
-| `packages/game`   | Game actions and default key and gamepad bindings (#34); headless by configuration and by test                                                                     |
-| `packages/ui`     | Empty public API; tokens and components arrive in stage 4                                                                                                          |
-| `packages/config` | `tsconfig.base.json`, Vitest presets (`node`, `jsdom`)                                                                                                             |
-| Supabase          | Not started (stage 8)                                                                                                                                              |
+| Container         | Today                                                                                                                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web`        | Start screen (hero, day or night, volume); the legacy game runs on the engine loop                                                                                               |
+| `packages/engine` | Fixed-step loop (#33); seeded RNG, deterministic trig, AABB + spatial hash, pools, event bus, canvas fit (#37); action input for keyboard, touch and gamepad (#34)               |
+| `packages/game`   | Headless simulation: ECS-lite world, systems, enemies and rules as data (#38, #39); game actions and bindings (#34). The app still runs the legacy game until the renderer lands |
+| `packages/ui`     | Empty public API; tokens and components arrive in stage 4                                                                                                                        |
+| `packages/config` | `tsconfig.base.json`, Vitest presets (`node`, `jsdom`)                                                                                                                           |
+| Supabase          | Not started (stage 8)                                                                                                                                                            |
 
 Stage 2 imports the original engine from the team project as `packages/game/src/legacy/` with its
 history and pins its behavior with characterization tests; stage 3 refactors it into the structure
