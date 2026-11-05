@@ -1,4 +1,5 @@
-import type { ActionInput } from './action-input';
+import type { ActionInput } from '../input/action-input';
+import type { GamepadBindings } from '../input/bindings';
 
 /** The part of a `Gamepad` the source reads. */
 export interface GamepadLike {
@@ -6,21 +7,6 @@ export interface GamepadLike {
   readonly connected: boolean;
   readonly buttons: readonly { readonly pressed: boolean }[];
   readonly axes: readonly number[];
-}
-
-/** A stick direction: the axis index and which way counts, -1 for up or left, 1 for down or right. */
-export interface AxisBinding {
-  readonly axis: number;
-  readonly direction: -1 | 1;
-}
-
-/**
- * Gamepad bindings by the indices of the W3C standard mapping: button 0 is the bottom face
- * button, 9 is Start, 12 to 15 are the D-pad; axis 1 is the left stick's vertical.
- */
-export interface GamepadBindings<A extends string> {
-  readonly buttons?: Readonly<Partial<Record<A, readonly number[]>>>;
-  readonly axes?: Readonly<Partial<Record<A, readonly AxisBinding[]>>>;
 }
 
 export interface GamepadSourceOptions<A extends string> {

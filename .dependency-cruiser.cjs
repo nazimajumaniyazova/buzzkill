@@ -31,6 +31,15 @@ module.exports = {
       to: { path: '^(packages/(game|ui)|apps)/|node_modules/react(-dom)?/' },
     },
     {
+      name: 'engine-core-is-headless',
+      severity: 'error',
+      comment:
+        'The main engine entry compiles without the DOM lib so the game and the server can use ' +
+        'it; only src/browser may touch the DOM, and nothing outside it imports it.',
+      from: { path: '^packages/engine/src/(?!browser/)' },
+      to: { path: '^packages/engine/src/browser/' },
+    },
+    {
       name: 'game-depends-only-on-engine',
       severity: 'error',
       comment: 'The game domain depends on the engine only; it never imports UI, the app or React.',
@@ -49,10 +58,10 @@ module.exports = {
       severity: 'error',
       comment: 'Other packages are used only through their public entry (src/index.ts).',
       from: { path: '^(apps|packages)/([^/]+)/' },
-      // The legacy entry (index.ts and its hand-written public.d.ts) is a declared subpath
-      // export of @buzzkill/game until #42 removes the folder.
+      // Declared subpath exports: the engine's browser entry, and the legacy entry of
+      // @buzzkill/game (index.ts and its hand-written public.d.ts) until #42 removes it.
       to: {
-        path: '^packages/(?!$2/)[^/]+/src/(?!index\\.ts$)(?!legacy/(index\\.ts|public\\.d\\.ts)$)',
+        path: '^packages/(?!$2/)[^/]+/src/(?!index\\.ts$)(?!browser/index\\.ts$)(?!legacy/(index\\.ts|public\\.d\\.ts)$)',
       },
     },
     {

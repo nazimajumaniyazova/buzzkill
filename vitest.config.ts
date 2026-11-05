@@ -10,7 +10,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary', 'json'],
-      include: ['packages/*/src/**', 'apps/*/src/**'],
+      // Source files only: a JSON file under src (such as a tsconfig with comments) is not code.
+      include: ['packages/*/src/**/*.{ts,tsx}', 'apps/*/src/**/*.{ts,tsx}'],
       exclude: [
         '**/*.stories.tsx',
         '**/*.gen.ts',

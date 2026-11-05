@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { createActionInput } from './action-input';
-import { createGamepadSource, type GamepadBindings, type GamepadLike } from './gamepad';
+import { createActionInput } from '../input/action-input';
+import { type GamepadBindings } from '../input/bindings';
+import { createGamepadSource, type GamepadLike } from './gamepad';
 
 const ACTIONS = ['moveUp', 'moveDown', 'fire', 'pause'] as const;
 type Action = (typeof ACTIONS)[number];

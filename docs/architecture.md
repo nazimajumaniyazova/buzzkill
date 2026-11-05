@@ -71,20 +71,24 @@ flowchart TB
 
 ### Dependency rules
 
-| From       | May import             | Never imports                      |
-| ---------- | ---------------------- | ---------------------------------- |
-| `apps/web` | `game`, `engine`, `ui` | internals of any package (`src/…`) |
-| `game`     | `engine`               | `ui`, `web`, React, the DOM        |
-| `engine`   | nothing in the repo    | `game`, `ui`, `web`, React         |
-| `ui`       | nothing in the repo    | `engine`, `game`, `web`            |
+| From       | May import             | Never imports                                 |
+| ---------- | ---------------------- | --------------------------------------------- |
+| `apps/web` | `game`, `engine`, `ui` | internals of any package (`src/…`)            |
+| `game`     | `engine` (main entry)  | `engine/browser`, `ui`, `web`, React, the DOM |
+| `engine`   | nothing in the repo    | `game`, `ui`, `web`, React                    |
+| `ui`       | nothing in the repo    | `engine`, `game`, `web`                       |
 
 The rules are enforced three times over:
 
 1. **pnpm**: a package can only import what its `package.json` declares.
-2. **dependency-cruiser** (`pnpm lint:repo`): `engine-is-standalone`, `game-depends-only-on-engine`,
-   `ui-knows-nothing-about-game`, `no-deep-imports` (other packages only through `src/index.ts`),
-   `no-circular`, `no-orphans`, `not-to-test`, `not-to-unresolvable`.
-3. **ESLint and TypeScript** for `packages/game`: no DOM lib in its `tsconfig.json`, and ESLint bans
+2. **dependency-cruiser** (`pnpm lint:repo`): `engine-is-standalone`, `engine-core-is-headless`,
+   `game-depends-only-on-engine`, `ui-knows-nothing-about-game`, `no-deep-imports` (other packages
+   only through their declared entries), `no-circular`, `no-orphans`, `not-to-test`,
+   `not-to-unresolvable`.
+3. **ESLint and TypeScript** for `packages/game` and the main entry of `packages/engine`: no DOM lib in
+   their `tsconfig.json`; the engine's DOM adapters (animation-frame host, keyboard, pointer
+   buttons, gamepad) live in `src/browser` behind the `@buzzkill/engine/browser` entry with a
+   tsconfig of their own, and only `apps/web` imports them. For the game, ESLint also bans
    `window`, `document`, `fetch`, `Math.random`, `Date.now`, `performance.now` and transcendental
    `Math` functions, so the simulation stays headless and deterministic.
 

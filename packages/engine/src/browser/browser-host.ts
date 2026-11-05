@@ -1,4 +1,4 @@
-import type { GameLoopHost } from './game-loop';
+import type { GameLoopHost } from '../loop/game-loop';
 
 /** The slice of `window` the browser host touches, so a test can hand in a fake. */
 export interface BrowserHostGlobals {
