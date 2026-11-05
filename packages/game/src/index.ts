@@ -18,6 +18,17 @@ export {
   type Range,
 } from './config/enemies';
 export { type HeroConfig, HEROES, type HeroId, RULES, WORLD } from './config/rules';
+export {
+  createGame,
+  type CreateGameOptions,
+  type Game,
+  type GameAudio,
+  type GameHud,
+  type GameRenderer,
+  type GameSettings,
+  type GameSound,
+  type GameView,
+} from './game/create-game';
 export { animationFrame, parallaxOffset } from './simulation/presentation';
 export { type GameStatus } from './simulation/rules';
 export { createSimulation, type Simulation, type SimulationOptions } from './simulation/simulation';
