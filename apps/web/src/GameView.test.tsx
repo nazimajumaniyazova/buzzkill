@@ -34,29 +34,39 @@ const sprites = createGameSprites<ImageBitmap>({
 
 const choice = { heroId: 'male', mode: 'day', volume: 0.5 } as const;
 
-/** One animation frame per timer turn, 50 ms apart: three ticks per frame. */
-function installFrames(): { pending: () => number } {
+/**
+ * Animation frames that run only when the test says so, 50 ms apart: the first frame sets the
+ * time reference and every later one runs three ticks. Timer-driven frames made the number of
+ * ticks depend on the machine's speed.
+ */
+function installFrames() {
   let timeMs = 0;
-  let pending = 0;
+  let nextHandle = 1;
+  const callbacks = new Map<number, FrameRequestCallback>();
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback): number => {
-    pending += 1;
-    return window.setTimeout(() => {
-      pending -= 1;
-      timeMs += 50;
-      callback(timeMs);
-    }, 0);
+    const handle = nextHandle;
+    nextHandle += 1;
+    callbacks.set(handle, callback);
+    return handle;
   });
   vi.stubGlobal('cancelAnimationFrame', (handle: number): void => {
-    pending -= 1;
-    window.clearTimeout(handle);
+    callbacks.delete(handle);
   });
-  return { pending: () => pending };
-}
-
-async function frames(count: number): Promise<void> {
-  for (let i = 0; i < count; i += 1) {
-    await act(() => new Promise((resolve) => window.setTimeout(resolve, 0)));
-  }
+  return {
+    pending: () => callbacks.size,
+    run(count: number): void {
+      act(() => {
+        for (let i = 0; i < count; i += 1) {
+          const due = [...callbacks.values()];
+          callbacks.clear();
+          timeMs += 50;
+          for (const callback of due) {
+            callback(timeMs);
+          }
+        }
+      });
+    },
+  };
 }
 
 /** The value shown next to a HUD label: score, lives or ammo. */
@@ -86,13 +96,12 @@ describe('GameView', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('runs the game on the canvas and shows its HUD', async () => {
-    installFrames();
+  it('runs the game on the canvas and shows its HUD', () => {
+    const frames = installFrames();
     render(<GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />);
 
-    // The first frame sets the time reference, each later one runs three ticks: 6 ticks, before
-    // the first round comes back at tick 12.
-    await frames(3);
+    // 6 ticks, before the first round comes back at tick 12.
+    frames.run(3);
 
     expect(hudValue('Score')).toBe('0');
     expect(hudValue('Ammo')).toBe('20');
@@ -100,57 +109,62 @@ describe('GameView', () => {
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, 1280, 720);
   });
 
-  it('shoots on Space: a sound and one round less', async () => {
-    installFrames();
+  it('shoots on Space: a sound and one round less', () => {
+    const frames = installFrames();
     render(<GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />);
-    await frames(1);
+    frames.run(1);
 
     fireEvent.keyDown(window, { code: 'Space' });
-    await frames(2);
+    frames.run(2);
     fireEvent.keyUp(window, { code: 'Space' });
 
     expect(play).toHaveBeenCalledWith('shot');
     expect(hudValue('Ammo')).toBe('19');
   });
 
-  it('pauses on Escape and resumes from the dialog', async () => {
-    installFrames();
+  it('pauses on Escape and resumes from the dialog', () => {
+    const frames = installFrames();
     render(<GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />);
-    await frames(2);
+    frames.run(2);
 
     fireEvent.keyDown(window, { code: 'Escape' });
-    await frames(2);
+    frames.run(1);
     fireEvent.keyUp(window, { code: 'Escape' });
 
-    const resume = screen.getByRole('button', { name: 'Resume' });
-    fireEvent.click(resume);
-    await frames(1);
+    expect(frames.pending()).toBe(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
+    frames.run(1);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(frames.pending()).toBe(1);
   });
 
-  it('starts a new run with Play again once the run is over', { timeout: 60_000 }, async () => {
-    installFrames();
+  it('starts a new run with Play again once the run is over', () => {
+    const frames = installFrames();
     render(<GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />);
 
-    // Standing still, the hero is eventually hit five times.
-    await screen.findByRole('dialog', { name: 'Game over' }, { timeout: 50_000, interval: 5 });
+    // Standing still, the hero is eventually hit five times; ten minutes of play at most.
+    for (let i = 0; i < 12_000 && screen.queryByRole('dialog') === null; i += 1) {
+      frames.run(1);
+    }
+    expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
-    await frames(2);
+    frames.run(2);
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(hudValue('Lives')).toBe('5 of 5');
   });
 
-  it('stops the run when it leaves the page', async () => {
-    const host = installFrames();
+  it('stops the run when it leaves the page', () => {
+    const frames = installFrames();
     const view = render(
       <GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />,
     );
-    await frames(2);
+    frames.run(2);
+    expect(frames.pending()).toBe(1);
 
     view.unmount();
 
-    expect(host.pending()).toBe(0);
+    expect(frames.pending()).toBe(0);
   });
 
   it('explains when the browser has no 2D canvas context', () => {
