@@ -5,15 +5,10 @@
   "description": "Buzzkill game domain: entities, systems, rules and levels as data. Depends only on the engine; no DOM, no React.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./legacy": {
-      "types": "./src/legacy/public.d.ts",
-      "default": "./src/legacy/index.ts"
-    },
-    "./legacy/assets/*": "./src/legacy/assets/*"
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit && tsc --noEmit -p src/legacy/tsconfig.json"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@buzzkill/engine": "workspace:*",

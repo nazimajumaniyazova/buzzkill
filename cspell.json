@@ -18,7 +18,6 @@
     "LICENSE",
     "CHANGELOG.md",
     ".husky",
-    ".cspell",
-    "packages/game/src/legacy/*.ts"
+    ".cspell"
   ]
 }
