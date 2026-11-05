@@ -95,6 +95,89 @@ The rules are enforced three times over:
 Packages export TypeScript source (`"exports": { ".": "./src/index.ts" }`); Vite consumes it
 directly and there is no per-package build step.
 
+## Level 3: components
+
+### Engine
+
+The engine is the reusable part: nothing in it knows Buzzkill. Its main entry compiles without the
+DOM lib; everything that touches the browser sits behind `@buzzkill/engine/browser` and is
+handed to the core through small interfaces, which is also how tests replace it.
+
+```mermaid
+flowchart TB
+  subgraph core["@buzzkill/engine: headless core"]
+    direction TB
+    loop["loop<br/>fixed timestep, game loop, visibility pause"]
+    input["input<br/>action input, key and gamepad bindings"]
+    math["math<br/>seeded RNG (sfc32), deterministic sin and cos, clamp"]
+    collision["collision<br/>AABB, spatial hash"]
+    events["events<br/>typed event bus"]
+    pool["pool<br/>object pool"]
+    hash["hash<br/>FNV-1a"]
+    assets["assets<br/>loader with progress and typed failures"]
+    render["render<br/>Renderer interface, Canvas 2D renderer, grid atlases"]
+    audio["audio<br/>mixer with music and effects groups"]
+    fit["canvas<br/>device-pixel-ratio fit and letterbox"]
+  end
+
+  subgraph adapters["@buzzkill/engine/browser: DOM adapters"]
+    direction TB
+    host["browser host<br/>requestAnimationFrame, Page Visibility"]
+    sources["input sources<br/>keyboard, pointer buttons, gamepad"]
+    decoders["asset decoders<br/>fetch, ImageBitmap, decodeAudioData"]
+    context["audio context<br/>created on the first gesture"]
+  end
+
+  host -- "GameLoopHost" --> loop
+  sources -- "press and release actions" --> input
+  decoders -- "AssetDecoders" --> assets
+  context -- "AudioContextLike" --> audio
+```
+
+The renderer and the mixer are typed against the part of the 2D context and of Web Audio they use,
+so they belong to the headless core even though only a browser runs them (ADR-0004).
+
+### Game
+
+The game is Buzzkill's rules as data plus pure systems over an ECS-lite world (ADR-0003). It
+imports only the engine's headless entry, so the same build runs in the browser and, in stage 8,
+in the server function that verifies a replay (ADR-0009).
+
+```mermaid
+flowchart TB
+  web["apps/web<br/>input sources, browser host,<br/>drawing code, audio mixer"]
+  server["submit-run edge function<br/>stage 8"]:::planned
+
+  subgraph game["@buzzkill/game"]
+    direction TB
+    api["createGame<br/>loop, input sampling, pushed HUD, recording"]
+    replay["replay<br/>format with Zod, recorder, simulate, state hash"]
+    simulation["simulation<br/>createSimulation, systems in a fixed order,<br/>pure rules, typed events"]
+    world["world<br/>typed-array component stores,<br/>dense ids, deferred removal"]
+    config["config and actions<br/>enemies, heroes, rules, action list"]
+  end
+
+  engine[("@buzzkill/engine<br/>headless entry")]
+
+  web -- "settings, seed, input, host,<br/>renderer and audio ports" --> api
+  api --> simulation
+  api --> replay
+  replay --> simulation
+  simulation --> world
+  simulation --> config
+  server -. "simulate(replay)" .-> replay
+  game --> engine
+
+  classDef planned stroke-dasharray: 5 5,color:#555
+```
+
+- `createGame` is the only thing the shell calls: it drives the simulation with the engine loop,
+  samples input once per tick, records the replay and publishes the HUD when a value changes.
+- `simulate` replays a run without a loop, a DOM or a clock and returns the score and an FNV-1a
+  hash of the whole state; a replay recorded in the browser gives the same hash.
+- The world never draws itself: the shell's drawing code reads it through the `GameRenderer` port
+  and interpolates between ticks.
+
 ## Runtime data flow
 
 ```mermaid
@@ -136,7 +219,8 @@ flowchart LR
 
 ## What exists today
 
-Stage 1 (foundation) is about the repository, not the game. The diagrams above show the target.
+Stages 1 to 3 are done: the repository, the import of the 2023 game, and its rebuild as an engine
+and a deterministic simulation. Dashed elements in the diagrams are later stages.
 
 | Container         | Today                                                                                                                                                                                                                                                                                        |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -154,7 +238,7 @@ the simulation, replay and golden tests now pin the behavior.
 
 ## Read next
 
-- [Architecture Decision Records](adr/README.md): monorepo tooling, UI framework, hosting, releases,
-  and the stage 3 decisions to come (entity model, rendering, determinism).
+- [Architecture Decision Records](adr/README.md): monorepo tooling, UI framework, entity model,
+  rendering, determinism and replays, hosting, releases, benchmarks in CI.
 - [CONTRIBUTING](../CONTRIBUTING.md): how to run the project and how changes get in.
 - [CLAUDE.md](../CLAUDE.md): the rules AI coding agents follow in this repository.
