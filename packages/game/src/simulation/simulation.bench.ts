@@ -19,6 +19,11 @@ import { createSimulation, type Simulation } from './simulation';
  */
 
 const TICKS_PER_MINUTE = 60 * 60;
+/**
+ * CodSpeed's CPU simulation (ADR-0012) runs code many times slower than the CPU does: the
+ * three-minute run alone took over two minutes there. Generous, so CI fails only on a real hang.
+ */
+const BENCH_TIMEOUT = 600_000;
 const MOVE_UP = 1;
 const MOVE_DOWN = 2;
 
@@ -55,7 +60,7 @@ function golden(value: unknown): Replay {
 }
 
 describe('simulation', () => {
-  test('one tick at typical load', { timeout: 120_000 }, async ({ bench }) => {
+  test('one tick at typical load', { timeout: BENCH_TIMEOUT }, async ({ bench }) => {
     // Past the spawn ramp (tick 1668), the number of enemies alive stays roughly constant.
     const simulation = endlessRun();
     const input = { down: 0, pressed: 0 };
@@ -66,7 +71,7 @@ describe('simulation', () => {
     }).run();
   });
 
-  test('three-minute run', { timeout: 120_000 }, async ({ bench }) => {
+  test('three-minute run', { timeout: BENCH_TIMEOUT }, async ({ bench }) => {
     const input = { down: 0, pressed: 0 };
 
     await bench('10 800 ticks from a new run', () => {
@@ -75,7 +80,7 @@ describe('simulation', () => {
     }).run();
   });
 
-  test('simulate the golden replays', { timeout: 120_000 }, async ({ bench }) => {
+  test('simulate the golden replays', { timeout: BENCH_TIMEOUT }, async ({ bench }) => {
     const day = golden(dayMale);
     const night = golden(nightFemale);
     const maxTicks = 10 * TICKS_PER_MINUTE;
