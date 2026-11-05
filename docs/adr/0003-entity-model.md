@@ -1,5 +1,3 @@
-<!-- cspell:ignore Explostion -->
-
 # ADR-0003: Entity model of the simulation
 
 - **Status:** Accepted
@@ -9,7 +7,7 @@
 ## Context
 
 The 2023 engine models the game with classes: `Game` owns arrays of `Player`, `Enemy1..3`,
-`EnemyNight1..3`, `Projectile`, `smokeExplostion`, `fireExplostion`. The six enemy classes differ
+`EnemyNight1..3`, `Projectile` and two explosion classes, smoke and fire. The six enemy classes differ
 only in numbers and sprites; every projectile and explosion is a fresh allocation; update order is
 whatever the class methods happen to call; nothing can be tested without a canvas, `Image` and
 `Audio`. The characterization tests of stage 2 pin this behavior.

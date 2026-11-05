@@ -123,20 +123,6 @@ export default defineConfig([
     },
   },
 
-  // The 2023 engine imported from the team project (packages/game/src/legacy). It is DOM-bound
-  // and predates the standards above, so until #42 replaces it, it is linted without type
-  // information and without the headless rules of the game package.
-  {
-    files: ['packages/game/src/legacy/*.ts'],
-    extends: [tsConfigs.disableTypeChecked],
-    languageOptions: { globals: globals.browser },
-    rules: {
-      'no-restricted-globals': 'off',
-      'no-restricted-properties': 'off',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-    },
-  },
-
   // React shell and design system. `extends` scopes each shared config to these files and
   // merges their rules instead of letting one object spread overwrite another.
   // eslint-plugin-react and eslint-plugin-jsx-a11y still call context APIs that ESLint 10

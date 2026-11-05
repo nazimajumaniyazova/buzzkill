@@ -3,7 +3,7 @@ import { animationFrame, type GameRenderer, Kind, RULES } from '@buzzkill/game';
 
 import type { GameSprites } from './sprites';
 
-/** Stand-in colors for art that does not exist yet, the same as the legacy placeholders. */
+/** Stand-in colors for art that does not exist yet, the same as the 2023 placeholders. */
 const COLORS = {
   sky: { day: '#bfe3ff', night: '#121a2b' },
   hero: { male: '#3b7dd8', female: '#e07aa5' },

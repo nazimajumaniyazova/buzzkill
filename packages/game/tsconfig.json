@@ -3,6 +3,5 @@
   "compilerOptions": {
     "lib": ["ES2023"]
   },
-  "include": ["src", "vitest.config.ts", "vitest.legacy.config.ts"],
-  "exclude": ["src/legacy"]
+  "include": ["src", "vitest.config.ts"]
 }

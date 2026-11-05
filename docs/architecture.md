@@ -147,9 +147,10 @@ Stage 1 (foundation) is about the repository, not the game. The diagrams above s
 | `packages/config` | `tsconfig.base.json`, Vitest presets (`node`, `jsdom`)                                                                                                                                                                                                                                       |
 | Supabase          | Not started (stage 8)                                                                                                                                                                                                                                                                        |
 
-Stage 2 imports the original engine from the team project as `packages/game/src/legacy/` with its
-history and pins its behavior with characterization tests; stage 3 refactors it into the structure
-above.
+Stage 2 imported the original engine from the team project as `packages/game/src/legacy/` with its
+history and pinned its behavior with characterization tests. Stage 3 rebuilt it as the engine and
+the simulation above and deleted the folder (#42); the 2023 commits stay in the git history, and
+the simulation, replay and golden tests now pin the behavior.
 
 ## Read next
 

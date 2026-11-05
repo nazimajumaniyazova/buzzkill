@@ -1,19 +1,19 @@
 import type { AssetManifest } from '@buzzkill/engine';
 import type { GameSound } from '@buzzkill/game';
-// The 2023 art the owner may publish. It moves out of the legacy folder with #42. The heroes, the
-// background and the first day enemy were drawn by other team members, so they are placeholders
-// until the CC0 art of stage 6.
-import shotSound from '@buzzkill/game/legacy/assets/bullet-sound.wav';
-import enemyBat2 from '@buzzkill/game/legacy/assets/enemy_bat_2.png';
-import enemyBat3 from '@buzzkill/game/legacy/assets/enemy_bat_3.png';
-import enemyRaven from '@buzzkill/game/legacy/assets/enemy_raven.png';
-import enemy2 from '@buzzkill/game/legacy/assets/enemy-2.png';
-import enemy3 from '@buzzkill/game/legacy/assets/enemy-3.png';
-import fireExplosion from '@buzzkill/game/legacy/assets/fireExplosion.png';
-import hitSound from '@buzzkill/game/legacy/assets/pain-sound.wav';
-import projectile from '@buzzkill/game/legacy/assets/projectile.png';
-import explosionSound from '@buzzkill/game/legacy/assets/smoke-bomb.wav';
-import smokeExplosion from '@buzzkill/game/legacy/assets/smokeExplosion.png';
+
+// The 2023 art the owner may publish. The heroes, the background and the first day enemy were
+// drawn by other team members, so they are placeholders until the CC0 art of stage 6.
+import shotSound from '../assets/bullet-sound.wav';
+import enemyBat2 from '../assets/enemy_bat_2.png';
+import enemyBat3 from '../assets/enemy_bat_3.png';
+import enemyRaven from '../assets/enemy_raven.png';
+import enemy2 from '../assets/enemy-2.png';
+import enemy3 from '../assets/enemy-3.png';
+import fireExplosion from '../assets/fireExplosion.png';
+import hitSound from '../assets/pain-sound.wav';
+import projectile from '../assets/projectile.png';
+import explosionSound from '../assets/smoke-bomb.wav';
+import smokeExplosion from '../assets/smokeExplosion.png';
 
 /** Enemy sprite sheets without art in the repository yet; they are drawn as placeholders. */
 export const MISSING_SHEETS: readonly string[] = ['enemy-day-1'];
