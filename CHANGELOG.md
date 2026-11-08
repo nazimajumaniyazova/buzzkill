@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.2.0...v0.3.0) (2026-11-08)
+
+
+### Features
+
+* **ui:** add Storybook with token docs, theme switcher and a11y tests ([#90](https://github.com/nazimajumaniyazova/buzzkill/issues/90)) ([3b01f76](https://github.com/nazimajumaniyazova/buzzkill/commit/3b01f768bd92aabfb67a48f3e4bef5a6b45b9849)), closes [#76](https://github.com/nazimajumaniyazova/buzzkill/issues/76)
+* **ui:** follow the user's theme, motion and contrast preferences ([#89](https://github.com/nazimajumaniyazova/buzzkill/issues/89)) ([a33b25c](https://github.com/nazimajumaniyazova/buzzkill/commit/a33b25ce40788cda28cf27d459efe2b092dafe1c)), closes [#75](https://github.com/nazimajumaniyazova/buzzkill/issues/75)
+
 ## [0.2.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.1.0...v0.2.0) (2026-11-08)
 
 
