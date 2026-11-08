@@ -34,6 +34,19 @@ export const button = define('button', {
   },
 });
 
+export const dialog = define('dialog', {
+  padding: space.inset.lg,
+  /** The least distance between the dialog and the edge of the viewport. */
+  margin: space.inset.md,
+  radius: radius.surface,
+  shadow: shadow.raised,
+  background: color.surface,
+  text: color.text,
+  border: color.border,
+  backdrop: color.overlay,
+  titleSize: text.lg,
+});
+
 export const menu = define('menu', {
   padding: space.inset.xs,
   radius: radius.control,

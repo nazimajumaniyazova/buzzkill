@@ -10,6 +10,7 @@ export {
   type ButtonVariant,
 } from './components/Button/Button';
 export { IconButton, type IconButtonProps } from './components/Button/IconButton';
+export { Dialog, type DialogProps } from './components/Dialog/Dialog';
 export {
   Inline,
   type InlineAlign,
