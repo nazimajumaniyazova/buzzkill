@@ -1,0 +1,33 @@
+/* The browser positions a modal dialog in the top layer; this only shapes it. */
+.dialog {
+  box-sizing: border-box;
+  inline-size: min(32rem, 100% - 2 * var(--dialog-margin));
+  padding: var(--dialog-padding);
+  color: var(--dialog-text);
+  background-color: var(--dialog-background);
+  border: 1px solid var(--dialog-border);
+  border-radius: var(--dialog-radius);
+  box-shadow: var(--dialog-shadow);
+}
+
+.dialog::backdrop {
+  background-color: var(--dialog-backdrop);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--dialog-title-size);
+  line-height: var(--font-line-height-tight);
+}
+
+.description {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+/* Last in the DOM so that Tab visits the content first, but drawn in the corner. */
+.close {
+  position: absolute;
+  inset-block-start: var(--space-inset-sm);
+  inset-inline-end: var(--space-inset-sm);
+}
