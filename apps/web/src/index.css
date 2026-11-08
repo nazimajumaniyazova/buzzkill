@@ -1,12 +1,3 @@
-:root {
-  /* Temporary values; the design-system tokens of stage 4 replace them. */
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 32px;
-  --color-overlay: rgb(0 0 0 / 65%);
-  --color-overlay-text: white;
-}
-
 html,
 body,
 #root {
@@ -15,27 +6,29 @@ body,
 }
 
 body {
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-canvas);
 }
 
 .start-screen {
   display: grid;
-  gap: var(--space-md);
+  gap: var(--space-stack-lg);
   justify-items: center;
   align-content: center;
   min-height: 100%;
-  padding: var(--space-lg);
+  padding: var(--space-inset-lg);
   text-align: center;
 }
 
 .start-screen fieldset {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-inline-lg);
 }
 
 .start-screen label {
   display: flex;
-  gap: var(--space-sm);
+  gap: var(--space-inline-md);
   align-items: center;
 }
 
@@ -49,30 +42,30 @@ body {
 
 .screen {
   display: grid;
-  gap: var(--space-md);
+  gap: var(--space-stack-lg);
   place-content: center;
   min-height: 100%;
-  padding: var(--space-lg);
+  padding: var(--space-inset-lg);
   text-align: center;
 }
 
 .hud {
   position: fixed;
-  inset: var(--space-md) var(--space-md) auto;
+  inset: var(--space-inset-md) var(--space-inset-md) auto;
   pointer-events: none;
-  color: var(--color-overlay-text);
-  text-shadow: 0 1px 2px black;
+  color: var(--color-on-overlay);
+  text-shadow: var(--shadow-text);
 }
 
 .hud dl {
   display: flex;
-  gap: var(--space-lg);
+  gap: var(--space-inline-xl);
   margin: 0;
 }
 
 .hud dl div {
   display: flex;
-  gap: var(--space-sm);
+  gap: var(--space-inline-md);
 }
 
 .hud dd {
@@ -85,15 +78,15 @@ body {
   position: fixed;
   inset: 0;
   display: grid;
-  gap: var(--space-md);
+  gap: var(--space-stack-lg);
   place-content: center;
-  color: var(--color-overlay-text);
+  color: var(--color-on-overlay);
   text-align: center;
   background-color: var(--color-overlay);
 }
 
 .actions {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-inline-lg);
   justify-content: center;
 }

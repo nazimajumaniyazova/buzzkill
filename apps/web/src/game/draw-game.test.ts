@@ -103,7 +103,7 @@ describe('createGameDrawer', () => {
 
     expect(calls.slice(2, 5)).toEqual([
       ['sprite', 'enemy-2', 2, 300, 400, { width: 50, height: 50 }],
-      ['rect', 300, 410, 50, 10, 'rgb(0 0 0 / 60%)'],
+      ['rect', 300, 410, 50, 10, '#0009'],
       ['rect', 300, 410, 12.5, 10, '#48bf53'],
     ]);
   });

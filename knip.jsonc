@@ -6,9 +6,6 @@
     },
     "apps/web": {
       "project": ["src/**/*.{ts,tsx}"],
-      // Declared ahead of use to fix the dependency direction (issue #2).
-      // Remove each entry once the app imports that package.
-      "ignoreDependencies": ["@buzzkill/ui"],
     },
     "packages/config": {
       "entry": [],
@@ -21,7 +18,8 @@
       "project": ["src/**/*.ts"],
     },
     "packages/ui": {
-      "project": ["src/**/*.{ts,tsx}"],
+      "entry": ["scripts/*.ts"],
+      "project": ["src/**/*.{ts,tsx}", "scripts/*.ts"],
     },
   },
 }
