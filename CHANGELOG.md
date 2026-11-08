@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.1.0...v0.2.0) (2026-11-08)
+
+
+### Features
+
+* **ui:** add design tokens in three layers with a generated stylesheet ([#87](https://github.com/nazimajumaniyazova/buzzkill/issues/87)) ([ed4a751](https://github.com/nazimajumaniyazova/buzzkill/commit/ed4a751fea4893347039567005d917efb96fa8c5)), closes [#74](https://github.com/nazimajumaniyazova/buzzkill/issues/74)
+
 ## 0.1.0 (2026-11-08)
 
 
