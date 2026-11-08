@@ -28,6 +28,8 @@ vi.mock('./GameSession', () => ({
 describe('App', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
   });
 
   it('shows the start screen first and passes the accessibility check', async () => {
@@ -71,5 +73,35 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Play' }));
 
     expect(screen.getByText('Session: male day, audio off')).toBeInTheDocument();
+  });
+
+  it('follows the system theme until the player picks one, then remembers the pick', () => {
+    render(<App />);
+
+    expect(document.documentElement).not.toHaveAttribute('data-theme');
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Always night' }));
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night');
+    expect(screen.getByRole('radio', { name: 'Always night' })).toBeChecked();
+    expect(localStorage.getItem('buzzkill.theme')).toBe('night');
+  });
+
+  it("restores the stored theme and uses the run's time of day while playing", () => {
+    localStorage.setItem('buzzkill.theme', 'night');
+    vi.stubGlobal('AudioContext', undefined);
+    render(<App />);
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night');
+    expect(screen.getByRole('radio', { name: 'Always night' })).toBeChecked();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Day' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'day');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Exit' }));
+
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night');
   });
 });

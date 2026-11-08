@@ -64,7 +64,12 @@ export const shadow = define('shadow', {
   md: '0 4px 12px #00000040',
 });
 
-export const duration = define('duration', { fast: '100ms', normal: '200ms', slow: '400ms' });
+export const duration = define('duration', {
+  none: '0ms',
+  fast: '100ms',
+  normal: '200ms',
+  slow: '400ms',
+});
 
 export const easing = define('easing', {
   standard: 'cubic-bezier(0.2, 0, 0, 1)',

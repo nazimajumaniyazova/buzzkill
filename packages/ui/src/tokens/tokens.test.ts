@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { contrastRatio } from './contrast';
 import { collect, type Token } from './define';
-import { themes } from './semantic';
+import { type ThemeName, themes } from './semantic';
 import { tokens } from './tokens';
 
 const CUSTOM_PROPERTY = /^--[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const HEX = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/;
+const THEME_NAMES = ['day', 'night'] as const satisfies readonly ThemeName[];
 
 /** Whether Stylelint would shorten the hex color (`#ffffff` to `#fff`). */
 function hasLongHexForm(hex: string): boolean {
@@ -71,12 +72,14 @@ describe('design tokens', () => {
   it('defines the same semantic colors in every theme, in the same order', () => {
     const names = collect(themes.day).map((token) => token.name);
 
+    expect(Object.keys(themes)).toEqual(THEME_NAMES);
     for (const theme of Object.values(themes)) {
       expect(collect(theme).map((token) => token.name)).toEqual(names);
     }
   });
 
-  describe.each(Object.entries(themes))('%s theme meets WCAG AA', (_theme, colors) => {
+  describe.each(THEME_NAMES)('%s theme meets WCAG AA', (theme) => {
+    const colors = themes[theme];
     const TEXT = 4.5;
     const CONTROL = 3;
     const pairs = [
@@ -105,6 +108,62 @@ describe('design tokens', () => {
 
     it.each(pairs)('$label reaches $min:1', ({ ratio, min }) => {
       expect(ratio).toBeGreaterThanOrEqual(min);
+    });
+  });
+
+  describe('preference overrides', () => {
+    const semanticNames = new Set(semantic.map((token) => token.name));
+    const overrides = [
+      ...collect(tokens.preferences.contrastMore),
+      ...collect(tokens.preferences.reducedMotion),
+    ];
+
+    it('use the names of the semantic layer and reference primitives', () => {
+      expect(overrides.length).toBeGreaterThan(0);
+      for (const token of overrides) {
+        expect(semanticNames.has(token.name)).toBe(true);
+        expect(layerOf(token)).toBe(1);
+      }
+    });
+
+    it('zero every duration under reduced motion', () => {
+      const durations = collect(tokens.preferences.reducedMotion);
+
+      expect(durations.map((token) => token.name)).toEqual([
+        '--motion-fast',
+        '--motion-normal',
+        '--motion-slow',
+      ]);
+      for (const token of durations) {
+        expect(token.value).toBe('0ms');
+      }
+    });
+
+    describe.each(THEME_NAMES)('raise the contrast of the %s theme', (theme) => {
+      const colors = themes[theme];
+      const more = tokens.preferences.contrastMore[theme];
+      const AAA_TEXT = 7;
+      const RAISED_BORDER = 4.5;
+      const pairs = [
+        { key: 'text', bg: colors.canvas, min: AAA_TEXT },
+        { key: 'text', bg: colors.surface, min: AAA_TEXT },
+        { key: 'textMuted', bg: colors.canvas, min: AAA_TEXT },
+        { key: 'textMuted', bg: colors.surface, min: AAA_TEXT },
+        { key: 'border', bg: colors.canvas, min: RAISED_BORDER },
+        { key: 'border', bg: colors.surface, min: RAISED_BORDER },
+      ] as const;
+
+      it.each(
+        pairs.map(({ key, bg, min }) => ({
+          label: `${more[key].name} on ${bg.name}`,
+          base: contrastRatio(colors[key].value, bg.value),
+          raised: contrastRatio(more[key].value, bg.value),
+          min,
+        })),
+      )('$label goes above its base ratio and reaches $min:1', ({ base, raised, min }) => {
+        expect(raised).toBeGreaterThan(base);
+        expect(raised).toBeGreaterThanOrEqual(min);
+      });
     });
   });
 });
