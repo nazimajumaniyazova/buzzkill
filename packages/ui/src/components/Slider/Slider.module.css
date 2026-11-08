@@ -1,0 +1,33 @@
+.slider {
+  display: grid;
+  gap: var(--space-stack-sm);
+}
+
+.label {
+  text-align: start;
+}
+
+.row {
+  display: flex;
+  gap: var(--slider-gap);
+  align-items: center;
+}
+
+/* The browser draws the track and the thumb in the accent color; only the focus ring is ours. */
+.input {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  accent-color: var(--slider-accent);
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--slider-focus-ring);
+  outline-offset: 2px;
+}
+
+.value {
+  min-inline-size: 3ch;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}

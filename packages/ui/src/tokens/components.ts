@@ -46,3 +46,28 @@ export const dialog = define('dialog', {
   backdrop: color.overlay,
   titleSize: text.lg,
 });
+
+/** `switch` is a reserved word, so the group is `switchControl` in TypeScript. */
+export const switchControl = define('switch', {
+  track: color.border,
+  trackChecked: color.accent,
+  thumb: color.surface,
+  radius: radius.pill,
+  gap: space.inline.md,
+  focusRing: color.focus,
+});
+
+export const slider = define('slider', {
+  accent: color.accent,
+  gap: space.inline.md,
+  focusRing: color.focus,
+});
+
+export const radio = define('radio', {
+  accent: color.accent,
+  /** Between the circle and its label. */
+  gap: space.inline.md,
+  /** Between the options. */
+  itemGap: space.inline.lg,
+  focusRing: color.focus,
+});

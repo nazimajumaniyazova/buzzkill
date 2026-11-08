@@ -21,17 +21,6 @@ body {
   text-align: center;
 }
 
-.start-screen fieldset {
-  display: flex;
-  gap: var(--space-inline-lg);
-}
-
-.start-screen label {
-  display: flex;
-  gap: var(--space-inline-md);
-  align-items: center;
-}
-
 .game-canvas {
   /* The engine sets the size; auto margins center the letterboxed canvas in the window. */
   position: fixed;

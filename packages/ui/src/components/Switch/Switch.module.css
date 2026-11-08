@@ -1,0 +1,55 @@
+.switch {
+  display: inline-flex;
+  gap: var(--switch-gap);
+  align-items: center;
+  padding: 0;
+  font: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--switch-focus-ring);
+  outline-offset: 2px;
+}
+
+.switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Sized in em, so the control follows the text size around it. */
+.track {
+  position: relative;
+  flex: none;
+  inline-size: 2.5em;
+  block-size: 1.5em;
+  background-color: var(--switch-track);
+  border-radius: var(--switch-radius);
+  transition: background-color var(--motion-fast) var(--motion-easing);
+}
+
+.thumb {
+  position: absolute;
+  inset-block-start: 0.125em;
+  inset-inline-start: 0.125em;
+  inline-size: 1.25em;
+  block-size: 1.25em;
+  background-color: var(--switch-thumb);
+  border-radius: var(--switch-radius);
+  transition: translate var(--motion-fast) var(--motion-easing);
+}
+
+.label {
+  text-align: start;
+}
+
+.switch[aria-checked='true'] .track {
+  background-color: var(--switch-track-checked);
+}
+
+.switch[aria-checked='true'] .thumb {
+  translate: 1em 0;
+}
