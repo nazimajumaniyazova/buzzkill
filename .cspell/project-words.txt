@@ -4,6 +4,7 @@ AZERTY
 bitecs
 bryc
 Buzzkill
+codegen
 codspeed
 commitlint
 davelosert

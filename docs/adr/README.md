@@ -17,6 +17,7 @@ continue from 0010.
 | [0004](0004-rendering.md)               | Rendering technology                    | Accepted |
 | [0009](0009-determinism-and-replays.md) | Determinism and replays                 | Accepted |
 | [0012](0012-benchmarks-in-ci.md)        | Benchmarks in CI                        | Accepted |
+| [0005](0005-styling.md)                 | Styling approach for the design system  | Accepted |
 
 ## Template
 
