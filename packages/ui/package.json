@@ -13,13 +13,14 @@
     "storybook": "storybook dev --port 6006 --no-open",
     "test:storybook": "vitest run --config vitest.storybook.config.ts",
     "tokens": "tsx scripts/build-tokens.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json"
+    "typecheck": "cmk && tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json"
   },
   "dependencies": {
     "react": "catalog:"
   },
   "devDependencies": {
     "@buzzkill/config": "workspace:*",
+    "@css-modules-kit/codegen": "catalog:",
     "@storybook/addon-a11y": "catalog:",
     "@storybook/addon-docs": "catalog:",
     "@storybook/addon-vitest": "catalog:",

@@ -46,6 +46,10 @@ catalog:
   '@vitest/browser': ^5.1.0
   '@vitest/browser-playwright': ^5.1.0
   playwright: ^1.65.0
+  # CSS Modules (ADR-0005): typed class names for tsc, unused-class and token-name checks
+  '@css-modules-kit/codegen': ^1.4.1
+  '@css-modules-kit/stylelint-plugin': ^1.4.1
+  stylelint-value-no-unknown-custom-properties: ^6.1.1
   # Token generation (#74): runs the TypeScript token source in Node to write tokens.css
   tsx: ^4.23.15
   '@types/node': ^24.19.2

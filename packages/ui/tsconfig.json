@@ -4,5 +4,7 @@
     "jsx": "react-jsx",
     "types": ["vite/client", "node"]
   },
-  "include": ["src", ".storybook/**/*", "vitest.config.ts", "vitest.storybook.config.ts"]
+  "include": ["src", ".storybook/**/*", "vitest.config.ts", "vitest.storybook.config.ts"],
+  // css-modules-kit: `cmk` writes a `.d.ts` next to every `*.module.css` (ADR-0005).
+  "cmkOptions": { "enabled": true, "dtsOutDir": "." }
 }

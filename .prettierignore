@@ -5,3 +5,4 @@ storybook-static
 pnpm-lock.yaml
 CHANGELOG.md
 **/*.gen.ts
+**/*.module.css.d.ts

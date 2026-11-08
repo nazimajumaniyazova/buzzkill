@@ -6,7 +6,8 @@
       "outputs": ["dist/**", "storybook-static/**"]
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"]
+      "dependsOn": ["^typecheck"],
+      "outputs": ["src/**/*.module.css.d.ts"]
     },
     "dev": {
       "cache": false,
