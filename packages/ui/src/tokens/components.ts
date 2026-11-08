@@ -1,5 +1,5 @@
 import { define } from './define';
-import { motion, radius, space, text, themes } from './semantic';
+import { motion, radius, shadow, space, text, themes } from './semantic';
 
 /**
  * Layer 3 of the design tokens: what a component needs, defined over the semantic layer. A
@@ -32,4 +32,17 @@ export const button = define('button', {
     backgroundHover: color.dangerHover,
     text: color.onDanger,
   },
+});
+
+export const dialog = define('dialog', {
+  padding: space.inset.lg,
+  /** The least distance between the dialog and the edge of the viewport. */
+  margin: space.inset.md,
+  radius: radius.surface,
+  shadow: shadow.raised,
+  background: color.surface,
+  text: color.text,
+  border: color.border,
+  backdrop: color.overlay,
+  titleSize: text.lg,
 });

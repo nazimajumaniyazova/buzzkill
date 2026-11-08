@@ -133,6 +133,15 @@
   --button-danger-background: var(--color-danger);
   --button-danger-background-hover: var(--color-danger-hover);
   --button-danger-text: var(--color-on-danger);
+  --dialog-padding: var(--space-inset-lg);
+  --dialog-margin: var(--space-inset-md);
+  --dialog-radius: var(--radius-surface);
+  --dialog-shadow: var(--shadow-raised);
+  --dialog-background: var(--color-surface);
+  --dialog-text: var(--color-text);
+  --dialog-border: var(--color-border);
+  --dialog-backdrop: var(--color-overlay);
+  --dialog-title-size: var(--text-lg);
 
   color-scheme: light;
 }
