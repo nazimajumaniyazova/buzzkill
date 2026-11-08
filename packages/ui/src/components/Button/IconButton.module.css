@@ -1,0 +1,21 @@
+/* Square: the inline padding equals the block padding of the same size. These rules come after
+   Button.module.css in the bundle, because IconButton imports Button first. */
+.iconButton[data-size='sm'] {
+  padding-inline: var(--button-padding-block-sm);
+}
+
+.iconButton[data-size='md'] {
+  padding-inline: var(--button-padding-block-md);
+}
+
+.iconButton[data-size='lg'] {
+  padding-inline: var(--button-padding-block-lg);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25em;
+  height: 1.25em;
+}

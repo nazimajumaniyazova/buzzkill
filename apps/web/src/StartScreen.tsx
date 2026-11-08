@@ -1,5 +1,5 @@
 import type { GameMode, HeroId } from '@buzzkill/game';
-import { KeyHint } from '@buzzkill/ui';
+import { Button, KeyHint } from '@buzzkill/ui';
 import { type JSX, type SubmitEvent, useId, useState } from 'react';
 
 import type { ThemeChoice } from './theme';
@@ -129,7 +129,9 @@ export function StartScreen({ theme, onThemeChange, onStart }: StartScreenProps)
         <KeyHint>Escape</KeyHint> to pause.
       </p>
 
-      <button type="submit">Play</button>
+      <Button type="submit" size="lg">
+        Play
+      </Button>
     </form>
   );
 }

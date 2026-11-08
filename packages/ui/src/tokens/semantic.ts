@@ -24,15 +24,19 @@ interface ThemeColorSource {
   readonly canvas: Token;
   /** Panels on the canvas: menus, dialogs, cards. */
   readonly surface: Token;
+  /** A surface under the pointer: a hovered secondary button or menu item. */
+  readonly surfaceHover: Token;
   readonly text: Token;
   readonly textMuted: Token;
   /** Borders and dividers; at least 3:1 against the canvas and the surface. */
   readonly border: Token;
-  /** Primary actions. `onAccent` is the text on them. */
+  /** Primary actions. `onAccent` is the text on them, also on the hover color. */
   readonly accent: Token;
+  readonly accentHover: Token;
   readonly onAccent: Token;
   /** Destructive actions, errors and damage. */
   readonly danger: Token;
+  readonly dangerHover: Token;
   readonly onDanger: Token;
   /** Health, confirmations. A fill color: it carries `onSuccess` text, not text on the canvas. */
   readonly success: Token;
@@ -51,12 +55,15 @@ export type ThemeName = 'day' | 'night';
 const day = define('color', {
   canvas: palette.blue[100],
   surface: palette.neutral[0],
+  surfaceHover: palette.neutral[100],
   text: palette.neutral[900],
   textMuted: palette.neutral[700],
   border: palette.neutral[500],
   accent: palette.blue[600],
+  accentHover: palette.blue[700],
   onAccent: palette.neutral[0],
   danger: palette.red[600],
+  dangerHover: palette.red[700],
   onDanger: palette.neutral[0],
   success: palette.green[500],
   onSuccess: palette.neutral[950],
@@ -68,12 +75,15 @@ const day = define('color', {
 const night = define('color', {
   canvas: palette.blue[950],
   surface: palette.neutral[800],
+  surfaceHover: palette.neutral[700],
   text: palette.neutral[50],
   textMuted: palette.neutral[300],
   border: palette.neutral[300],
   accent: palette.blue[400],
+  accentHover: palette.blue[300],
   onAccent: palette.neutral[950],
   danger: palette.red[400],
+  dangerHover: palette.red[300],
   onDanger: palette.neutral[950],
   success: palette.green[500],
   onSuccess: palette.neutral[950],
@@ -86,7 +96,7 @@ export const themes = { day, night } as const satisfies Record<ThemeName, ThemeC
 
 /** Padding (`inset`), vertical gaps (`stack`) and horizontal gaps (`inline`). */
 export const space = define('space', {
-  inset: { sm: spacing[2], md: spacing[4], lg: spacing[8] },
+  inset: { xs: spacing[1], sm: spacing[2], md: spacing[4], lg: spacing[8] },
   stack: { sm: spacing[1], md: spacing[2], lg: spacing[4], xl: spacing[8] },
   inline: { sm: spacing[1], md: spacing[2], lg: spacing[4], xl: spacing[8] },
 });
@@ -111,6 +121,15 @@ export const typography = define('font', {
   body: font.family.sans,
   display: font.family.sans,
   code: font.family.mono,
+});
+
+/** The text sizes components pick from; the primitives behind them are the font size scale. */
+export const text = define('text', {
+  sm: font.size.sm,
+  md: font.size.md,
+  lg: font.size.lg,
+  xl: font.size.xl,
+  xxl: font.size.xxl,
 });
 
 /**
