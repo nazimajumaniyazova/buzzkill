@@ -35,6 +35,9 @@ catalog:
   '@codspeed/vitest-plugin': ^6.1.0
   # Runtime validation at trust boundaries: replays (ADR-0009), later settings and the API
   zod: ^4.6.7
+  # Token generation (#74): runs the TypeScript token source in Node to write tokens.css
+  tsx: ^4.23.15
+  '@types/node': ^24.19.2
 
 peerDependencyRules:
   allowedVersions:
@@ -47,3 +50,6 @@ peerDependencyRules:
 allowBuilds:
   # Native resolver used by eslint-plugin-import-x; the postinstall picks the platform binary.
   unrs-resolver: true
+  # tsx (token generation, #74) runs TypeScript through esbuild; its postinstall checks the
+  # platform binary.
+  esbuild: true

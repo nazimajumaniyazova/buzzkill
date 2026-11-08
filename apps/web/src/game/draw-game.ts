@@ -1,15 +1,23 @@
 import type { Renderer } from '@buzzkill/engine';
 import { animationFrame, type GameRenderer, Kind, RULES } from '@buzzkill/game';
+import { tokens } from '@buzzkill/ui';
 
 import type { GameSprites } from './sprites';
 
-/** Stand-in colors for art that does not exist yet, the same as the 2023 placeholders. */
+const { palette } = tokens.primitives;
+const { color } = tokens.semantic;
+
+/**
+ * Stand-in colors for art that does not exist yet, the same values as the 2023 placeholders,
+ * taken from the design tokens: the sky is each theme's canvas, the rest are palette entries.
+ * Resolved once here, never read from the DOM in a frame.
+ */
 const COLORS = {
-  sky: { day: '#bfe3ff', night: '#121a2b' },
-  hero: { male: '#3b7dd8', female: '#e07aa5' },
-  enemy: '#c0392b',
-  healthTrack: 'rgb(0 0 0 / 60%)',
-  health: '#48bf53',
+  sky: { day: color.day.canvas.value, night: color.night.canvas.value },
+  hero: { male: palette.blue[500].value, female: palette.pink[400].value },
+  enemy: palette.red[600].value,
+  healthTrack: palette.shade[60].value,
+  health: palette.green[500].value,
 } as const;
 
 /** The health bar of the 2023 game: 50 px wide, 10 px below the enemy's top edge. */

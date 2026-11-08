@@ -58,9 +58,9 @@ module.exports = {
       severity: 'error',
       comment: 'Other packages are used only through their public entry (src/index.ts).',
       from: { path: '^(apps|packages)/([^/]+)/' },
-      // The one declared subpath export: the engine's browser entry.
+      // The declared subpath exports: the engine's browser entry and the tokens stylesheet.
       to: {
-        path: '^packages/(?!$2/)[^/]+/src/(?!index\\.ts$)(?!browser/index\\.ts$)',
+        path: '^packages/(?!$2/)[^/]+/src/(?!index\\.ts$)(?!browser/index\\.ts$)(?!tokens/tokens\\.css$)',
       },
     },
     {

@@ -10,6 +10,7 @@ commitlint
 davelosert
 deadzone
 depcruise
+esbuild
 googleapis
 hitbox
 hypot

@@ -5,10 +5,12 @@
   "description": "Buzzkill design system: tokens, themes and accessible React components. Knows nothing about the game.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/tokens/tokens.css"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "tokens": "tsx scripts/build-tokens.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json"
   },
   "dependencies": {
     "react": "catalog:"
@@ -17,9 +19,11 @@
     "@buzzkill/config": "workspace:*",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "jsdom": "catalog:",
     "react-dom": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "vitest-axe": "catalog:"
