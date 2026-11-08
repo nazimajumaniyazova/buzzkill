@@ -152,6 +152,19 @@
   --menu-item-padding-inline: var(--space-inset-sm);
   --menu-item-radius: var(--radius-control);
   --menu-item-background-hover: var(--color-surface-hover);
+  --switch-track: var(--color-border);
+  --switch-track-checked: var(--color-accent);
+  --switch-thumb: var(--color-surface);
+  --switch-radius: var(--radius-pill);
+  --switch-gap: var(--space-inline-md);
+  --switch-focus-ring: var(--color-focus);
+  --slider-accent: var(--color-accent);
+  --slider-gap: var(--space-inline-md);
+  --slider-focus-ring: var(--color-focus);
+  --radio-accent: var(--color-accent);
+  --radio-gap: var(--space-inline-md);
+  --radio-item-gap: var(--space-inline-lg);
+  --radio-focus-ring: var(--color-focus);
 
   color-scheme: light;
 }

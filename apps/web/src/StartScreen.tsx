@@ -1,5 +1,5 @@
 import type { GameMode, HeroId } from '@buzzkill/game';
-import { Button, KeyHint } from '@buzzkill/ui';
+import { Button, KeyHint, RadioGroup, type RadioOption, Slider } from '@buzzkill/ui';
 import { type JSX, type SubmitEvent, useId, useState } from 'react';
 
 import type { ThemeChoice } from './theme';
@@ -19,25 +19,27 @@ interface StartScreenProps {
   onStart: (choice: StartChoice) => void;
 }
 
-const HEROES: readonly { id: HeroId; name: string }[] = [
-  { id: 'male', name: 'Mike' },
-  { id: 'female', name: 'Julie' },
-];
+const HEROES = [
+  { value: 'male', label: 'Mike' },
+  { value: 'female', label: 'Julie' },
+] as const satisfies readonly RadioOption<HeroId>[];
 
-const MODES: readonly { id: GameMode; name: string }[] = [
-  { id: 'day', name: 'Day' },
-  { id: 'night', name: 'Night' },
-];
+const MODES = [
+  { value: 'day', label: 'Day' },
+  { value: 'night', label: 'Night' },
+] as const satisfies readonly RadioOption<GameMode>[];
 
-const THEMES: readonly { id: ThemeChoice; name: string }[] = [
-  { id: 'system', name: 'Match the system' },
-  { id: 'day', name: 'Always day' },
-  { id: 'night', name: 'Always night' },
-];
+const THEMES = [
+  { value: 'system', label: 'Match the system' },
+  { value: 'day', label: 'Always day' },
+  { value: 'night', label: 'Always night' },
+] as const satisfies readonly RadioOption<ThemeChoice>[];
+
+const percent = (value: number): string => `${String(Math.round(value * 100))} %`;
 
 /**
- * Plain, keyboard-reachable start screen: hero, time of day, volume and theme, then Play. It is
- * written from scratch; the design-system version replaces it in stage 5.
+ * Plain, keyboard-reachable start screen: hero, time of day, volume and theme, then Play. The
+ * design-system version with the menu state machine replaces it in stage 5.
  */
 export function StartScreen({ theme, onThemeChange, onStart }: StartScreenProps): JSX.Element {
   const titleId = useId();
@@ -55,73 +57,30 @@ export function StartScreen({ theme, onThemeChange, onStart }: StartScreenProps)
       <h1 id={titleId}>Buzzkill</h1>
       <p>The year is 3023. Giant insects from outer space attack the city. Shoot them down.</p>
 
-      <fieldset>
-        <legend>Hero</legend>
-        {HEROES.map((option) => (
-          <label key={option.id}>
-            <input
-              type="radio"
-              name="hero"
-              value={option.id}
-              checked={hero === option.id}
-              onChange={() => {
-                setHero(option.id);
-              }}
-            />
-            {option.name}
-          </label>
-        ))}
-      </fieldset>
-
-      <fieldset>
-        <legend>Time of day</legend>
-        {MODES.map((option) => (
-          <label key={option.id}>
-            <input
-              type="radio"
-              name="mode"
-              value={option.id}
-              checked={mode === option.id}
-              onChange={() => {
-                setMode(option.id);
-              }}
-            />
-            {option.name}
-          </label>
-        ))}
-      </fieldset>
-
-      <label>
-        Sound volume
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={volume}
-          onChange={(event) => {
-            setVolume(Number(event.target.value));
-          }}
-        />
-      </label>
-
-      <fieldset>
-        <legend>Theme</legend>
-        {THEMES.map((option) => (
-          <label key={option.id}>
-            <input
-              type="radio"
-              name="theme"
-              value={option.id}
-              checked={theme === option.id}
-              onChange={() => {
-                onThemeChange(option.id);
-              }}
-            />
-            {option.name}
-          </label>
-        ))}
-      </fieldset>
+      <RadioGroup label="Hero" name="hero" options={HEROES} value={hero} onValueChange={setHero} />
+      <RadioGroup
+        label="Time of day"
+        name="mode"
+        options={MODES}
+        value={mode}
+        onValueChange={setMode}
+      />
+      <Slider
+        label="Sound volume"
+        min={0}
+        max={1}
+        step={0.1}
+        value={volume}
+        onValueChange={setVolume}
+        formatValue={percent}
+      />
+      <RadioGroup
+        label="Theme"
+        name="theme"
+        options={THEMES}
+        value={theme}
+        onValueChange={onThemeChange}
+      />
 
       <p>
         Controls: <KeyHint symbol="↑">Arrow up</KeyHint> and{' '}

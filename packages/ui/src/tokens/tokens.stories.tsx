@@ -255,6 +255,9 @@ export const Components: Story = {
       <TokenTable caption="Button" group={tokens.components.button} />
       <TokenTable caption="Dialog" group={tokens.components.dialog} />
       <TokenTable caption="Menu" group={tokens.components.menu} />
+      <TokenTable caption="Switch" group={tokens.components.switch} />
+      <TokenTable caption="Slider" group={tokens.components.slider} />
+      <TokenTable caption="Radio" group={tokens.components.radio} />
     </Page>
   ),
 };
