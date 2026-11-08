@@ -9,6 +9,7 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import { configs as storybookConfigs } from 'eslint-plugin-storybook';
 import testingLibrary from 'eslint-plugin-testing-library';
 import globals from 'globals';
 import { configs as tsConfigs } from 'typescript-eslint';
@@ -88,6 +89,13 @@ export default defineConfig([
   },
   {
     files: ['**/*.config.{js,cjs,mjs,ts}'],
+    rules: { 'import-x/no-default-export': 'off' },
+  },
+
+  // Storybook: its rules for stories and the preview, and the default exports that CSF requires.
+  ...storybookConfigs['flat/recommended'],
+  {
+    files: ['**/*.stories.tsx', '**/.storybook/**'],
     rules: { 'import-x/no-default-export': 'off' },
   },
 

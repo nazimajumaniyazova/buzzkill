@@ -108,6 +108,19 @@ jobs:
         with:
           file-coverage-mode: changes
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter @buzzkill/ui exec playwright install chromium --with-deps
+
+      # Every story renders in Chromium with its play function and the a11y check (#76).
+      - name: Run the Storybook tests
+        run: pnpm test:storybook
+
   build:
     name: Build
     runs-on: ubuntu-latest

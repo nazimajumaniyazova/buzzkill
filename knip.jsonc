@@ -19,7 +19,7 @@
     },
     "packages/ui": {
       "entry": ["scripts/*.ts"],
-      "project": ["src/**/*.{ts,tsx}", "scripts/*.ts"],
+      "project": ["src/**/*.{ts,tsx,mdx}", "scripts/*.ts"],
     },
   },
 }

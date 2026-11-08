@@ -1,0 +1,30 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Themes" />
+
+# Themes
+
+Buzzkill has two themes, **day** and **night**, which continue the game's own time of day. A
+theme is one set of values for the semantic color tokens (`--color-canvas`, `--color-text`,
+`--color-accent` and the others); every other token is the same in both. The
+[Tokens](?path=/docs/tokens--docs) pages show the values, and the **Theme** control in the
+toolbar switches the preview.
+
+## How a theme is applied
+
+- No `data-theme` attribute on the root element means _match the system_: `prefers-color-scheme`
+  decides, day by default and night for a dark preference.
+- `data-theme="day"` or `data-theme="night"` pins the theme. The web app sets it from the
+  player's setting on the menus and from the run's own time of day while playing, so the HUD and
+  the dialogs match the sky.
+- Each theme also sets `color-scheme`, so native controls and scrollbars follow it.
+
+## Preferences
+
+- `prefers-contrast: more` moves the text and border colors of each theme to the far end of the
+  palette.
+- `prefers-reduced-motion: reduce` sets every motion token to zero.
+
+Both are overrides of semantic tokens, written in the token source next to the themes, and the
+tests check the contrast of every semantic pair in both themes and under more contrast. The
+stylesheet is generated from that source; the reasoning is in ADR-0005 of the repository.

@@ -1,0 +1,6 @@
+/* The preview frame follows the theme like the web app's page does. */
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-canvas);
+}

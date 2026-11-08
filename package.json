@@ -16,8 +16,10 @@
     "lint:fix": "eslint . --fix && stylelint \"**/*.css\" --fix",
     "lint:repo": "sherif && knip && depcruise apps packages && cspell --no-progress --dot --gitignore \"**/*.{ts,tsx,js,cjs,mjs,md,yml,yaml}\"",
     "prepare": "husky",
+    "storybook": "pnpm --filter @buzzkill/ui storybook",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:storybook": "pnpm --filter @buzzkill/ui test:storybook",
     "test:watch": "vitest",
     "typecheck": "turbo run typecheck typecheck:root",
     "typecheck:root": "tsc --noEmit -p tsconfig.json"
@@ -40,6 +42,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-simple-import-sort": "^14.0.0",
+    "eslint-plugin-storybook": "catalog:",
     "eslint-plugin-testing-library": "catalog:",
     "globals": "^17.13.0",
     "husky": "^9.1.7",
