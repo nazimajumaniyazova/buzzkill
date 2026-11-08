@@ -50,6 +50,7 @@
   --shadow-xs: 0 1px 2px #000c;
   --shadow-sm: 0 1px 2px #0000004d;
   --shadow-md: 0 4px 12px #00000040;
+  --duration-none: 0ms;
   --duration-fast: 100ms;
   --duration-normal: 200ms;
   --duration-slow: 400ms;
@@ -97,6 +98,8 @@
   --color-focus: var(--palette-blue-700);
   --color-overlay: var(--palette-shade-60);
   --color-on-overlay: var(--palette-neutral-0);
+
+  color-scheme: light;
 }
 
 [data-theme='night'] {
@@ -114,4 +117,57 @@
   --color-focus: var(--palette-amber-400);
   --color-overlay: var(--palette-shade-60);
   --color-on-overlay: var(--palette-neutral-0);
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color-canvas: var(--palette-blue-950);
+    --color-surface: var(--palette-neutral-800);
+    --color-text: var(--palette-neutral-50);
+    --color-text-muted: var(--palette-neutral-300);
+    --color-border: var(--palette-neutral-300);
+    --color-accent: var(--palette-blue-400);
+    --color-on-accent: var(--palette-neutral-950);
+    --color-danger: var(--palette-red-400);
+    --color-on-danger: var(--palette-neutral-950);
+    --color-success: var(--palette-green-500);
+    --color-on-success: var(--palette-neutral-950);
+    --color-focus: var(--palette-amber-400);
+    --color-overlay: var(--palette-shade-60);
+    --color-on-overlay: var(--palette-neutral-0);
+
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-text: var(--palette-neutral-950);
+    --color-text-muted: var(--palette-neutral-900);
+    --color-border: var(--palette-neutral-900);
+  }
+
+  [data-theme='night'] {
+    --color-text: var(--palette-neutral-0);
+    --color-text-muted: var(--palette-neutral-50);
+    --color-border: var(--palette-neutral-0);
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --color-text: var(--palette-neutral-0);
+    --color-text-muted: var(--palette-neutral-50);
+    --color-border: var(--palette-neutral-0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: var(--duration-none);
+    --motion-normal: var(--duration-none);
+    --motion-slow: var(--duration-none);
+  }
 }

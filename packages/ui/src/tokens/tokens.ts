@@ -2,6 +2,7 @@ import type { TokenGroup } from './define';
 import { duration, easing, font, layer, palette, radius, shadow, spacing } from './primitives';
 import {
   motion,
+  preferences,
   radius as semanticRadius,
   shadow as semanticShadow,
   space,
@@ -28,6 +29,8 @@ export const tokens = {
   },
   /** Layer 3: per component, defined over the semantic layer. The first component (#79) adds the first group. */
   components: {} as TokenGroup,
+  /** Semantic tokens replaced under a user preference (#75); same names, other primitives. */
+  preferences,
 } as const;
 
 export type Tokens = typeof tokens;

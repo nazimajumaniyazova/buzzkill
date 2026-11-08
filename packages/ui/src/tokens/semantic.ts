@@ -112,3 +112,30 @@ export const typography = define('font', {
   display: font.family.sans,
   code: font.family.mono,
 });
+
+/**
+ * Overrides under `prefers-contrast: more`: the text and border colors of each theme move to the
+ * far end of the palette. The names are those of the semantic tokens they replace.
+ */
+const contrastMore = {
+  day: define('color', {
+    text: palette.neutral[950],
+    textMuted: palette.neutral[900],
+    border: palette.neutral[900],
+  }),
+  night: define('color', {
+    text: palette.neutral[0],
+    textMuted: palette.neutral[50],
+    border: palette.neutral[0],
+  }),
+} as const satisfies Record<ThemeName, Partial<ThemeColorTokens>>;
+
+/** Overrides under `prefers-reduced-motion: reduce`: every duration is zero. */
+const reducedMotion = define('motion', {
+  fast: duration.none,
+  normal: duration.none,
+  slow: duration.none,
+}) satisfies Partial<typeof motion>;
+
+/** Semantic tokens that a user preference replaces (#75). */
+export const preferences = { contrastMore, reducedMotion } as const;

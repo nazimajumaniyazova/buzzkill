@@ -1,6 +1,8 @@
 import type { GameMode, HeroId } from '@buzzkill/game';
 import { type JSX, type SubmitEvent, useId, useState } from 'react';
 
+import type { ThemeChoice } from './theme';
+
 /** What the player picked on the start screen. */
 export interface StartChoice {
   readonly heroId: HeroId;
@@ -10,6 +12,9 @@ export interface StartChoice {
 }
 
 interface StartScreenProps {
+  /** The player's theme setting; a page setting, not part of the run, so it is controlled. */
+  theme: ThemeChoice;
+  onThemeChange: (theme: ThemeChoice) => void;
   onStart: (choice: StartChoice) => void;
 }
 
@@ -23,11 +28,17 @@ const MODES: readonly { id: GameMode; name: string }[] = [
   { id: 'night', name: 'Night' },
 ];
 
+const THEMES: readonly { id: ThemeChoice; name: string }[] = [
+  { id: 'system', name: 'Match the system' },
+  { id: 'day', name: 'Always day' },
+  { id: 'night', name: 'Always night' },
+];
+
 /**
- * Plain, keyboard-reachable start screen: hero, time of day and volume, then Play. It is written
- * from scratch; the design-system version replaces it in stage 5.
+ * Plain, keyboard-reachable start screen: hero, time of day, volume and theme, then Play. It is
+ * written from scratch; the design-system version replaces it in stage 5.
  */
-export function StartScreen({ onStart }: StartScreenProps): JSX.Element {
+export function StartScreen({ theme, onThemeChange, onStart }: StartScreenProps): JSX.Element {
   const titleId = useId();
   const [hero, setHero] = useState<HeroId>('male');
   const [mode, setMode] = useState<GameMode>('day');
@@ -92,6 +103,24 @@ export function StartScreen({ onStart }: StartScreenProps): JSX.Element {
           }}
         />
       </label>
+
+      <fieldset>
+        <legend>Theme</legend>
+        {THEMES.map((option) => (
+          <label key={option.id}>
+            <input
+              type="radio"
+              name="theme"
+              value={option.id}
+              checked={theme === option.id}
+              onChange={() => {
+                onThemeChange(option.id);
+              }}
+            />
+            {option.name}
+          </label>
+        ))}
+      </fieldset>
 
       <p>Controls: arrow up and arrow down to move, Space to shoot, Escape to pause.</p>
 
