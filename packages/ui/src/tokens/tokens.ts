@@ -1,4 +1,4 @@
-import { button } from './components';
+import { button, menu } from './components';
 import { duration, easing, font, layer, palette, radius, shadow, spacing } from './primitives';
 import {
   motion,
@@ -30,7 +30,7 @@ export const tokens = {
     text,
   },
   /** Layer 3: per component, defined over the semantic layer. */
-  components: { button },
+  components: { button, menu },
   /** Semantic tokens replaced under a user preference (#75); same names, other primitives. */
   preferences,
 } as const;

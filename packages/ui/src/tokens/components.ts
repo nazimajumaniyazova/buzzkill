@@ -1,5 +1,5 @@
 import { define } from './define';
-import { motion, radius, space, text, themes } from './semantic';
+import { motion, radius, shadow, space, text, themes } from './semantic';
 
 /**
  * Layer 3 of the design tokens: what a component needs, defined over the semantic layer. A
@@ -31,5 +31,20 @@ export const button = define('button', {
     background: color.danger,
     backgroundHover: color.dangerHover,
     text: color.onDanger,
+  },
+});
+
+export const menu = define('menu', {
+  padding: space.inset.xs,
+  radius: radius.control,
+  shadow: shadow.raised,
+  background: color.surface,
+  text: color.text,
+  border: color.border,
+  item: {
+    paddingBlock: space.inset.xs,
+    paddingInline: space.inset.sm,
+    radius: radius.control,
+    backgroundHover: color.surfaceHover,
   },
 });

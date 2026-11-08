@@ -253,6 +253,7 @@ export const Components: Story = {
   render: () => (
     <Page title="Components">
       <TokenTable caption="Button" group={tokens.components.button} />
+      <TokenTable caption="Menu" group={tokens.components.menu} />
     </Page>
   ),
 };
