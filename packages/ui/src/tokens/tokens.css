@@ -142,6 +142,16 @@
   --dialog-border: var(--color-border);
   --dialog-backdrop: var(--color-overlay);
   --dialog-title-size: var(--text-lg);
+  --menu-padding: var(--space-inset-xs);
+  --menu-radius: var(--radius-control);
+  --menu-shadow: var(--shadow-raised);
+  --menu-background: var(--color-surface);
+  --menu-text: var(--color-text);
+  --menu-border: var(--color-border);
+  --menu-item-padding-block: var(--space-inset-xs);
+  --menu-item-padding-inline: var(--space-inset-sm);
+  --menu-item-radius: var(--radius-control);
+  --menu-item-background-hover: var(--color-surface-hover);
 
   color-scheme: light;
 }

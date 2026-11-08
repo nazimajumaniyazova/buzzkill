@@ -1,0 +1,22 @@
+.item {
+  padding-block: var(--menu-item-padding-block);
+  padding-inline: var(--menu-item-padding-inline);
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--menu-item-radius);
+}
+
+.item[aria-disabled='true'] {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.item:focus-visible {
+  background-color: var(--menu-item-background-hover);
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.item:hover:not([aria-disabled='true']) {
+  background-color: var(--menu-item-background-hover);
+}

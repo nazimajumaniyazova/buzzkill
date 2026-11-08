@@ -254,6 +254,7 @@ export const Components: Story = {
     <Page title="Components">
       <TokenTable caption="Button" group={tokens.components.button} />
       <TokenTable caption="Dialog" group={tokens.components.dialog} />
+      <TokenTable caption="Menu" group={tokens.components.menu} />
     </Page>
   ),
 };

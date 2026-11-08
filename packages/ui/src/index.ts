@@ -19,6 +19,8 @@ export {
   type InlineProps,
 } from './components/Inline/Inline';
 export { KeyHint, type KeyHintKind, type KeyHintProps } from './components/KeyHint/KeyHint';
+export { Menu, type MenuProps } from './components/Menu/Menu';
+export { MenuItem, type MenuItemProps } from './components/Menu/MenuItem';
 export { Stack, type StackAlign, type StackGap, type StackProps } from './components/Stack/Stack';
 export {
   VisuallyHidden,

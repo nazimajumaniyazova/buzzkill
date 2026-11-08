@@ -46,3 +46,18 @@ export const dialog = define('dialog', {
   backdrop: color.overlay,
   titleSize: text.lg,
 });
+
+export const menu = define('menu', {
+  padding: space.inset.xs,
+  radius: radius.control,
+  shadow: shadow.raised,
+  background: color.surface,
+  text: color.text,
+  border: color.border,
+  item: {
+    paddingBlock: space.inset.xs,
+    paddingInline: space.inset.sm,
+    radius: radius.control,
+    backgroundHover: color.surfaceHover,
+  },
+});
