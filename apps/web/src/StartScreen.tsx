@@ -1,4 +1,5 @@
 import type { GameMode, HeroId } from '@buzzkill/game';
+import { KeyHint } from '@buzzkill/ui';
 import { type JSX, type SubmitEvent, useId, useState } from 'react';
 
 import type { ThemeChoice } from './theme';
@@ -122,7 +123,11 @@ export function StartScreen({ theme, onThemeChange, onStart }: StartScreenProps)
         ))}
       </fieldset>
 
-      <p>Controls: arrow up and arrow down to move, Space to shoot, Escape to pause.</p>
+      <p>
+        Controls: <KeyHint symbol="↑">Arrow up</KeyHint> and{' '}
+        <KeyHint symbol="↓">Arrow down</KeyHint> to move, <KeyHint>Space</KeyHint> to shoot,{' '}
+        <KeyHint>Escape</KeyHint> to pause.
+      </p>
 
       <button type="submit">Play</button>
     </form>

@@ -3,6 +3,7 @@
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "stylelint.vscode-stylelint",
+    "mizdra.css-modules-kit-vscode",
     "streetsidesoftware.code-spell-checker",
     "vitest.explorer",
     "ms-playwright.playwright",

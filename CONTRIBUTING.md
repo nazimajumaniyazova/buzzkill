@@ -15,7 +15,7 @@ Requirements: Node.js 24 LTS (see `.nvmrc`) and pnpm. The exact pnpm version is 
 pnpm install        # also installs the git hooks
 pnpm dev            # web app on http://localhost:5173
 pnpm build          # every package, through Turborepo
-pnpm typecheck      # tsc --noEmit in every package
+pnpm typecheck      # tsc --noEmit in every package; in ui, cmk first writes the *.module.css.d.ts
 pnpm lint           # ESLint, Stylelint, Sherif, Knip, dependency-cruiser, CSpell
 pnpm test           # Vitest, all projects; pnpm test:coverage adds coverage
 pnpm test:storybook # every story in Chromium; once: pnpm --filter @buzzkill/ui exec playwright install chromium

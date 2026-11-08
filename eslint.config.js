@@ -17,7 +17,14 @@ import { configs as tsConfigs } from 'typescript-eslint';
 const reactFiles = ['apps/web/**/*.{ts,tsx}', 'packages/ui/**/*.{ts,tsx}'];
 
 export default defineConfig([
-  globalIgnores(['**/dist', '**/coverage', '**/.turbo', '**/storybook-static', '**/*.gen.ts']),
+  globalIgnores([
+    '**/dist',
+    '**/coverage',
+    '**/.turbo',
+    '**/storybook-static',
+    '**/*.gen.ts',
+    '**/*.module.css.d.ts',
+  ]),
 
   js.configs.recommended,
   tsConfigs.strictTypeChecked,

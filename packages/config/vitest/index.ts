@@ -47,6 +47,9 @@ export function jsdomProject(name: string, overrides: ProjectOverrides = {}): Pr
       // Testing Library registers its automatic DOM cleanup only when `afterEach` is a global;
       // without it, renders pile up across the tests of a file. Tests still import from vitest.
       globals: true,
+      // CSS Modules keep their class names as written (`styles.stack === 'stack'`), so a test
+      // can assert them; other stylesheets are not processed.
+      css: { include: [/.module.css$/], modules: { classNameStrategy: 'non-scoped' } },
     },
   });
 }
