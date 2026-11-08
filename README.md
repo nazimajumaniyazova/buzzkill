@@ -6,9 +6,11 @@
 A side-scrolling Canvas shooter in TypeScript. Defend the city from an alien insect swarm, day and night.
 
 [![Play Buzzkill](https://img.shields.io/badge/%E2%96%B6%20Play-Buzzkill-2ea44f?style=for-the-badge)](https://buzzkill-nazimajumaniyazovas-projects.vercel.app)
+[![Storybook](https://img.shields.io/badge/Storybook-design%20system-ff4785?style=for-the-badge&logo=storybook&logoColor=white)](https://buzzkill-storybook.vercel.app)
 
 Arrow keys or W and S to move, Space or J to shoot, Escape or P to pause; a gamepad works too.
 Production is deployed from `main` on Vercel; every pull request gets its own preview deployment.
+The Storybook of the design system is deployed the same way, from `packages/ui`.
 
 Started as a team project at RS School: https://github.com/nazimajumaniyazova/shooting-game.
 The game engine was written by me; since then the project has been rebuilt and extended solo.

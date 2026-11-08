@@ -9,6 +9,9 @@
     "./tokens.css": "./src/tokens/tokens.css"
   },
   "scripts": {
+    "build": "storybook build",
+    "storybook": "storybook dev --port 6006 --no-open",
+    "test:storybook": "vitest run --config vitest.storybook.config.ts",
     "tokens": "tsx scripts/build-tokens.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json"
   },
@@ -17,14 +20,24 @@
   },
   "devDependencies": {
     "@buzzkill/config": "workspace:*",
+    "@storybook/addon-a11y": "catalog:",
+    "@storybook/addon-docs": "catalog:",
+    "@storybook/addon-vitest": "catalog:",
+    "@storybook/react-vite": "catalog:",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/browser": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
     "jsdom": "catalog:",
+    "playwright": "catalog:",
     "react-dom": "catalog:",
+    "storybook": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
+    "vite": "catalog:",
     "vitest": "catalog:",
     "vitest-axe": "catalog:"
   }

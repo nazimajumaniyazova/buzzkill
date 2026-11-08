@@ -85,6 +85,8 @@ module.exports = {
           // Tests, benchmarks and their setup files are entry points: nothing imports them by design.
           '\\.(test|bench)\\.[jt]sx?$',
           '/__tests__/',
+          // Storybook reads its configuration folder itself.
+          '/[.]storybook/',
         ],
       },
       to: {},
