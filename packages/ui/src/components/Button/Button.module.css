@@ -1,0 +1,95 @@
+/* Rules are ordered by specificity: the hover rules at the end override the variant colors. */
+.button {
+  display: inline-flex;
+  gap: var(--button-gap);
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  font-weight: var(--font-weight-bold);
+  line-height: var(--font-line-height-tight);
+  color: var(--button-primary-text);
+  cursor: pointer;
+  background-color: var(--button-primary-background);
+  border: 1px solid transparent;
+  border-radius: var(--button-radius);
+  transition:
+    background-color var(--button-transition) var(--motion-easing),
+    border-color var(--button-transition) var(--motion-easing);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--button-focus-ring);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.button[aria-disabled='true'] {
+  cursor: progress;
+}
+
+.button[data-size='sm'] {
+  padding-block: var(--button-padding-block-sm);
+  padding-inline: var(--button-padding-inline-sm);
+  font-size: var(--button-font-size-sm);
+}
+
+.button[data-size='md'] {
+  padding-block: var(--button-padding-block-md);
+  padding-inline: var(--button-padding-inline-md);
+  font-size: var(--button-font-size-md);
+}
+
+.button[data-size='lg'] {
+  padding-block: var(--button-padding-block-lg);
+  padding-inline: var(--button-padding-inline-lg);
+  font-size: var(--button-font-size-lg);
+}
+
+.button[data-variant='secondary'] {
+  color: var(--button-secondary-text);
+  background-color: var(--button-secondary-background);
+  border-color: var(--button-secondary-border);
+}
+
+.button[data-variant='danger'] {
+  color: var(--button-danger-text);
+  background-color: var(--button-danger-background);
+}
+
+.button:hover:not(:disabled, [aria-disabled='true']) {
+  background-color: var(--button-primary-background-hover);
+}
+
+.button[data-variant='secondary']:hover:not(:disabled, [aria-disabled='true']) {
+  background-color: var(--button-secondary-background-hover);
+}
+
+.button[data-variant='danger']:hover:not(:disabled, [aria-disabled='true']) {
+  background-color: var(--button-danger-background-hover);
+}
+
+.label {
+  display: inline-flex;
+  gap: var(--button-gap);
+  align-items: center;
+}
+
+/* A ring of the text color with one gap, turning; reduced motion sets the duration to zero. */
+.spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentcolor;
+  border-right-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: spin var(--motion-slow) linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}

@@ -1,6 +1,7 @@
 import { type AssetFailure, type AudioMixer, createAudioMixer, loadAssets } from '@buzzkill/engine';
 import { createBrowserAssetDecoders } from '@buzzkill/engine/browser';
 import type { GameSound } from '@buzzkill/game';
+import { Button } from '@buzzkill/ui';
 import { type JSX, useEffect, useState } from 'react';
 
 import { GAME_ASSETS } from './game/assets';
@@ -84,18 +85,17 @@ export function GameSession({ choice, audioContext, onExit }: GameSessionProps):
           ))}
         </ul>
         <div className="actions">
-          <button
-            type="button"
+          <Button
             onClick={() => {
               setPhase({ name: 'loading', fraction: 0 });
               setAttempt((count) => count + 1);
             }}
           >
             Try again
-          </button>
-          <button type="button" onClick={onExit}>
+          </Button>
+          <Button variant="secondary" onClick={onExit}>
             Back to menu
-          </button>
+          </Button>
         </div>
       </div>
     );

@@ -24,6 +24,7 @@ export const palette = define('palette', {
   },
   blue: {
     100: '#bfe3ff',
+    300: '#8ab6ef',
     400: '#6aa2ea',
     500: '#3b7dd8',
     600: '#2f6bc0',
@@ -31,7 +32,7 @@ export const palette = define('palette', {
     950: '#121a2b',
   },
   pink: { 400: '#e07aa5' },
-  red: { 400: '#e8655a', 600: '#c0392b' },
+  red: { 300: '#f08a80', 400: '#e8655a', 600: '#c0392b', 700: '#9c2d22' },
   green: { 500: '#48bf53' },
   amber: { 400: '#f5c242' },
   /** Translucent black for overlays; the key is the opacity in percent. */

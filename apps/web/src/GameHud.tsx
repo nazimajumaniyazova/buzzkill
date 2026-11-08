@@ -1,4 +1,5 @@
 import { DEFAULT_KEY_BINDINGS, type Game, RULES } from '@buzzkill/game';
+import { Button } from '@buzzkill/ui';
 import { type JSX, useCallback, useEffect, useSyncExternalStore } from 'react';
 
 interface GameHudProps {
@@ -62,8 +63,7 @@ export function GameHud({ game, onPlayAgain, onExit }: GameHudProps): JSX.Elemen
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="paused-title">
           <h2 id="paused-title">Paused</h2>
           <div className="actions">
-            <button
-              type="button"
+            <Button
               // The dialog appears in response to the player's own key press.
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
@@ -72,10 +72,10 @@ export function GameHud({ game, onPlayAgain, onExit }: GameHudProps): JSX.Elemen
               }}
             >
               Resume
-            </button>
-            <button type="button" onClick={onExit}>
+            </Button>
+            <Button variant="secondary" onClick={onExit}>
               Quit to menu
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -85,17 +85,16 @@ export function GameHud({ game, onPlayAgain, onExit }: GameHudProps): JSX.Elemen
           <h2 id="over-title">{hud.status === 'won' ? 'You won!' : 'Game over'}</h2>
           <p role="status">Score: {hud.score}</p>
           <div className="actions">
-            <button
-              type="button"
+            <Button
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
               onClick={onPlayAgain}
             >
               Play again
-            </button>
-            <button type="button" onClick={onExit}>
+            </Button>
+            <Button variant="secondary" onClick={onExit}>
               Back to menu
-            </button>
+            </Button>
           </div>
         </div>
       )}

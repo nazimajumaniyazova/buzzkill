@@ -4,6 +4,13 @@
  * once.
  */
 export {
+  Button,
+  type ButtonProps,
+  type ButtonSize,
+  type ButtonVariant,
+} from './components/Button/Button';
+export { IconButton, type IconButtonProps } from './components/Button/IconButton';
+export {
   Inline,
   type InlineAlign,
   type InlineGap,
