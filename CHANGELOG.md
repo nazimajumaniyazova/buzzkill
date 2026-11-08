@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.3.0...v0.4.0) (2026-11-08)
+
+
+### Features
+
+* **ui:** add Button and IconButton on the first component tokens ([#93](https://github.com/nazimajumaniyazova/buzzkill/issues/93)) ([fa901d1](https://github.com/nazimajumaniyazova/buzzkill/commit/fa901d10e03ba010a36e81d6a78f04553f445cfc)), closes [#79](https://github.com/nazimajumaniyazova/buzzkill/issues/79)
+* **ui:** add Stack, Inline, VisuallyHidden and KeyHint primitives ([#92](https://github.com/nazimajumaniyazova/buzzkill/issues/92)) ([865f9cc](https://github.com/nazimajumaniyazova/buzzkill/commit/865f9ccbbc42804ee035950f21be885d37e0fefe)), closes [#78](https://github.com/nazimajumaniyazova/buzzkill/issues/78)
+
 ## [0.3.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.2.0...v0.3.0) (2026-11-08)
 
 
