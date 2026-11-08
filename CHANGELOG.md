@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.4.0...v0.5.0) (2026-11-08)
+
+
+### Features
+
+* **ui:** add Dialog on the native modal with focus return and Escape ([#95](https://github.com/nazimajumaniyazova/buzzkill/issues/95)) ([c649cd0](https://github.com/nazimajumaniyazova/buzzkill/commit/c649cd059df9adc476a89327d08c219f5de93b35)), closes [#80](https://github.com/nazimajumaniyazova/buzzkill/issues/80)
+* **ui:** add Menu and MenuItem with a roving tabindex ([#96](https://github.com/nazimajumaniyazova/buzzkill/issues/96)) ([3dff4f7](https://github.com/nazimajumaniyazova/buzzkill/commit/3dff4f7b83ce531d2d14c001a41f860765dc6b97)), closes [#81](https://github.com/nazimajumaniyazova/buzzkill/issues/81)
+
 ## [0.4.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.3.0...v0.4.0) (2026-11-08)
 
 

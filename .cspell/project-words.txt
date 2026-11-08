@@ -25,6 +25,7 @@ nvmrc
 PractRand
 scroller
 splitmix
+subcomponents
 subfolders
 Supabase
 Turborepo

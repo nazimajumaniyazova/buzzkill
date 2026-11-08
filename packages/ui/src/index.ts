@@ -19,6 +19,8 @@ export {
   type InlineProps,
 } from './components/Inline/Inline';
 export { KeyHint, type KeyHintKind, type KeyHintProps } from './components/KeyHint/KeyHint';
+export { Menu, type MenuProps } from './components/Menu/Menu';
+export { MenuItem, type MenuItemProps } from './components/Menu/MenuItem';
 export {
   RadioGroup,
   type RadioGroupProps,

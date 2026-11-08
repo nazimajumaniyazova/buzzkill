@@ -1,0 +1,20 @@
+.root {
+  position: relative;
+  display: inline-block;
+}
+
+/* Below the trigger, aligned to its start edge, above the content around it. */
+.menu {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: 0;
+  z-index: var(--layer-raised);
+  min-inline-size: 12rem;
+  padding: var(--menu-padding);
+  margin-block-start: var(--space-stack-sm);
+  color: var(--menu-text);
+  background-color: var(--menu-background);
+  border: 1px solid var(--menu-border);
+  border-radius: var(--menu-radius);
+  box-shadow: var(--menu-shadow);
+}
