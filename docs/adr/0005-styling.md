@@ -1,6 +1,6 @@
 # ADR-0005: Styling approach for the design system
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-08
 - **Deciders:** Nazima Jumaniyazova
 
@@ -113,11 +113,9 @@ strings built at render. Both would be reasonable; neither is needed.
 
 ## Decision
 
-_Pending the owner's decision._
+Option A: CSS Modules with custom properties as tokens. Decided by the owner on 2026-11-08.
 
 ## Consequences
-
-Written for the recommended option; to be revised if the owner chooses another.
 
 - **Vite.** No change: `*.module.css` works as is, Lightning CSS minifies. Class names in CSS are
   written in camelCase so that `styles.primaryButton` reads without a `localsConvention`.
