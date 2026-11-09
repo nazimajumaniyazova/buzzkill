@@ -59,6 +59,21 @@ describe('design tokens', () => {
     }
   });
 
+  it('rings every focusable component in the semantic focus color, so it follows the theme', () => {
+    const rings = components.filter((token) => token.name.endsWith('-focus-ring'));
+
+    expect(rings.map((token) => token.name).sort()).toEqual([
+      '--button-focus-ring',
+      '--radio-focus-ring',
+      '--slider-focus-ring',
+      '--switch-focus-ring',
+      '--tabs-focus-ring',
+    ]);
+    for (const token of rings) {
+      expect(token.ref?.name).toBe(color.day.focus.name);
+    }
+  });
+
   it('writes colors as short lowercase hex, the form Stylelint keeps in the stylesheet', () => {
     const colors = primitives.filter((token) => token.value.startsWith('#'));
 

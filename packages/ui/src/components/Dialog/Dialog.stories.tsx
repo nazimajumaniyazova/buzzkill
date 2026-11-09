@@ -42,6 +42,9 @@ const meta = {
     title: 'Paused',
     closeLabel: 'Close',
   },
+  parameters: {
+    docs: { subtitle: 'WAI-ARIA pattern: Dialog (Modal), on the native dialog element' },
+  },
 } satisfies Meta<typeof Demo>;
 
 export default meta;

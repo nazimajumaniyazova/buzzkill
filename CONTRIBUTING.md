@@ -28,7 +28,10 @@ pnpm format:check   # Prettier
 applies the autofixes. `pnpm test` runs every Vitest project; `pnpm test:coverage` enforces the
 80% thresholds of `engine` and `game`. `pnpm test:storybook` renders every story of `packages/ui`
 in Playwright's Chromium, runs its play function and fails on an accessibility violation; it
-needs the browser installed once (the command above) and runs in CI on every pull request. `pnpm bench` runs the `*.bench.ts` files; in CI, CodSpeed
+needs the browser installed once (the command above) and runs in CI on every pull request. The
+**Accessibility** page of that Storybook names the WAI-ARIA pattern of every component and walks
+through each with the keyboard; a new component gets its pattern as the `docs.subtitle` of its
+stories, a row on that page and an axe assertion in its test. `pnpm bench` runs the `*.bench.ts` files; in CI, CodSpeed
 runs them on every pull request and fails the check when one gets slower than its threshold
 (ADR-0012).
 

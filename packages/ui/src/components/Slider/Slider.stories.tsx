@@ -18,6 +18,7 @@ const meta = {
     onValueChange: fn(),
   },
   argTypes: { formatValue: { control: false } },
+  parameters: { docs: { subtitle: 'WAI-ARIA pattern: Slider, on the native range input' } },
 } satisfies Meta<typeof Slider>;
 
 export default meta;

@@ -20,6 +20,7 @@ const meta = {
   argTypes: {
     activation: { control: 'inline-radio', options: ['automatic', 'manual'] },
   },
+  parameters: { docs: { subtitle: 'WAI-ARIA pattern: Tabs' } },
 } satisfies Meta<typeof Tabs>;
 
 export default meta;

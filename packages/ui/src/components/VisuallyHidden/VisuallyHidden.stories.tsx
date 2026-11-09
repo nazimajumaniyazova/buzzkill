@@ -6,6 +6,7 @@ import { VisuallyHidden } from './VisuallyHidden';
 const meta = {
   title: 'Primitives/VisuallyHidden',
   component: VisuallyHidden,
+  parameters: { docs: { subtitle: 'No WAI-ARIA pattern: the visually hidden text technique' } },
 } satisfies Meta<typeof VisuallyHidden>;
 
 export default meta;

@@ -10,6 +10,9 @@ const meta = {
   argTypes: {
     kind: { control: 'inline-radio', options: ['key', 'gamepad'] },
   },
+  parameters: {
+    docs: { subtitle: 'No WAI-ARIA pattern: a kbd element with a name for assistive technology' },
+  },
 } satisfies Meta<typeof KeyHint>;
 
 export default meta;

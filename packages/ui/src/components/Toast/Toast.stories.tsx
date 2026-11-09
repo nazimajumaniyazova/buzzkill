@@ -56,6 +56,9 @@ const meta = {
   title: 'Components/Toast',
   component: Demo,
   args: { label: 'Notifications', duration: 5000 },
+  parameters: {
+    docs: { subtitle: 'WAI-ARIA pattern: Alert for danger; the status live region for the rest' },
+  },
 } satisfies Meta<typeof Demo>;
 
 export default meta;

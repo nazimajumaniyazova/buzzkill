@@ -19,6 +19,7 @@ const meta = {
     variant: { control: 'inline-radio', options: ['primary', 'secondary', 'danger'] },
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
   },
+  parameters: { docs: { subtitle: 'WAI-ARIA pattern: Button, with a required accessible name' } },
 } satisfies Meta<typeof IconButton>;
 
 export default meta;
