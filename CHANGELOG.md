@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.5.0...v0.6.0) (2026-11-08)
+
+
+### Features
+
+* **ui:** add Switch, Slider and RadioGroup with both state modes ([#98](https://github.com/nazimajumaniyazova/buzzkill/issues/98)) ([96d12c3](https://github.com/nazimajumaniyazova/buzzkill/commit/96d12c33c0259b9ed43132d74dc2b0538c3620ea)), closes [#82](https://github.com/nazimajumaniyazova/buzzkill/issues/82)
+
 ## [0.5.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.4.0...v0.5.0) (2026-11-08)
 
 
