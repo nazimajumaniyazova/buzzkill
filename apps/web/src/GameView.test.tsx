@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createGameSprites } from './game/sprites';
 import { GameView } from './GameView';
+import type { GameEvent } from './state/bridge';
+import type { GameAssets, Run } from './state/machine';
 
 // jsdom has no canvas: a context that accepts every call the renderer makes.
 const context = {
@@ -32,7 +34,7 @@ const sprites = createGameSprites<ImageBitmap>({
   fireExplosion: image,
 });
 
-const choice = { heroId: 'male', mode: 'day', volume: 0.5 } as const;
+const run: Run = { heroId: 'male', mode: 'day', volume: 0.5, seed: 1 };
 
 /**
  * Animation frames that run only when the test says so, 50 ms apart: the first frame sets the
@@ -79,39 +81,72 @@ function hudValue(name: 'Score' | 'Lives' | 'Ammo'): string | null {
 
 describe('GameView', () => {
   let audio: AudioMixer<GameSound>;
+  let assets: GameAssets;
   let play: ReturnType<typeof vi.fn<AudioMixer<GameSound>['play']>>;
+  let setVolume: ReturnType<typeof vi.fn<AudioMixer<GameSound>['setVolume']>>;
+  let onEvent: ReturnType<typeof vi.fn<(event: GameEvent) => void>>;
+
+  /** The events reported so far, by type. */
+  const reported = (): GameEvent['type'][] => onEvent.mock.calls.map(([event]) => event.type);
+
+  function renderView(props: Partial<{ run: Run; paused: boolean }> = {}) {
+    const view = render(
+      <GameView
+        run={props.run ?? run}
+        assets={assets}
+        paused={props.paused ?? false}
+        onEvent={onEvent}
+      />,
+    );
+    return {
+      ...view,
+      rerender(next: Partial<{ run: Run; paused: boolean }>): void {
+        view.rerender(
+          <GameView
+            run={next.run ?? props.run ?? run}
+            assets={assets}
+            paused={next.paused ?? false}
+            onEvent={onEvent}
+          />,
+        );
+      },
+    };
+  }
 
   beforeEach(() => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
       context as unknown as CanvasRenderingContext2D,
     );
     play = vi.fn<AudioMixer<GameSound>['play']>();
-    audio = { ...createAudioMixer({ context: null, buffers: {} }), play };
-    window.history.replaceState(null, '', '/?seed=1');
+    setVolume = vi.fn<AudioMixer<GameSound>['setVolume']>();
+    audio = { ...createAudioMixer({ context: null, buffers: {} }), play, setVolume };
+    assets = { sprites, audio };
+    onEvent = vi.fn<(event: GameEvent) => void>();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
-    window.history.replaceState(null, '', '/');
   });
 
-  it('runs the game on the canvas and shows its HUD', () => {
+  it("runs the game on the canvas at the run's volume and shows its HUD", () => {
     const frames = installFrames();
-    render(<GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />);
+    renderView();
 
     // 6 ticks, before the first round comes back at tick 12.
     frames.run(3);
 
     expect(hudValue('Score')).toBe('0');
     expect(hudValue('Ammo')).toBe('20');
+    expect(setVolume).toHaveBeenCalledExactlyOnceWith('effects', 0.5);
     // Every frame starts with the day sky.
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, 1280, 720);
+    expect(onEvent).not.toHaveBeenCalled();
   });
 
   it('shoots on Space: a sound and one round less', () => {
     const frames = installFrames();
-    render(<GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />);
+    renderView();
     frames.run(1);
 
     fireEvent.keyDown(window, { code: 'Space' });
@@ -122,43 +157,64 @@ describe('GameView', () => {
     expect(hudValue('Ammo')).toBe('19');
   });
 
-  it('pauses on Escape and resumes from the dialog', () => {
+  it("reports the game's own pause on Escape and goes on when the machine says so", () => {
     const frames = installFrames();
-    render(<GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />);
+    const view = renderView();
     frames.run(2);
 
     fireEvent.keyDown(window, { code: 'Escape' });
     frames.run(1);
     fireEvent.keyUp(window, { code: 'Escape' });
 
+    expect(reported()).toEqual(['gamePaused']);
     expect(frames.pending()).toBe(0);
-    fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
-    frames.run(1);
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    // The machine mirrors the pause, then resumes on the player's command.
+    view.rerender({ paused: true });
+    expect(reported()).toEqual(['gamePaused']);
+    view.rerender({ paused: false });
+
+    expect(reported()).toEqual(['gamePaused', 'gameResumed']);
     expect(frames.pending()).toBe(1);
   });
 
-  it('starts a new run with Play again once the run is over', () => {
+  it('holds the game when the machine says paused', () => {
     const frames = installFrames();
-    render(<GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />);
-
-    // Standing still, the hero is eventually hit five times; ten minutes of play at most.
-    for (let i = 0; i < 12_000 && screen.queryByRole('dialog') === null; i += 1) {
-      frames.run(1);
-    }
-    expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
+    const view = renderView();
     frames.run(2);
 
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    view.rerender({ paused: true });
+
+    expect(frames.pending()).toBe(0);
+    expect(reported()).toEqual(['gamePaused']);
+  });
+
+  it('reports the end of the run once and starts a new run on a new run object', () => {
+    const frames = installFrames();
+    const view = renderView();
+
+    // Standing still, the hero is eventually hit five times; ten minutes of play at most.
+    for (let i = 0; i < 12_000 && !reported().includes('runEnded'); i += 1) {
+      frames.run(1);
+    }
+    const ended = onEvent.mock.calls.map(([event]) => event).find((e) => e.type === 'runEnded');
+    expect(ended?.type === 'runEnded' ? ended.result.status : null).toBe('lost');
+    expect(hudValue('Lives')).toBe('0 of 5');
+
+    // The world moves on for the picture, but the end is reported once.
+    frames.run(20);
+    expect(reported().filter((type) => type === 'runEnded')).toHaveLength(1);
+
+    view.rerender({ run: { ...run, seed: 2 } });
+    frames.run(2);
+
     expect(hudValue('Lives')).toBe('5 of 5');
+    expect(setVolume).toHaveBeenCalledTimes(2);
   });
 
   it('stops the run when it leaves the page', () => {
     const frames = installFrames();
-    const view = render(
-      <GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />,
-    );
+    const view = renderView();
     frames.run(2);
     expect(frames.pending()).toBe(1);
 
@@ -170,7 +226,7 @@ describe('GameView', () => {
   it('explains when the browser has no 2D canvas context', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
-    render(<GameView choice={choice} sprites={sprites} audio={audio} onExit={vi.fn()} />);
+    renderView();
 
     expect(screen.getByRole('alert')).toHaveTextContent('does not support the canvas element');
   });

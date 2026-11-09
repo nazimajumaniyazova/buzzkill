@@ -1,7 +1,6 @@
 import {
   type ActionInput,
   applyCanvasFit,
-  type AudioMixer,
   computeCanvasFit,
   createActionInput,
   createCanvas2DRenderer,
@@ -18,35 +17,37 @@ import {
   type Game,
   GAME_ACTIONS,
   type GameAction,
-  type GameSound,
   WORLD,
 } from '@buzzkill/game';
 import { type JSX, useEffect, useRef, useState } from 'react';
 
 import { createGameDrawer } from './game/draw-game';
-import { GAME_VERSION, seedForRun } from './game/run-options';
-import type { GameSprites } from './game/sprites';
+import { GAME_VERSION } from './game/run-options';
 import { GameHud } from './GameHud';
-import type { StartChoice } from './StartScreen';
+import { connectGame, type GameEvent } from './state/bridge';
+import type { GameAssets, Run } from './state/machine';
 
 interface GameViewProps {
-  readonly choice: StartChoice;
-  readonly sprites: GameSprites<ImageBitmap>;
-  readonly audio: AudioMixer<GameSound>;
-  readonly onExit: () => void;
+  readonly run: Run;
+  readonly assets: GameAssets;
+  /** The machine's word: `true` holds the game, `false` lets it go on. */
+  readonly paused: boolean;
+  /** Where the game's own reports go: the pause, the resume and the end of the run. */
+  readonly onEvent: (event: GameEvent) => void;
 }
 
 /**
- * The canvas and one run of the game on it. Everything the run needs is created here and passed
- * to `createGame`: the input with its keyboard and gamepad sources, the frame host, the Canvas 2D
- * renderer with the game's drawing code, and the audio. The shell then talks to the run only
- * through the `Game` object. "Play again" starts a new run on the same canvas.
+ * The canvas and one run of the game on it. The effect that the run keys creates everything the
+ * run needs and passes it to `createGame`: the input with its keyboard and gamepad sources, the
+ * frame host, the Canvas 2D renderer with the game's drawing code, and the shared mixer at the
+ * run's volume. The machine then drives the game through `paused`, and the game drives the
+ * machine through the bridge, so each side learns of the other's pause without a loop: `pause`
+ * and `resume` do nothing when the game is there already.
  */
-export function GameView({ choice, sprites, audio, onExit }: GameViewProps): JSX.Element {
+export function GameView({ run, assets, paused, onEvent }: GameViewProps): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null);
   const [unsupported, setUnsupported] = useState(false);
-  const [run, setRun] = useState(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -81,14 +82,15 @@ export function GameView({ choice, sprites, audio, onExit }: GameViewProps): JSX
       },
     };
 
+    assets.audio.setVolume('effects', run.volume);
     const created = createGame({
-      settings: { heroId: choice.heroId, mode: choice.mode },
-      seed: seedForRun(window.location.search),
+      settings: { heroId: run.heroId, mode: run.mode },
+      seed: run.seed,
       gameVersion: GAME_VERSION,
       input: polledInput,
       host: createBrowserHost(),
-      renderer: createGameDrawer(renderer, sprites),
-      audio,
+      renderer: createGameDrawer(renderer, assets.sprites),
+      audio: assets.audio,
     });
     setGame(created);
     created.start();
@@ -99,7 +101,22 @@ export function GameView({ choice, sprites, audio, onExit }: GameViewProps): JSX
       gamepad.dispose();
       window.removeEventListener('resize', fit);
     };
-  }, [choice, sprites, audio, run]);
+  }, [run, assets]);
+
+  // The bridge: what the game reports becomes events of the machine.
+  useEffect(() => (game === null ? undefined : connectGame(game, onEvent)), [game, onEvent]);
+
+  // The machine's command. The game's own pause arrives here as `paused` too, and is a no-op.
+  useEffect(() => {
+    if (game === null) {
+      return;
+    }
+    if (paused) {
+      game.pause();
+    } else {
+      game.resume();
+    }
+  }, [game, paused]);
 
   return (
     <>
@@ -111,15 +128,7 @@ export function GameView({ choice, sprites, audio, onExit }: GameViewProps): JSX
           Your browser does not support the canvas element, so the game cannot run.
         </p>
       ) : (
-        game !== null && (
-          <GameHud
-            game={game}
-            onPlayAgain={() => {
-              setRun((count) => count + 1);
-            }}
-            onExit={onExit}
-          />
-        )
+        game !== null && <GameHud game={game} />
       )}
     </>
   );

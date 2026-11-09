@@ -1,51 +1,151 @@
-import { createBrowserAudioContext } from '@buzzkill/engine/browser';
+import { DEFAULT_KEY_BINDINGS } from '@buzzkill/game';
 import { type JSX, useEffect, useState } from 'react';
 
-import { GameSession } from './GameSession';
-import { type StartChoice, StartScreen } from './StartScreen';
+import { BootScreen } from './BootScreen';
+import { seedForRun } from './game/run-options';
+import { GameView } from './GameView';
+import { HeroSelectScreen } from './HeroSelectScreen';
+import { MenuScreen } from './MenuScreen';
+import { PauseDialog } from './PauseDialog';
+import { RunOverDialog } from './RunOverDialog';
+import {
+  type AppState,
+  type AppStore,
+  createAppStore,
+  type GameAssets,
+  isRunState,
+  type RunChoice,
+} from './state/machine';
+import { useStore } from './state/use-store';
 import { applyTheme, readThemeChoice, type ThemeChoice, writeThemeChoice } from './theme';
 
+const PAUSE_KEYS: readonly string[] = DEFAULT_KEY_BINDINGS.pause;
+
+const RUN_OVER_TITLES = {
+  levelComplete: 'Level complete',
+  gameOver: 'Game over',
+} as const satisfies Record<Extract<AppState['name'], 'levelComplete' | 'gameOver'>, string>;
+
+interface AppProps {
+  /** The store of the flow. The app creates its own when none is given; a test starts anywhere. */
+  readonly store?: AppStore;
+}
+
+const whole = (state: AppState): AppState => state;
+
 /**
- * Application shell: the start screen until the player presses Play, then a game session. The
- * state machine of stage 5 (menu, playing, paused, game over) replaces this switch.
+ * Application shell: renders the screen of the machine's state (ADR-0006) and nothing else. The
+ * screens and the game report through `send`; the effects here are the two the whole page needs,
+ * the theme and the pause key.
  */
-export function App(): JSX.Element {
-  const [choice, setChoice] = useState<StartChoice | null>(null);
+export function App({ store: given }: AppProps): JSX.Element {
+  const [own] = useState(() => createAppStore());
+  const store = given ?? own;
+  const state = useStore(store, whole);
+  const { send } = store;
   const [theme, setTheme] = useState<ThemeChoice>(readThemeChoice);
-  // One audio context for the page, created and started by the first Play click: browsers allow
-  // audio to start only in response to a gesture.
-  const [audioContext, setAudioContext] = useState<AudioContext | null | undefined>(undefined);
+  const run = isRunState(state) ? state.run : null;
 
   // The theme of the page (#75): the player's setting on the menus, the run's own time of day
-  // while playing, so the HUD and the dialogs match the sky.
+  // while a run is on screen, so the HUD and the dialogs match the sky.
   useEffect(() => {
-    applyTheme(choice === null ? theme : choice.mode);
-  }, [choice, theme]);
+    applyTheme(run === null ? theme : run.mode);
+  }, [run, theme]);
 
-  if (choice === null) {
-    return (
-      <StartScreen
-        theme={theme}
-        onThemeChange={(next) => {
-          setTheme(next);
-          writeThemeChoice(next);
-        }}
-        onStart={(picked) => {
-          const context = audioContext === undefined ? createBrowserAudioContext() : audioContext;
-          void context?.resume().catch(() => undefined);
-          setAudioContext(context);
-          setChoice(picked);
-        }}
-      />
-    );
+  // The loop does not sample input while paused, so the pause key resumes from here.
+  useEffect(() => {
+    if (state.name !== 'paused') {
+      return;
+    }
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (PAUSE_KEYS.includes(event.code)) {
+        event.preventDefault();
+        send({ type: 'resume' });
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [state.name, send]);
+
+  const play = (assets: GameAssets, choice: RunChoice): void => {
+    // Browsers start audio only in response to a gesture, and this click is one.
+    void assets.audio.unlock();
+    send({ type: 'play', run: { ...choice, seed: seedForRun(window.location.search) } });
+  };
+
+  switch (state.name) {
+    case 'boot':
+      return (
+        <BootScreen
+          attempt={state.attempt}
+          failures={state.failures}
+          onEvent={send}
+          onRetry={() => {
+            send({ type: 'retry' });
+          }}
+        />
+      );
+    case 'menu':
+      return (
+        <MenuScreen
+          theme={theme}
+          onThemeChange={(next) => {
+            setTheme(next);
+            writeThemeChoice(next);
+          }}
+          onPlay={() => {
+            send({ type: 'selectHero' });
+          }}
+        />
+      );
+    case 'heroSelect':
+      return (
+        <HeroSelectScreen
+          onStart={(choice) => {
+            play(state.assets, choice);
+          }}
+          onBack={() => {
+            send({ type: 'back' });
+          }}
+        />
+      );
+    case 'playing':
+    case 'paused':
+    case 'levelComplete':
+    case 'gameOver':
+      return (
+        <>
+          <GameView
+            run={state.run}
+            assets={state.assets}
+            paused={state.name === 'paused'}
+            onEvent={send}
+          />
+          {state.name === 'paused' && (
+            <PauseDialog
+              onResume={() => {
+                send({ type: 'resume' });
+              }}
+              onQuit={() => {
+                send({ type: 'quit' });
+              }}
+            />
+          )}
+          {(state.name === 'levelComplete' || state.name === 'gameOver') && (
+            <RunOverDialog
+              title={RUN_OVER_TITLES[state.name]}
+              result={state.result}
+              onPlayAgain={() => {
+                play(state.assets, state.run);
+              }}
+              onQuit={() => {
+                send({ type: 'quit' });
+              }}
+            />
+          )}
+        </>
+      );
   }
-  return (
-    <GameSession
-      choice={choice}
-      audioContext={audioContext ?? null}
-      onExit={() => {
-        setChoice(null);
-      }}
-    />
-  );
 }

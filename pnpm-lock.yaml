@@ -407,6 +407,9 @@ importers:
       '@buzzkill/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@fast-check/vitest':
+        specifier: 'catalog:'
+        version: 0.5.0(vitest@5.1.0)
       '@testing-library/jest-dom':
         specifier: 'catalog:'
         version: 7.0.1(@testing-library/dom@10.4.2)(vitest@5.1.0)
