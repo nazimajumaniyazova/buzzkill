@@ -1,6 +1,7 @@
 import type { AssetFailure } from '@buzzkill/engine';
+import type { GamepadLike } from '@buzzkill/engine/browser';
 import type { RunResult } from '@buzzkill/game';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
@@ -8,10 +9,12 @@ import { App } from './App';
 import type { BootEvent } from './BootScreen';
 import type { GameEvent } from './state/bridge';
 import { createAppStore, type GameAssets, type Run } from './state/machine';
+import { createSettingsStore, DEFAULT_SETTINGS } from './state/settings';
 
 const unlock = vi.fn(() => Promise.resolve());
-// The shell calls only unlock; the game view, which uses the rest, is replaced below.
-const assets = { sprites: {}, audio: { unlock } } as unknown as GameAssets;
+const setVolume = vi.fn();
+// The shell calls unlock and setVolume; the game view, which uses the rest, is replaced below.
+const assets = { sprites: {}, audio: { unlock, setVolume } } as unknown as GameAssets;
 
 const failure: AssetFailure = {
   id: 'projectile',
@@ -77,9 +80,9 @@ vi.mock('./GameView', () => ({
     paused: boolean;
     onEvent: (event: GameEvent) => void;
   }) => (
-    <div>
+    <main aria-label="Game">
       <p>
-        Game view: {run.heroId} {run.mode} seed {run.seed} volume {run.volume}
+        Game view: {run.heroId} {run.mode} seed {run.seed}
         {paused ? ', held' : ''}
       </p>
       <button
@@ -106,7 +109,7 @@ vi.mock('./GameView', () => ({
       >
         Win
       </button>
-    </div>
+    </main>
   ),
 }));
 
@@ -114,31 +117,77 @@ const click = (name: string): void => {
   fireEvent.click(screen.getByRole('button', { name }));
 };
 
-/** Boots and starts a run with the defaults: Mike, day, 30 %. */
+const heading = (name: string): HTMLElement => screen.getByRole('heading', { level: 1, name });
+
+/** Boots and starts a run with the defaults: Mike, day. */
 function startRun(): void {
   click('Finish boot');
   click('Play');
   click('Start');
 }
 
+/** A gamepad in the standard mapping, and frames that run when the test says so. */
+function installGamepad() {
+  const pad = {
+    index: 0,
+    connected: true,
+    buttons: Array.from({ length: 17 }, () => ({ pressed: false })),
+    axes: [0, 0, 0, 0],
+  };
+  const pads: (GamepadLike | null)[] = [pad];
+  Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => pads });
+  const frames: FrameRequestCallback[] = [];
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback): number => {
+    frames.push(callback);
+    return frames.length;
+  });
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  const frame = (): void => {
+    const due = frames.splice(0);
+    act(() => {
+      for (const callback of due) {
+        callback(0);
+      }
+    });
+  };
+  /** Presses a button for one frame and releases it in the next. */
+  const tap = (button: number): void => {
+    const control = pad.buttons[button];
+    if (control === undefined) {
+      throw new Error(`no button ${String(button)}`);
+    }
+    control.pressed = true;
+    frame();
+    control.pressed = false;
+    frame();
+  };
+  return { tap };
+}
+
 describe('App', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    Reflect.deleteProperty(navigator, 'getGamepads');
     unlock.mockClear();
+    setVolume.mockClear();
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
     window.history.replaceState(null, '', '/');
   });
 
-  it('boots first, then shows the menu, and passes the accessibility check', async () => {
+  it('boots first, then shows the main menu, and passes the accessibility check', async () => {
     const { container } = render(<App />);
 
     expect(screen.getByText('Boot attempt 0, loading')).toBeInTheDocument();
 
     click('Finish boot');
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Buzzkill' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    expect(heading('Buzzkill')).toBeInTheDocument();
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
+      'Play',
+      'Settings',
+      'Help',
+    ]);
     expect(await axe(container)).toHaveNoViolations();
   });
 
@@ -152,15 +201,55 @@ describe('App', () => {
     expect(screen.getByText('Boot attempt 1, loading')).toBeInTheDocument();
   });
 
-  it('goes from the menu to the hero select and back', () => {
+  it('opens the hero select, the settings and the help from the menu; Back and Escape return', () => {
     render(<App />);
     click('Finish boot');
 
     click('Play');
-    expect(screen.getByRole('heading', { level: 1, name: 'Choose your hero' })).toBeInTheDocument();
-
+    expect(heading('Choose your hero')).toBeInTheDocument();
     click('Back');
-    expect(screen.getByRole('heading', { level: 1, name: 'Buzzkill' })).toBeInTheDocument();
+    expect(heading('Buzzkill')).toBeInTheDocument();
+
+    click('Settings');
+    expect(heading('Settings')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(heading('Buzzkill')).toBeInTheDocument();
+
+    click('Help');
+    expect(heading('Help')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(heading('Buzzkill')).toBeInTheDocument();
+
+    // Escape has no meaning on the main menu.
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(heading('Buzzkill')).toBeInTheDocument();
+  });
+
+  it('sets the mixer from the settings as soon as the assets exist, and follows every change', () => {
+    render(<App />);
+    expect(setVolume).not.toHaveBeenCalled();
+
+    click('Finish boot');
+    expect(setVolume.mock.calls).toEqual([
+      ['effects', 0.3],
+      ['music', 0.5],
+    ]);
+
+    click('Settings');
+    setVolume.mockClear();
+    fireEvent.click(screen.getByRole('switch', { name: 'Sound' }));
+    expect(setVolume.mock.calls).toEqual([
+      ['effects', 0],
+      ['music', 0],
+    ]);
+
+    setVolume.mockClear();
+    fireEvent.change(screen.getByRole('slider', { name: 'Effects volume' }), {
+      target: { value: '0.7' },
+    });
+    fireEvent.click(screen.getByRole('switch', { name: 'Sound' }));
+    expect(setVolume.mock.calls.at(-2)).toEqual(['effects', 0.7]);
+    expect(setVolume.mock.calls.at(-1)).toEqual(['music', 0.5]);
   });
 
   it('starts the chosen run with the seed of the URL and starts the audio in the click', () => {
@@ -173,7 +262,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Night' }));
     click('Start');
 
-    expect(screen.getByText('Game view: female night seed 7 volume 0.3')).toBeInTheDocument();
+    expect(screen.getByText('Game view: female night seed 7')).toBeInTheDocument();
     expect(unlock).toHaveBeenCalledOnce();
   });
 
@@ -193,14 +282,14 @@ describe('App', () => {
     expect(screen.queryByText(/, held$/)).not.toBeInTheDocument();
 
     click('Game pauses itself');
-    fireEvent.keyDown(window, { code: 'KeyA' });
+    fireEvent.keyDown(document, { key: 'a', code: 'KeyA' });
     expect(screen.getByRole('dialog', { name: 'Paused' })).toBeInTheDocument();
-    fireEvent.keyDown(window, { code: 'Escape' });
+    fireEvent.keyDown(document, { key: 'p', code: 'KeyP' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     click('Game pauses itself');
     click('Quit to menu');
-    expect(screen.getByRole('heading', { level: 1, name: 'Buzzkill' })).toBeInTheDocument();
+    expect(heading('Buzzkill')).toBeInTheDocument();
   });
 
   it('ends a lost run as game over and a won run as level complete, over the running view', async () => {
@@ -209,9 +298,9 @@ describe('App', () => {
     startRun();
 
     click('Lose');
-    expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Score: 42');
-    expect(screen.getByText('Game view: male day seed 7 volume 0.3')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: 'Game over' });
+    expect(dialog).toHaveAccessibleDescription('Score: 42');
+    expect(screen.getByText('Game view: male day seed 7')).toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();
 
     click('Play again');
@@ -222,15 +311,17 @@ describe('App', () => {
     expect(screen.getByRole('dialog', { name: 'Level complete' })).toBeInTheDocument();
 
     click('Back to menu');
-    expect(screen.getByRole('heading', { level: 1, name: 'Buzzkill' })).toBeInTheDocument();
+    expect(heading('Buzzkill')).toBeInTheDocument();
   });
 
-  it('follows the system theme until the player picks one, then remembers the pick', () => {
+  it('follows the system theme until the player picks one in the settings, then remembers it', () => {
     render(<App />);
     click('Finish boot');
-
     expect(document.documentElement).not.toHaveAttribute('data-theme');
+    expect(localStorage.getItem('buzzkill.theme')).toBeNull();
 
+    click('Settings');
+    fireEvent.click(screen.getByRole('tab', { name: 'Display' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Always night' }));
 
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
@@ -242,9 +333,7 @@ describe('App', () => {
     localStorage.setItem('buzzkill.theme', 'night');
     render(<App />);
     click('Finish boot');
-
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
-    expect(screen.getByRole('radio', { name: 'Always night' })).toBeChecked();
 
     click('Play');
     click('Start');
@@ -257,11 +346,36 @@ describe('App', () => {
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
   });
 
-  it('renders the state of the store it is given', () => {
-    const run: Run = { heroId: 'female', mode: 'night', volume: 1, seed: 3 };
-    render(<App store={createAppStore({ name: 'paused', assets, run })} />);
+  it('renders the state of the stores it is given', () => {
+    const run: Run = { heroId: 'female', mode: 'night', seed: 3 };
+    render(
+      <App
+        store={createAppStore({ name: 'paused', assets, run })}
+        settings={createSettingsStore({ ...DEFAULT_SETTINGS, muted: true })}
+      />,
+    );
 
     expect(screen.getByRole('dialog', { name: 'Paused' })).toBeInTheDocument();
-    expect(screen.getByText('Game view: female night seed 3 volume 1, held')).toBeInTheDocument();
+    expect(screen.getByText('Game view: female night seed 3, held')).toBeInTheDocument();
+    expect(setVolume).toHaveBeenCalledWith('effects', 0);
+  });
+
+  it('lets a gamepad move focus in the menu, select with A and go back with B', () => {
+    const { tap } = installGamepad();
+    render(<App />);
+    click('Finish boot');
+
+    tap(13);
+    expect(screen.getByRole('button', { name: 'Play' })).toHaveFocus();
+    tap(13);
+    expect(screen.getByRole('button', { name: 'Settings' })).toHaveFocus();
+    tap(12);
+    expect(screen.getByRole('button', { name: 'Play' })).toHaveFocus();
+
+    tap(0);
+    expect(heading('Choose your hero')).toBeInTheDocument();
+
+    tap(1);
+    expect(heading('Buzzkill')).toBeInTheDocument();
   });
 });

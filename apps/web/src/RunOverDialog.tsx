@@ -1,6 +1,6 @@
 import type { RunResult } from '@buzzkill/game';
-import { Button } from '@buzzkill/ui';
-import { type JSX, useId } from 'react';
+import { Button, Dialog, Inline } from '@buzzkill/ui';
+import type { JSX } from 'react';
 
 interface RunOverDialogProps {
   /** "Level complete" or "Game over": the state the run ended in. */
@@ -12,7 +12,7 @@ interface RunOverDialogProps {
 
 /**
  * The `levelComplete` and `gameOver` states over the canvas, where the world still moves for the
- * picture. The design-system `Dialog` replaces it in #108.
+ * picture. Escape and the close button go back to the menu.
  */
 export function RunOverDialog({
   title,
@@ -20,25 +20,14 @@ export function RunOverDialog({
   onPlayAgain,
   onQuit,
 }: RunOverDialogProps): JSX.Element {
-  const titleId = useId();
-
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-      <h2 id={titleId}>{title}</h2>
-      <p role="status">Score: {result.score}</p>
-      <div className="actions">
-        <Button
-          // The dialog appears when the run ends, in the middle of play.
-          // eslint-disable-next-line jsx-a11y/no-autofocus
-          autoFocus
-          onClick={onPlayAgain}
-        >
-          Play again
-        </Button>
+    <Dialog open title={title} description={`Score: ${String(result.score)}`} onClose={onQuit}>
+      <Inline gap="lg" justify="center">
+        <Button onClick={onPlayAgain}>Play again</Button>
         <Button variant="secondary" onClick={onQuit}>
           Back to menu
         </Button>
-      </div>
-    </div>
+      </Inline>
+    </Dialog>
   );
 }

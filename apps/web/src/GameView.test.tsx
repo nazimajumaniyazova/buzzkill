@@ -34,7 +34,7 @@ const sprites = createGameSprites<ImageBitmap>({
   fireExplosion: image,
 });
 
-const run: Run = { heroId: 'male', mode: 'day', volume: 0.5, seed: 1 };
+const run: Run = { heroId: 'male', mode: 'day', seed: 1 };
 
 /**
  * Animation frames that run only when the test says so, 50 ms apart: the first frame sets the
@@ -83,7 +83,6 @@ describe('GameView', () => {
   let audio: AudioMixer<GameSound>;
   let assets: GameAssets;
   let play: ReturnType<typeof vi.fn<AudioMixer<GameSound>['play']>>;
-  let setVolume: ReturnType<typeof vi.fn<AudioMixer<GameSound>['setVolume']>>;
   let onEvent: ReturnType<typeof vi.fn<(event: GameEvent) => void>>;
 
   /** The events reported so far, by type. */
@@ -118,8 +117,7 @@ describe('GameView', () => {
       context as unknown as CanvasRenderingContext2D,
     );
     play = vi.fn<AudioMixer<GameSound>['play']>();
-    setVolume = vi.fn<AudioMixer<GameSound>['setVolume']>();
-    audio = { ...createAudioMixer({ context: null, buffers: {} }), play, setVolume };
+    audio = { ...createAudioMixer({ context: null, buffers: {} }), play };
     assets = { sprites, audio };
     onEvent = vi.fn<(event: GameEvent) => void>();
   });
@@ -129,7 +127,7 @@ describe('GameView', () => {
     vi.unstubAllGlobals();
   });
 
-  it("runs the game on the canvas at the run's volume and shows its HUD", () => {
+  it('runs the game on the canvas and shows its HUD', () => {
     const frames = installFrames();
     renderView();
 
@@ -138,7 +136,6 @@ describe('GameView', () => {
 
     expect(hudValue('Score')).toBe('0');
     expect(hudValue('Ammo')).toBe('20');
-    expect(setVolume).toHaveBeenCalledExactlyOnceWith('effects', 0.5);
     // Every frame starts with the day sky.
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, 1280, 720);
     expect(onEvent).not.toHaveBeenCalled();
@@ -209,7 +206,6 @@ describe('GameView', () => {
     frames.run(2);
 
     expect(hudValue('Lives')).toBe('5 of 5');
-    expect(setVolume).toHaveBeenCalledTimes(2);
   });
 
   it('stops the run when it leaves the page', () => {
