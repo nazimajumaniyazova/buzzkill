@@ -144,3 +144,43 @@ below are facts gathered from the pull requests of the stage (#54 to #72)._
   recorded on `main`. The timeouts had to grow because CPU simulation runs the three-minute
   benchmark for over two minutes, and the Vitest module runner makes absolute numbers about four
   times those of the bundled game, which is why the absolute budget is measured on the bundle.
+
+## Stage 4 — Design system
+
+_Completed on 2026-11-09 with release v0.8.0. The three answers are the owner's; the STAR draft
+below is facts gathered from the pull requests of the stage (#86 to #104)._
+
+### What did I learn?
+
+### What was hard?
+
+### What would I do differently?
+
+### STAR stories
+
+#### ADR-0005: Styling of the design system
+
+- **Situation:** The 2023 game styled its menus with one global stylesheet and hard-coded colors.
+  The new shell needed a day and a night theme that continue the game's own time of day, had to
+  honor the user's contrast and motion preferences, and its colors had to reach the Canvas 2D
+  renderer as well as React. The candidates were CSS Modules with custom properties,
+  vanilla-extract and Tailwind 4.
+- **Task:** Choose a styling approach with no runtime cost, typed class names, tokens readable
+  from CSS and from TypeScript, and lint rules that catch a misspelled token before review.
+- **Action:** CSS Modules plus custom properties. One TypeScript source defines the tokens in three
+  layers, primitives, semantic and component, and every token keeps a reference to the one it is
+  built on, so a theme changes 17 semantic colors and every component follows. A script renders
+  `tokens.css` with the day theme on `:root`, the night theme under `data-theme` and under
+  `prefers-color-scheme`, and overrides for `prefers-contrast: more` and `prefers-reduced-motion`;
+  a test fails when the committed file is stale. `css-modules-kit` generates the class-name types,
+  Stylelint rejects unknown custom properties and raw colors outside the token folder, and
+  variants are `data-*` attributes rather than class combinations. Nine components and four
+  primitives followed, on native elements wherever a WAI-ARIA pattern allowed it, each with a
+  controlled and an uncontrolled mode, tests written first, axe in every test and every story.
+- **Result:** 188 custom properties (62 primitives, 47 semantic, 79 component) in a 10 kB
+  stylesheet, 1.9 kB gzipped, and no styling code at runtime. Both themes pass 25 WCAG AA contrast
+  pairs in the token tests, and 6 more under `prefers-contrast: more`, text at 7:1. The package
+  has 168 tests in 21 files and 55 stories that the a11y addon checks in Chromium on every pull
+  request. The canvas drawing code reads the same tokens object as the components, so the HUD and
+  the health bar take their colors from one source. The stage took 12 pull requests and 7 releases
+  (v0.2.0 to v0.8.0) over two days.

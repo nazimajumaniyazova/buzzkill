@@ -41,3 +41,4 @@ vite
 vitejs
 vitest
 WASD
+WCAG
