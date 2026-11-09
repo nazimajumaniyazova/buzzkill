@@ -1,0 +1,52 @@
+.tabs {
+  display: grid;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tabs-gap);
+  border-block-end: 1px solid var(--tabs-border);
+}
+
+/* The selected tab's indicator is an inset shadow on the bottom edge, so no margin tricks. */
+.tab {
+  padding-block: var(--tabs-tab-padding-block);
+  padding-inline: var(--tabs-tab-padding-inline);
+  font: inherit;
+  font-weight: var(--font-weight-bold);
+  color: var(--tabs-text);
+  cursor: pointer;
+  background-color: transparent;
+  border: 0;
+  border-start-start-radius: var(--tabs-tab-radius);
+  border-start-end-radius: var(--tabs-tab-radius);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--tabs-focus-ring);
+  outline-offset: -2px;
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tab[aria-selected='true'] {
+  color: var(--tabs-text-selected);
+  box-shadow: inset 0 -2px 0 var(--tabs-indicator);
+}
+
+.tab:hover:not(:disabled) {
+  background-color: var(--tabs-tab-background-hover);
+}
+
+.panel {
+  padding-block: var(--tabs-panel-padding-block);
+}
+
+.panel:focus-visible {
+  outline: 2px solid var(--tabs-focus-ring);
+  outline-offset: 2px;
+}

@@ -86,3 +86,19 @@ export const radio = define('radio', {
   itemGap: space.inline.lg,
   focusRing: color.focus,
 });
+
+export const tabs = define('tabs', {
+  gap: space.inline.sm,
+  border: color.border,
+  indicator: color.accent,
+  text: color.textMuted,
+  textSelected: color.text,
+  focusRing: color.focus,
+  tab: {
+    paddingBlock: space.inset.sm,
+    paddingInline: space.inset.md,
+    radius: radius.control,
+    backgroundHover: color.surfaceHover,
+  },
+  panelPaddingBlock: space.inset.md,
+});
