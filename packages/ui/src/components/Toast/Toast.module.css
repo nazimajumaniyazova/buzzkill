@@ -1,0 +1,49 @@
+.toast {
+  display: flex;
+  gap: var(--toast-gap);
+  align-items: flex-start;
+  inline-size: 24rem;
+  max-inline-size: 100%;
+  padding: var(--toast-padding);
+  color: var(--toast-text);
+  pointer-events: auto;
+  background-color: var(--toast-background);
+  border: 1px solid var(--toast-border);
+  border-inline-start: 4px solid var(--toast-info);
+  border-radius: var(--toast-radius);
+  box-shadow: var(--toast-shadow);
+  animation: slide-in var(--motion-normal) var(--motion-easing);
+}
+
+.toast[data-tone='success'] {
+  border-inline-start-color: var(--toast-success);
+}
+
+.toast[data-tone='danger'] {
+  border-inline-start-color: var(--toast-danger);
+}
+
+.body {
+  display: grid;
+  flex: 1;
+  gap: var(--space-stack-sm);
+  min-inline-size: 0;
+}
+
+.title {
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+}
+
+.description {
+  margin: 0;
+  color: var(--toast-text-muted);
+}
+
+/* Reduced motion sets the duration to zero, so the toast simply appears. */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--space-stack-lg);
+  }
+}

@@ -102,3 +102,19 @@ export const tabs = define('tabs', {
   },
   panelPaddingBlock: space.inset.md,
 });
+
+export const toast = define('toast', {
+  padding: space.inset.md,
+  gap: space.inline.md,
+  radius: radius.control,
+  shadow: shadow.raised,
+  background: color.surface,
+  text: color.text,
+  textMuted: color.textMuted,
+  border: color.border,
+  /** The accent stripe per tone. */
+  info: color.accent,
+  success: color.success,
+  danger: color.danger,
+  region: { inset: space.inset.md, gap: space.stack.md },
+});

@@ -1,0 +1,15 @@
+/* The corner of the viewport, above everything; pointer events only on the toasts themselves. */
+.region {
+  position: fixed;
+  inset-block-end: var(--toast-region-inset);
+  inset-inline-end: var(--toast-region-inset);
+  z-index: var(--layer-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--toast-region-gap);
+  max-inline-size: calc(100% - 2 * var(--toast-region-inset));
+  padding: 0;
+  margin: 0;
+  pointer-events: none;
+  list-style: none;
+}

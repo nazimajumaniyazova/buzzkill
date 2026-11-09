@@ -176,6 +176,19 @@
   --tabs-tab-radius: var(--radius-control);
   --tabs-tab-background-hover: var(--color-surface-hover);
   --tabs-panel-padding-block: var(--space-inset-md);
+  --toast-padding: var(--space-inset-md);
+  --toast-gap: var(--space-inline-md);
+  --toast-radius: var(--radius-control);
+  --toast-shadow: var(--shadow-raised);
+  --toast-background: var(--color-surface);
+  --toast-text: var(--color-text);
+  --toast-text-muted: var(--color-text-muted);
+  --toast-border: var(--color-border);
+  --toast-info: var(--color-accent);
+  --toast-success: var(--color-success);
+  --toast-danger: var(--color-danger);
+  --toast-region-inset: var(--space-inset-md);
+  --toast-region-gap: var(--space-stack-md);
 
   color-scheme: light;
 }
