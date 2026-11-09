@@ -4,6 +4,7 @@ autosquash
 AZERTY
 bitecs
 bryc
+bundlephobia
 Buzzkill
 codegen
 codspeed
@@ -25,6 +26,7 @@ nvmrc
 PractRand
 scroller
 splitmix
+statechart
 subcomponents
 subfolders
 Supabase
