@@ -2,7 +2,14 @@
 import { DEFAULT_KEY_BINDINGS } from '@buzzkill/game';
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_SETTINGS, parseSettings, type Settings, SETTINGS_VERSION } from './schema';
+import {
+  DEFAULT_SETTINGS,
+  defaultSettings,
+  parseSettings,
+  preferredLanguage,
+  type Settings,
+  SETTINGS_VERSION,
+} from './schema';
 
 /** The stored form of a settings object: the fields and the version. */
 const stored = (settings: Settings = DEFAULT_SETTINGS): Record<string, unknown> => ({
@@ -107,5 +114,39 @@ describe('parseSettings', () => {
     expect(parseSettings(null)).toBeNull();
     expect(parseSettings('night')).toBeNull();
     expect(parseSettings([stored()])).toBeNull();
+  });
+
+  it('takes a missing or broken field from the given defaults', () => {
+    const russian = defaultSettings(['ru-RU']);
+
+    expect(parseSettings({ version: SETTINGS_VERSION, theme: 'day' }, russian)).toEqual({
+      ...russian,
+      theme: 'day',
+    });
+    expect(parseSettings({ ...stored(), language: 'fr' }, russian)?.language).toBe('ru');
+  });
+
+  it('keeps a stored language over the defaults', () => {
+    expect(parseSettings(stored(), defaultSettings(['ru']))?.language).toBe('en');
+  });
+});
+
+describe('preferredLanguage', () => {
+  it.each([
+    [['ru-RU', 'en-US'], 'ru'],
+    [['en-GB', 'ru'], 'en'],
+    [['de-DE', 'ru'], 'ru'],
+    [['RU'], 'ru'],
+    [['de', 'fr-FR'], 'en'],
+    [[], 'en'],
+  ])('gives %j the language %s', (tags, language) => {
+    expect(preferredLanguage(tags)).toBe(language);
+  });
+});
+
+describe('defaultSettings', () => {
+  it('is DEFAULT_SETTINGS in the preferred language', () => {
+    expect(defaultSettings(['ru-RU'])).toEqual({ ...DEFAULT_SETTINGS, language: 'ru' });
+    expect(defaultSettings(['en-US'])).toEqual(DEFAULT_SETTINGS);
   });
 });

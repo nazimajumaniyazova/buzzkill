@@ -16,6 +16,36 @@ import { configs as tsConfigs } from 'typescript-eslint';
 
 const reactFiles = ['apps/web/**/*.{ts,tsx}', 'packages/ui/**/*.{ts,tsx}'];
 
+const restrictedSyntax = [
+  {
+    selector: 'AssignmentExpression[left.property.name=/^(innerHTML|outerHTML)$/]',
+    message: 'Do not assign HTML strings. Use DOM APIs or JSX.',
+  },
+  {
+    selector: "CallExpression[callee.property.name='insertAdjacentHTML']",
+    message: 'Do not insert HTML strings.',
+  },
+  {
+    selector: 'TSEnumDeclaration',
+    message: 'Use union types or `as const` objects instead of enums.',
+  },
+];
+
+// Text for the player outside the dictionary (ADR-0013): a string in a prop or a field that
+// reaches the player, or in a condition between tags. `react/jsx-no-literals` covers the rest of
+// the text between tags. A string literal is the one whose source starts with a quote.
+const userFacingProps =
+  '/^(alt|aria-description|aria-label|aria-valuetext|closeLabel|description|label|placeholder|title)$/';
+const text = `:matches(Literal[raw=/^['"]/], TemplateLiteral)`;
+const dictionaryMessage =
+  'Text for the player comes from the dictionary (ADR-0013): use useI18n().';
+const userFacingStrings = [
+  `JSXAttribute[name.name=${userFacingProps}] > ${text}`,
+  `JSXAttribute[name.name=${userFacingProps}] > JSXExpressionContainer > ${text}`,
+  `Property[key.name=/^(description|label|title)$/] > ${text}`,
+  `:matches(JSXElement, JSXFragment) > JSXExpressionContainer > :matches(ConditionalExpression, LogicalExpression) > Literal[raw=/^['"]/]`,
+].map((selector) => ({ selector, message: dictionaryMessage }));
+
 export default defineConfig([
   globalIgnores([
     '**/dist',
@@ -61,21 +91,7 @@ export default defineConfig([
       'import-x/no-extraneous-dependencies': 'error',
       'no-console': ['error', { allow: ['warn', 'error'] }],
       eqeqeq: ['error', 'always'],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'AssignmentExpression[left.property.name=/^(innerHTML|outerHTML)$/]',
-          message: 'Do not assign HTML strings. Use DOM APIs or JSX.',
-        },
-        {
-          selector: "CallExpression[callee.property.name='insertAdjacentHTML']",
-          message: 'Do not insert HTML strings.',
-        },
-        {
-          selector: 'TSEnumDeclaration',
-          message: 'Use union types or `as const` objects instead of enums.',
-        },
-      ],
+      'no-restricted-syntax': ['error', ...restrictedSyntax],
     },
   },
 
@@ -157,6 +173,17 @@ export default defineConfig([
       // The strict preset drops the rule's own allowance; the WAI-ARIA tabs pattern puts a
       // tabpanel in the Tab order so its content is reachable when it holds no control.
       'jsx-a11y/no-noninteractive-tabindex': ['error', { roles: ['tabpanel'] }],
+    },
+  },
+
+  // The shell speaks through its dictionary (ADR-0013): no text for the player in the code of
+  // the screens. The dictionaries are where the text lives; tests query by it.
+  {
+    files: ['apps/web/src/**/*.{ts,tsx}'],
+    ignores: ['**/*.test.{ts,tsx}', 'apps/web/src/i18n/en.ts', 'apps/web/src/i18n/ru.ts'],
+    rules: {
+      'react/jsx-no-literals': ['error', { noStrings: true, ignoreProps: true }],
+      'no-restricted-syntax': ['error', ...restrictedSyntax, ...userFacingStrings],
     },
   },
 

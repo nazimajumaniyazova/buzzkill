@@ -3,7 +3,11 @@
   "version": "0.2",
   "language": "en",
   "dictionaryDefinitions": [
-    { "name": "project-words", "path": "./.cspell/project-words.txt", "addWords": true }
+    {
+      "name": "project-words",
+      "path": "./.cspell/project-words.txt",
+      "addWords": true
+    }
   ],
   "dictionaries": ["project-words"],
   "useGitignore": true,
@@ -19,5 +23,17 @@
     "CHANGELOG.md",
     ".husky",
     ".cspell"
+  ],
+  "patterns": [
+    {
+      "name": "Cyrillic",
+      "pattern": "/[\u0400-\u04FF]+/gu"
+    }
+  ],
+  "overrides": [
+    {
+      "filename": "apps/web/src/**",
+      "ignoreRegExpList": ["Cyrillic"]
+    }
   ]
 }

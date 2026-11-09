@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
+import { i18nFor, I18nProvider } from './i18n/i18n';
 import { SettingsScreen } from './SettingsScreen';
 import { DEFAULT_SETTINGS } from './state/settings/schema';
 
@@ -16,8 +17,27 @@ describe('SettingsScreen', () => {
     expect(screen.getByRole('switch', { name: 'Sound' })).toBeChecked();
     expect(screen.getByRole('slider', { name: 'Effects volume' })).toHaveValue('0.3');
     expect(screen.getByRole('slider', { name: 'Music volume' })).toHaveValue('0.5');
-    expect(screen.getByText('30 %')).toBeInTheDocument();
+    expect(screen.getByText('30%')).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'Effects volume' })).toHaveAttribute(
+      'aria-valuetext',
+      '30%',
+    );
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('speaks the language of its provider, percentages included', () => {
+    render(
+      <I18nProvider i18n={i18nFor('ru')}>
+        <SettingsScreen settings={DEFAULT_SETTINGS} onChange={vi.fn()} onBack={vi.fn()} />
+      </I18nProvider>,
+    );
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Настройки' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Звук' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('slider', { name: 'Громкость эффектов' })).toHaveAttribute(
+      'aria-valuetext',
+      '30 %',
+    );
   });
 
   it('reports every sound change as the fields that changed', () => {

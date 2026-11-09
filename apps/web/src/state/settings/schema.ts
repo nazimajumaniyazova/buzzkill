@@ -29,7 +29,7 @@ export interface Settings {
   readonly musicVolume: number;
   /** Stored and edited now; the game reads it once levels are balanced by it (stage 7). */
   readonly difficulty: Difficulty;
-  /** Stored and edited now; the strings follow it with i18n (#111). */
+  /** The language of every string (ADR-0013); the browser's language until the player picks one. */
   readonly language: Language;
   /** `KeyboardEvent.code` values, `KEYS_PER_ACTION` per action, no key bound twice. */
   readonly keyBindings: KeyBindings<GameAction>;
@@ -44,6 +44,26 @@ export const DEFAULT_SETTINGS: Settings = {
   language: 'en',
   keyBindings: DEFAULT_KEY_BINDINGS,
 };
+
+/**
+ * The first language of `tags` (`navigator.languages`, most preferred first) that the game
+ * speaks, matched on the primary subtag: "ru-RU" gives Russian. English when none matches.
+ */
+export function preferredLanguage(tags: readonly string[]): Language {
+  for (const tag of tags) {
+    const primary = tag.split('-')[0]?.toLowerCase();
+    const match = LANGUAGES.find((language) => language === primary);
+    if (match !== undefined) {
+      return match;
+    }
+  }
+  return DEFAULT_SETTINGS.language;
+}
+
+/** The defaults of a player whose browser prefers `tags`: `DEFAULT_SETTINGS` in their language. */
+export function defaultSettings(tags: readonly string[]): Settings {
+  return { ...DEFAULT_SETTINGS, language: preferredLanguage(tags) };
+}
 
 function boundOnce(bindings: Readonly<Record<string, readonly string[]>>): boolean {
   const all = Object.values(bindings).flat();
@@ -67,32 +87,38 @@ const volume = (fallback: number) => z.catch(z.number().check(z.gte(0), z.lte(1)
 
 /**
  * The stored form. The version must match; past versions go through `migrateSettings` first. A
- * field that fails its check falls back to its default on its own, so one broken value never
- * costs the player the rest of the settings.
+ * field that is missing or fails its check falls back to its default on its own, so one broken
+ * value never costs the player the rest of the settings.
  */
-const storedSettingsSchema = z.object({
-  version: z.literal(SETTINGS_VERSION),
-  theme: z.catch(z.enum(THEMES), DEFAULT_SETTINGS.theme),
-  muted: z.catch(z.boolean(), DEFAULT_SETTINGS.muted),
-  effectsVolume: volume(DEFAULT_SETTINGS.effectsVolume),
-  musicVolume: volume(DEFAULT_SETTINGS.musicVolume),
-  difficulty: z.catch(z.enum(DIFFICULTIES), DEFAULT_SETTINGS.difficulty),
-  language: z.catch(z.enum(LANGUAGES), DEFAULT_SETTINGS.language),
-  // A fresh copy each time: the schema's output is mutable, the defaults are not.
-  keyBindings: z.catch(keyBindingsSchema, () => ({
-    moveUp: [...DEFAULT_KEY_BINDINGS.moveUp],
-    moveDown: [...DEFAULT_KEY_BINDINGS.moveDown],
-    fire: [...DEFAULT_KEY_BINDINGS.fire],
-    pause: [...DEFAULT_KEY_BINDINGS.pause],
-  })),
-});
+function storedSettingsSchema(defaults: Settings) {
+  return z.object({
+    version: z.literal(SETTINGS_VERSION),
+    theme: z.catch(z.enum(THEMES), defaults.theme),
+    muted: z.catch(z.boolean(), defaults.muted),
+    effectsVolume: volume(defaults.effectsVolume),
+    musicVolume: volume(defaults.musicVolume),
+    difficulty: z.catch(z.enum(DIFFICULTIES), defaults.difficulty),
+    language: z.catch(z.enum(LANGUAGES), defaults.language),
+    // A fresh copy each time: the schema's output is mutable, the defaults are not.
+    keyBindings: z.catch(keyBindingsSchema, () => ({
+      moveUp: [...defaults.keyBindings.moveUp],
+      moveDown: [...defaults.keyBindings.moveDown],
+      fire: [...defaults.keyBindings.fire],
+      pause: [...defaults.keyBindings.pause],
+    })),
+  });
+}
 
 /**
  * Validates stored data of the current version: the settings, or `null` when it is not a settings
- * object of this version at all. Unknown fields are dropped. Never throws.
+ * object of this version at all. A missing or broken field takes its value from `defaults`.
+ * Unknown fields are dropped. Never throws.
  */
-export function parseSettings(data: unknown): Settings | null {
-  const result = storedSettingsSchema.safeParse(data);
+export function parseSettings(
+  data: unknown,
+  defaults: Settings = DEFAULT_SETTINGS,
+): Settings | null {
+  const result = storedSettingsSchema(defaults).safeParse(data);
   if (!result.success) {
     return null;
   }

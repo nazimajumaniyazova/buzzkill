@@ -25,6 +25,7 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 import { createGameDrawer } from './game/draw-game';
 import { GAME_VERSION } from './game/run-options';
 import { GameHud } from './GameHud';
+import { useI18n } from './i18n/i18n';
 import { connectGame, type GameEvent } from './state/bridge';
 import type { GameAssets, Run } from './state/machine';
 
@@ -54,6 +55,7 @@ export function GameView({
   keyBindings,
   onEvent,
 }: GameViewProps): JSX.Element {
+  const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null);
   const [unsupported, setUnsupported] = useState(false);
@@ -141,14 +143,12 @@ export function GameView({
   }, [game, paused]);
 
   return (
-    <main aria-label="Game">
+    <main aria-label={t.game.label}>
       <canvas ref={canvasRef} className="game-canvas">
-        Buzzkill game screen
+        {t.game.canvas}
       </canvas>
       {unsupported ? (
-        <p role="alert">
-          Your browser does not support the canvas element, so the game cannot run.
-        </p>
+        <p role="alert">{t.game.unsupported}</p>
       ) : (
         game !== null && <GameHud game={game} />
       )}

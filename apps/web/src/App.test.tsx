@@ -171,8 +171,10 @@ describe('App', () => {
     Reflect.deleteProperty(navigator, 'getGamepads');
     unlock.mockClear();
     setVolume.mockClear();
+    vi.restoreAllMocks();
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('lang');
     window.history.replaceState(null, '', '/');
   });
 
@@ -351,6 +353,62 @@ describe('App', () => {
     expect(screen.getByRole('radio', { name: 'Hard' })).toBeChecked();
     fireEvent.click(screen.getByRole('tab', { name: 'Controls' }));
     expect(screen.getByRole('button', { name: 'Shoot, key 2: F' })).toBeInTheDocument();
+  });
+
+  it('switches the language at once, without a reload, and the lang of the page follows', () => {
+    render(<App />);
+    click('Finish boot');
+    expect(document.documentElement).toHaveAttribute('lang', 'en');
+
+    click('Settings');
+    fireEvent.click(screen.getByRole('tab', { name: 'Display' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Русский' }));
+
+    expect(document.documentElement).toHaveAttribute('lang', 'ru');
+    expect(heading('Настройки')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Экран' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('radio', { name: 'Русский' })).toBeChecked();
+    expect(JSON.parse(localStorage.getItem('buzzkill.settings') ?? '{}')).toMatchObject({
+      language: 'ru',
+    });
+
+    click('Назад');
+    expect(screen.getByRole('button', { name: 'Играть' })).toBeInTheDocument();
+  });
+
+  it("starts in the browser's language until the player picks one", () => {
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['ru-RU', 'en-US']);
+    const view = render(<App />);
+    click('Finish boot');
+
+    expect(screen.getByRole('button', { name: 'Играть' })).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('lang', 'ru');
+    expect(localStorage.getItem('buzzkill.settings')).toBeNull();
+    view.unmount();
+
+    localStorage.setItem(
+      'buzzkill.settings',
+      JSON.stringify({ version: 1, ...DEFAULT_SETTINGS, language: 'en' }),
+    );
+    render(<App />);
+    click('Finish boot');
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+  });
+
+  it('titles the end of a run and writes its score in the language of the settings', () => {
+    render(<App settings={createSettingsStore({ ...DEFAULT_SETTINGS, language: 'ru' })} />);
+    click('Finish boot');
+    click('Играть');
+    click('Начать');
+
+    click('Lose');
+    expect(screen.getByRole('dialog', { name: 'Игра окончена' })).toHaveAccessibleDescription(
+      'Счёт: 42',
+    );
+    click('Играть снова');
+    click('Win');
+    expect(screen.getByRole('dialog', { name: 'Уровень пройден' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Закрыть' })).toBeInTheDocument();
   });
 
   it("shows the player's keys in the help", () => {

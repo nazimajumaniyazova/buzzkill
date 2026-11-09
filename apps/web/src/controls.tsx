@@ -1,39 +1,40 @@
-import type { GameAction } from '@buzzkill/game';
 import { KeyHint } from '@buzzkill/ui';
 import type { JSX } from 'react';
 
-/** What the player reads for each action of the game. */
-export const ACTION_LABELS: Readonly<Record<GameAction, string>> = {
-  moveUp: 'Move up',
-  moveDown: 'Move down',
-  fire: 'Shoot',
-  pause: 'Pause',
+import type { Messages } from './i18n/en';
+import { useI18n } from './i18n/i18n';
+
+/**
+ * What is printed on the cap of a key, where that differs from its name. The print is the same
+ * in every language, like the keys themselves; the name comes from the dictionary.
+ */
+export const KEY_SYMBOLS: Readonly<Partial<Record<string, string>>> = {
+  ArrowUp: '↑',
+  ArrowDown: '↓',
+  ArrowLeft: '←',
+  ArrowRight: '→',
+  Escape: 'Esc',
 };
 
-/** How a `KeyboardEvent.code` is called and printed, where its code is not the name. */
-const KEY_CAPS: Readonly<Record<string, { readonly name: string; readonly symbol?: string }>> = {
-  ArrowUp: { name: 'Arrow up', symbol: '↑' },
-  ArrowDown: { name: 'Arrow down', symbol: '↓' },
-  ArrowLeft: { name: 'Arrow left', symbol: '←' },
-  ArrowRight: { name: 'Arrow right', symbol: '→' },
-  Escape: { name: 'Escape', symbol: 'Esc' },
-  ShiftLeft: { name: 'Left Shift' },
-  ShiftRight: { name: 'Right Shift' },
-  ControlLeft: { name: 'Left Ctrl' },
-  ControlRight: { name: 'Right Ctrl' },
-  AltLeft: { name: 'Left Alt' },
-  AltRight: { name: 'Right Alt' },
-};
+type KeyNames = Messages['keys'];
 
-/** The name of a key: "Arrow up", "W", "1", "Space". */
-export function keyName(code: string): string {
-  return KEY_CAPS[code]?.name ?? code.replace(/^(Key|Digit)/, '');
+function isNamed(code: string, names: KeyNames): code is keyof KeyNames {
+  return Object.hasOwn(names, code);
+}
+
+/**
+ * The name of a key in the current language: "Arrow up", "Space". A key the dictionary does not
+ * name is called by its code, a letter or a digit without the prefix: "W", "1".
+ */
+export function keyName(code: string, names: KeyNames): string {
+  return isNamed(code, names) ? names[code] : code.replace(/^(Key|Digit)/, '');
 }
 
 /** A key cap: the printed symbol where there is one, the name for assistive technology. */
 export function KeyCap({ code }: { readonly code: string }): JSX.Element {
-  const symbol = KEY_CAPS[code]?.symbol;
-  const name = keyName(code);
+  const { t } = useI18n();
+  const symbol = KEY_SYMBOLS[code];
+  const name = keyName(code, t.keys);
   return symbol === undefined ? (
     <KeyHint>{name}</KeyHint>
   ) : (

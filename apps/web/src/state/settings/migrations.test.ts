@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { migrateSettings, MIGRATIONS } from './migrations';
-import { DEFAULT_SETTINGS, parseSettings, SETTINGS_VERSION } from './schema';
+import { DEFAULT_SETTINGS, defaultSettings, parseSettings, SETTINGS_VERSION } from './schema';
 
 /**
  * One stored example of every past version, as a browser may still hold it. Version 0 is the bare
@@ -32,6 +32,15 @@ describe('migrateSettings', () => {
     const migrated = migrateSettings(FIXTURES[0]);
 
     expect(parseSettings(migrated)).toEqual({ ...DEFAULT_SETTINGS, theme: 'night' });
+  });
+
+  it("moves only the theme of version 0, so the rest takes the player's defaults", () => {
+    expect(MIGRATIONS[0]?.({ version: 0, theme: 'night' })).toEqual({ version: 1, theme: 'night' });
+    expect(parseSettings(migrateSettings(FIXTURES[0]), defaultSettings(['ru']))).toEqual({
+      ...DEFAULT_SETTINGS,
+      theme: 'night',
+      language: 'ru',
+    });
   });
 
   it('carries a broken theme through, for the schema to replace with its default', () => {

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { HelpScreen } from './HelpScreen';
+import { i18nFor, I18nProvider } from './i18n/i18n';
 
 /**
  * The rows of a controls list as "action: caps". A printed symbol stands before the hidden name
@@ -27,6 +28,7 @@ describe('HelpScreen', () => {
     );
 
     expect(screen.getByRole('heading', { level: 1, name: 'Help' })).toBeInTheDocument();
+    expect(screen.getByText(/5 hits and the run is over.$/)).toBeInTheDocument();
     expect(rows('Keyboard')).toEqual([
       'Move up: ↑Arrow up or W',
       'Move down: ↓Arrow down or S',
@@ -39,8 +41,31 @@ describe('HelpScreen', () => {
       'Shoot: A',
       'Pause: Start',
     ]);
-    expect(screen.getByRole('region', { name: 'In the menus' })).toHaveTextContent('B goes back');
+    expect(rows('In the menus')).toEqual([
+      'Move: Tab or ↑↓←→Arrow keys or D-pad or Left stick',
+      'Select: Enter or A',
+      'Go back or close a dialog: EscEscape or B',
+    ]);
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('speaks Russian, with the plural of the hits and the keys named in Russian', () => {
+    render(
+      <I18nProvider i18n={i18nFor('ru')}>
+        <HelpScreen keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />
+      </I18nProvider>,
+    );
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Справка' })).toBeInTheDocument();
+    expect(screen.getByText(/5 попаданий — и игра окончена.$/)).toBeInTheDocument();
+    expect(rows('Клавиатура')).toEqual([
+      'Вверх: ↑Стрелка вверх или W',
+      'Вниз: ↓Стрелка вниз или S',
+      'Стрелять: Пробел или J',
+      'Пауза: EscEscape или P',
+    ]);
+    expect(rows('Геймпад')[0]).toBe('Вверх: Крестовина вверх или Левый стик');
+    expect(screen.getByRole('button', { name: 'Назад' })).toBeInTheDocument();
   });
 
   it('prints the symbol of a key once and keeps its name for assistive technology', () => {

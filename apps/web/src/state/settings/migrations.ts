@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, SETTINGS_VERSION } from './schema';
+import { SETTINGS_VERSION } from './schema';
 
 type Stored = Readonly<Record<string, unknown>>;
 
@@ -8,8 +8,8 @@ type Stored = Readonly<Record<string, unknown>>;
  */
 export const MIGRATIONS: Readonly<Record<number, (data: Stored) => Stored>> = {
   // Version 0 is the theme setting of #75, a bare string under its own key. Every other setting
-  // is new in version 1, so it starts at its default.
-  0: (data) => ({ ...DEFAULT_SETTINGS, theme: data['theme'], version: 1 }),
+  // is new in version 1: the schema gives each its default, the browser's language among them.
+  0: (data) => ({ version: 1, theme: data['theme'] }),
 };
 
 function isStored(data: unknown): data is Stored {
