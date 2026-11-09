@@ -165,6 +165,17 @@
   --radio-gap: var(--space-inline-md);
   --radio-item-gap: var(--space-inline-lg);
   --radio-focus-ring: var(--color-focus);
+  --tabs-gap: var(--space-inline-sm);
+  --tabs-border: var(--color-border);
+  --tabs-indicator: var(--color-accent);
+  --tabs-text: var(--color-text-muted);
+  --tabs-text-selected: var(--color-text);
+  --tabs-focus-ring: var(--color-focus);
+  --tabs-tab-padding-block: var(--space-inset-sm);
+  --tabs-tab-padding-inline: var(--space-inset-md);
+  --tabs-tab-radius: var(--radius-control);
+  --tabs-tab-background-hover: var(--color-surface-hover);
+  --tabs-panel-padding-block: var(--space-inset-md);
 
   color-scheme: light;
 }

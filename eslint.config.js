@@ -154,6 +154,9 @@ export default defineConfig([
     rules: {
       'react/no-danger': 'error',
       'react/jsx-no-useless-fragment': 'error',
+      // The strict preset drops the rule's own allowance; the WAI-ARIA tabs pattern puts a
+      // tabpanel in the Tab order so its content is reachable when it holds no control.
+      'jsx-a11y/no-noninteractive-tabindex': ['error', { roles: ['tabpanel'] }],
     },
   },
 
