@@ -37,6 +37,7 @@ const meta = {
     align: { control: 'inline-radio', options: ['start', 'center', 'end', 'baseline'] },
     justify: { control: 'inline-radio', options: ['start', 'center', 'end', 'between'] },
   },
+  parameters: { docs: { subtitle: 'No WAI-ARIA pattern: layout only, without a role' } },
 } satisfies Meta<typeof Inline>;
 
 export default meta;

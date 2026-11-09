@@ -1,0 +1,153 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Accessibility" />
+
+# Accessibility
+
+Every component of the design system is built for the keyboard and for assistive technology
+first, and the checks that keep it so run on every pull request. This page names the WAI-ARIA
+pattern of each component, says how focus looks, lists what is checked where, and walks through
+every component with the keyboard alone.
+
+## Patterns
+
+The [ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/patterns/) (APG) describes
+the roles, states and keys a widget is expected to have. Each component names its pattern in the
+subtitle of its docs page. Wherever a native element carries the pattern, the component is built
+on it, so the browser supplies the role and most of the keys.
+
+| Component                                                                                  | WAI-ARIA pattern                                                                                                                                        | Built on                                                    |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [Button](?path=/docs/components-button--docs)                                              | [Button](https://www.w3.org/WAI/ARIA/apg/patterns/button/)                                                                                              | `button`                                                    |
+| [IconButton](?path=/docs/components-iconbutton--docs)                                      | [Button](https://www.w3.org/WAI/ARIA/apg/patterns/button/), with a required accessible name                                                             | `Button`                                                    |
+| [Dialog](?path=/docs/components-dialog--docs)                                              | [Dialog (Modal)](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/)                                                                                | `dialog` opened with `showModal()`                          |
+| [Menu](?path=/docs/components-menu--docs)                                                  | [Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) and [Menu](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/)                      | a `Button` trigger, `role="menu"` and `role="menuitem"`     |
+| [RadioGroup](?path=/docs/components-radiogroup--docs)                                      | [Radio Group](https://www.w3.org/WAI/ARIA/apg/patterns/radio/)                                                                                          | `fieldset`, `legend` and `input type="radio"`               |
+| [Slider](?path=/docs/components-slider--docs)                                              | [Slider](https://www.w3.org/WAI/ARIA/apg/patterns/slider/)                                                                                              | `input type="range"` with `aria-valuetext`                  |
+| [Switch](?path=/docs/components-switch--docs)                                              | [Switch](https://www.w3.org/WAI/ARIA/apg/patterns/switch/)                                                                                              | `button` with `role="switch"` and `aria-checked`            |
+| [Tabs](?path=/docs/components-tabs--docs)                                                  | [Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)                                                                                                  | `role="tablist"`, `role="tab"` and `role="tabpanel"`        |
+| [Toast](?path=/docs/components-toast--docs)                                                | [Alert](https://www.w3.org/WAI/ARIA/apg/patterns/alert/) for `danger`; the [`status`](https://www.w3.org/TR/wai-aria-1.2/#status) live region otherwise | an `ol` region and two visually hidden live regions         |
+| [KeyHint](?path=/docs/primitives-keyhint--docs)                                            | None                                                                                                                                                    | `kbd` with a visually hidden name when a symbol is printed  |
+| [Stack](?path=/docs/primitives-stack--docs), [Inline](?path=/docs/primitives-inline--docs) | None: layout only                                                                                                                                       | `div` without a role; the parent gives a group its meaning  |
+| [VisuallyHidden](?path=/docs/primitives-visuallyhidden--docs)                              | None: the visually hidden text technique                                                                                                                | `span` kept in the accessibility tree and out of the layout |
+
+## Focus
+
+- Every component that takes focus shows a ring when focus arrives from the keyboard: a 2px
+  outline in the focus token, two pixels outside the control, or just inside it for menu items
+  and tabs, which sit edge to edge. Focus from a pointer shows no ring (`:focus-visible`).
+- `--color-focus` is a semantic token with a value per theme, so the ring reads on the day canvas
+  and on the night canvas alike. The token tests hold it to at least 3:1 against the canvas and
+  the surface in both themes (WCAG 1.4.11, non-text contrast). It stays put under
+  `prefers-contrast: more`, where the text and border colors move to the ends of the palette.
+- A test over the stylesheets confirms that the components that can take focus, and only those,
+  have a `:focus-visible` rule, and that every such rule draws the outline in a focus token.
+- To see the ring in both themes: switch the **Theme** control in the toolbar, click once in the
+  story canvas and press Tab.
+
+Focus moves between components as the patterns ask:
+
+- **Dialog**: on open, focus goes to `initialFocusRef`, otherwise to the first focusable control;
+  the close button is last in the DOM, so the content comes first. On close, focus returns to the
+  element that opened it. `showModal()` makes the rest of the page inert.
+- **Menu**: opening from the keyboard puts focus on the first item, or on the last for ArrowUp;
+  Escape returns it to the trigger; Tab moves on and closes the menu behind it.
+- **Menu and Tabs** keep one Tab stop (a roving tabindex); the arrow keys move within.
+- **Toast** never takes focus. Its dismiss button is in the reading order after the page content,
+  and the timer pauses while focus is inside the toast.
+
+## Checks
+
+- **Tokens**: `tokens.test.ts` checks the contrast of every semantic pair in both themes, 4.5:1
+  for text and 3:1 for borders, focus and controls, and the `prefers-contrast: more` overrides at
+  7:1 and 4.5:1. The component focus rings must reference the semantic focus color.
+- **Component tests**: every component's test renders it, drives the keys below with
+  `user-event` and runs axe (`vitest-axe`) with `toHaveNoViolations`; `pnpm test` runs them in
+  jsdom.
+- **Stories**: the a11y addon runs axe on every story with `test: 'error'`. A violation fails the
+  story in this UI and under `pnpm test:storybook`, which renders every story in Playwright's
+  Chromium and runs its play function. CI runs both on every pull request.
+
+## Keyboard walkthrough
+
+Open a story, click once in the canvas and use the keys below. Storybook's own shortcuts (`S`,
+`A`, `D`, `F`, `T` and `/`) listen in the canvas too, so for the Menu's type-ahead open the
+canvas in its own tab with the toolbar button.
+
+### Button and IconButton
+
+| Key                | Does                                                                        |
+| ------------------ | --------------------------------------------------------------------------- |
+| `Tab`, `Shift+Tab` | Moves focus to the next or previous button. A disabled button is skipped.   |
+| `Enter`, `Space`   | Activates. A loading button keeps focus and ignores both (`aria-disabled`). |
+
+### Dialog
+
+| Key                | Does                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| `Enter`, `Space`   | On the opener: opens the dialog and moves focus inside.                                     |
+| `Tab`, `Shift+Tab` | Moves between the dialog's controls; the page behind is inert. The close button comes last. |
+| `Escape`           | Closes the dialog and returns focus to the opener.                                          |
+
+### Menu
+
+| Key                           | Does                                                                  |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `Enter`, `Space`, `ArrowDown` | On the trigger: opens the menu and focuses the first item.            |
+| `ArrowUp`                     | On the trigger: opens the menu and focuses the last item.             |
+| `ArrowDown`, `ArrowUp`        | Moves to the next or previous item, wrapping around.                  |
+| `Home`, `End`                 | Moves to the first or last item.                                      |
+| A letter                      | Moves to the next item whose label starts with it.                    |
+| `Enter`, `Space`              | Activates the item; the menu closes and focus returns to the trigger. |
+| `Escape`                      | Closes the menu and returns focus to the trigger.                     |
+| `Tab`                         | Leaves the menu: it closes and focus moves on.                        |
+
+### RadioGroup
+
+| Key                                               | Does                                                               |
+| ------------------------------------------------- | ------------------------------------------------------------------ |
+| `Tab`                                             | Enters the group on the checked option, or the first when none is. |
+| `ArrowDown`, `ArrowRight`, `ArrowUp`, `ArrowLeft` | Moves to and chooses the next or previous option, wrapping around. |
+| `Space`                                           | Chooses the focused option when none is checked yet.               |
+
+### Slider
+
+| Key                      | Does                                                        |
+| ------------------------ | ----------------------------------------------------------- |
+| `Tab`                    | Focuses the slider.                                         |
+| `ArrowRight`, `ArrowUp`  | Raises the value by one step.                               |
+| `ArrowLeft`, `ArrowDown` | Lowers the value by one step.                               |
+| `Home`, `End`            | Jumps to the minimum or the maximum.                        |
+| `PageUp`, `PageDown`     | Moves by the larger step the browser chooses for the range. |
+
+The readout and `aria-valuetext` follow every change, in the words of `formatValue`.
+
+### Switch
+
+| Key              | Does                |
+| ---------------- | ------------------- |
+| `Tab`            | Focuses the switch. |
+| `Space`, `Enter` | Toggles it.         |
+
+### Tabs
+
+| Key                       | Does                                                                                                                                                 |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Tab`                     | Enters the tab list on the selected tab; `Tab` again moves into the panel.                                                                           |
+| `ArrowRight`, `ArrowLeft` | Moves to the next or previous tab, wrapping around and skipping disabled tabs. `automatic` activation selects it at once; `manual` only moves focus. |
+| `Home`, `End`             | Moves to the first or last tab.                                                                                                                      |
+| `Enter`, `Space`          | Selects the focused tab, which `manual` activation needs.                                                                                            |
+
+### Toast
+
+| Key              | Does                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
+| none on show     | A toast is announced through a live region, politely or at once for `danger`; focus stays put.     |
+| `Tab`            | Reaches the toast's dismiss button after the page content; the timer pauses while focus is inside. |
+| `Enter`, `Space` | Dismisses the toast.                                                                               |
+| `Escape`         | Dismisses the toast while its dismiss button has focus.                                            |
+
+### KeyHint, Stack, Inline and VisuallyHidden
+
+Not interactive: nothing takes focus and no key does anything. A screen reader reads the name of a
+`KeyHint` even when only a symbol is printed, and the text of a `VisuallyHidden` in its place.

@@ -8,6 +8,7 @@ const meta = {
   title: 'Components/Switch',
   component: Switch,
   args: { label: 'Sound effects', disabled: false, onCheckedChange: fn() },
+  parameters: { docs: { subtitle: 'WAI-ARIA pattern: Switch, on a native button' } },
 } satisfies Meta<typeof Switch>;
 
 export default meta;

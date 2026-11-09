@@ -20,6 +20,7 @@ const meta = {
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
     type: { control: 'inline-radio', options: ['button', 'submit', 'reset'] },
   },
+  parameters: { docs: { subtitle: 'WAI-ARIA pattern: Button, on the native button element' } },
 } satisfies Meta<typeof Button>;
 
 export default meta;

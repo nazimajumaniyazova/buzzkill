@@ -28,6 +28,7 @@ const meta = {
     variant: { control: 'inline-radio', options: ['primary', 'secondary', 'danger'] },
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg'] },
   },
+  parameters: { docs: { subtitle: 'WAI-ARIA patterns: Menu Button and Menu' } },
 } satisfies Meta<typeof Menu>;
 
 export default meta;

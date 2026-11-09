@@ -27,6 +27,7 @@ const meta = {
     gap: { control: 'inline-radio', options: ['sm', 'md', 'lg', 'xl'] },
     align: { control: 'inline-radio', options: ['start', 'center', 'end', 'stretch'] },
   },
+  parameters: { docs: { subtitle: 'No WAI-ARIA pattern: layout only, without a role' } },
 } satisfies Meta<typeof Stack>;
 
 export default meta;

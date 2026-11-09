@@ -20,6 +20,9 @@ const meta = {
   argTypes: {
     orientation: { control: 'inline-radio', options: ['horizontal', 'vertical'] },
   },
+  parameters: {
+    docs: { subtitle: 'WAI-ARIA pattern: Radio Group, on native radio inputs in a fieldset' },
+  },
 } satisfies Meta<typeof RadioGroup>;
 
 export default meta;
