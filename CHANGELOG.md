@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.6.0...v0.7.0) (2026-11-09)
+
+
+### Features
+
+* **ui:** add Tabs with automatic or manual activation ([#100](https://github.com/nazimajumaniyazova/buzzkill/issues/100)) ([fe53bac](https://github.com/nazimajumaniyazova/buzzkill/commit/fe53bac013c9cf2f0b6ec781951b5f69c907df62)), closes [#83](https://github.com/nazimajumaniyazova/buzzkill/issues/83)
+
 ## [0.6.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.5.0...v0.6.0) (2026-11-08)
 
 
