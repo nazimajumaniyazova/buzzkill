@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.8.0...v0.9.0) (2026-11-09)
+
+
+### Features
+
+* **web:** build the screens of the shell on the design system ([#117](https://github.com/nazimajumaniyazova/buzzkill/issues/117)) ([1bf4ce1](https://github.com/nazimajumaniyazova/buzzkill/commit/1bf4ce13522b9064171ab3c5d12f509d5c6c5f7c)), closes [#108](https://github.com/nazimajumaniyazova/buzzkill/issues/108)
+* **web:** drive the shell from a typed state machine ([#116](https://github.com/nazimajumaniyazova/buzzkill/issues/116)) ([36a651f](https://github.com/nazimajumaniyazova/buzzkill/commit/36a651f15c2e920827e0d2a494a46f8a465a9b56)), closes [#107](https://github.com/nazimajumaniyazova/buzzkill/issues/107)
+
 ## [0.8.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.7.0...v0.8.0) (2026-11-09)
 
 
