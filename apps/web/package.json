@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@buzzkill/config": "workspace:*",
+    "@fast-check/vitest": "catalog:",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",
     "@types/react": "catalog:",

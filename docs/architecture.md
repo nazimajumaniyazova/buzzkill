@@ -217,6 +217,36 @@ flowchart LR
 | Server state (leaderboard, profile)                              | `apps/web` | TanStack Query (stage 8)                                                                                              |
 | URL                                                              | `apps/web` | `?seed=`, `?debug=1` for reproducible bugs and demos                                                                  |
 
+### Application flow
+
+The flow is a state machine of our own (ADR-0006): `transition(state, event)` in
+`apps/web/src/state/machine.ts`, held by a store that React reads through `useSyncExternalStore`.
+`boot` loads the assets; every later state carries them; the four run states carry the run and
+the two final ones its result, so a pause dialog on the menu or a game over without a run cannot
+be written. `gamePaused`, `gameResumed` and `runEnded` are what the game reports through the
+bridge; the other events are the player's actions and the outcome of the boot. A test keeps this
+diagram honest: it must name every state and draw exactly the transitions of the table.
+
+```mermaid
+stateDiagram-v2
+  [*] --> boot
+  boot --> boot: bootFailed, retry
+  boot --> menu: booted
+  menu --> heroSelect: selectHero
+  heroSelect --> menu: back
+  heroSelect --> playing: play
+  playing --> paused: pause, gamePaused
+  paused --> playing: resume, gameResumed
+  playing --> levelComplete: runEnded (won)
+  playing --> gameOver: runEnded (lost)
+  levelComplete --> playing: play
+  gameOver --> playing: play
+  playing --> menu: quit
+  paused --> menu: quit
+  levelComplete --> menu: quit
+  gameOver --> menu: quit
+```
+
 ## What exists today
 
 Stages 1 to 3 are done: the repository, the import of the 2023 game, and its rebuild as an engine
@@ -224,7 +254,7 @@ and a deterministic simulation. Dashed elements in the diagrams are later stages
 
 | Container         | Today                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web`        | Start screen; loading screen with progress and load errors; the game through `createGame` with the Canvas 2D renderer, Web Audio, keyboard and gamepad; React HUD, pause and game-over dialogs (#64)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `apps/web`        | The application state machine with its store and the bridge from the game (#107): a boot screen with progress and load errors, the menu, the hero select, the game through `createGame` with the Canvas 2D renderer, Web Audio, keyboard and gamepad (#64), the React HUD and the pause, level-complete and game-over dialogs                                                                                                                                                                                                                                                                                                                                                                               |
 | `packages/engine` | Fixed-step loop (#33); seeded RNG, deterministic trig, AABB + spatial hash, pools, event bus, canvas fit (#37); action input for keyboard, touch and gamepad (#34); asset loader with progress, grid atlases and the Canvas 2D renderer (#35, #63); Web Audio mixer with volume groups (#36)                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `packages/game`   | Headless simulation: ECS-lite world, systems, enemies and rules as data (#38, #39); game actions and bindings (#34); `createGame` with injected dependencies and a pushed HUD (#40); replay recording, the Zod-validated replay format, `simulate` and golden replays (#41).                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `packages/ui`     | Design tokens in three layers from one TypeScript source (#74), rendered to the `@buzzkill/ui/tokens.css` export; the day and night themes with the user's preferences (#75); Storybook with the token and theme docs (#76); the layout and text primitives `Stack`, `Inline`, `VisuallyHidden` and `KeyHint` (#78), styled with CSS Modules whose class types `cmk` generates; `Button`, `IconButton`, `Dialog`, `Menu`, `Switch`, `Slider`, `RadioGroup`, `Tabs` and `Toast`, each after its WAI-ARIA pattern with a controlled and an uncontrolled mode (#79 to #84); the Accessibility page with every pattern, the focus rules and a keyboard walkthrough, guarded by axe and a focus-style test (#77) |
