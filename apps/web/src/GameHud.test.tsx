@@ -1,5 +1,6 @@
 import type { Game, GameHud as Hud } from '@buzzkill/game';
 import { act, render, screen, within } from '@testing-library/react';
+import { Profiler, type ProfilerOnRenderCallback } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
@@ -30,18 +31,25 @@ function createFakeGame() {
       }
     });
   }
-  return { game, update };
+  return { game, update, listeners };
 }
 
 function setup() {
   const fake = createFakeGame();
-  const view = render(<GameHud game={fake.game} />);
+  const onRender = vi.fn<ProfilerOnRenderCallback>();
+  const view = render(
+    <Profiler id="hud" onRender={onRender}>
+      <GameHud game={fake.game} />
+    </Profiler>,
+  );
   /** Score, lives and ammo as shown. */
   const values = () =>
     within(screen.getByRole('region', { name: 'Game status' }))
       .getAllByRole('definition')
       .map((value) => value.textContent);
-  return { ...fake, values, ...view };
+  /** The commits after the first render. */
+  const updates = () => onRender.mock.calls.filter(([, phase]) => phase !== 'mount').length;
+  return { ...fake, values, updates, ...view };
 }
 
 describe('GameHud', () => {
@@ -63,6 +71,25 @@ describe('GameHud', () => {
     update({ score: 7, ammo: 12, lives: 3 });
 
     expect(values()).toEqual(['7', '3 of 5', '12']);
+  });
+
+  it('subscribes once per value it shows', () => {
+    const { listeners } = setup();
+
+    expect(listeners.size).toBe(3);
+  });
+
+  it('commits only when a value it shows changes, once per publication', () => {
+    const { update, updates } = setup();
+
+    update({ paused: true });
+    update({ paused: false });
+    update({});
+    expect(updates()).toBe(0);
+
+    update({ score: 1 });
+    update({ ammo: 19, lives: 4 });
+    expect(updates()).toBe(2);
   });
 
   it('leaves the pause and the end of the run to the machine: no dialog of its own', () => {
