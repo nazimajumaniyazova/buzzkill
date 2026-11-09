@@ -208,14 +208,14 @@ flowchart LR
 
 ### State layers
 
-| State                                                            | Lives in   | Tool                                                    |
-| ---------------------------------------------------------------- | ---------- | ------------------------------------------------------- |
-| Simulation (positions, enemies, projectiles)                     | `game`     | Mutable structures, no reactivity; updated every tick   |
-| Application flow (menu, hero select, playing, paused, game over) | `apps/web` | Finite state machine (ADR-0006, stage 5)                |
-| HUD (score, lives, ammo)                                         | bridge     | External store + `useSyncExternalStore`                 |
-| Settings (volume, theme, controls, language)                     | `apps/web` | Small store + `localStorage`, versioned schema with Zod |
-| Server state (leaderboard, profile)                              | `apps/web` | TanStack Query (stage 8)                                |
-| URL                                                              | `apps/web` | `?seed=`, `?debug=1` for reproducible bugs and demos    |
+| State                                                            | Lives in   | Tool                                                                                                                  |
+| ---------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| Simulation (positions, enemies, projectiles)                     | `game`     | Mutable structures, no reactivity; updated every tick                                                                 |
+| Application flow (menu, hero select, playing, paused, game over) | `apps/web` | Typed state machine of our own: `transition(state, event)` and a store read through `useSyncExternalStore` (ADR-0006) |
+| HUD (score, lives, ammo)                                         | bridge     | External store + `useSyncExternalStore`                                                                               |
+| Settings (volume, theme, controls, language)                     | `apps/web` | The same store, a Zod schema with `version` and migrations, `localStorage` (ADR-0006)                                 |
+| Server state (leaderboard, profile)                              | `apps/web` | TanStack Query (stage 8)                                                                                              |
+| URL                                                              | `apps/web` | `?seed=`, `?debug=1` for reproducible bugs and demos                                                                  |
 
 ## What exists today
 
