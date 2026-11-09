@@ -1,29 +1,8 @@
 import type { VolumeGroup } from '@buzzkill/engine';
 
-import type { ThemeChoice } from '../theme';
-import { createStore, type Store } from './store';
-
-/**
- * The player's settings. The persisted, versioned form with Zod and its migrations arrives with
- * #110; until then the theme keeps its own key in `localStorage` (#75) and the rest lives for
- * the visit.
- */
-export interface Settings {
-  readonly theme: ThemeChoice;
-  /** Silences both volume groups without forgetting their levels. */
-  readonly muted: boolean;
-  /** From 0 to 1. */
-  readonly effectsVolume: number;
-  /** From 0 to 1. */
-  readonly musicVolume: number;
-}
-
-export const DEFAULT_SETTINGS: Settings = {
-  theme: 'system',
-  muted: false,
-  effectsVolume: 0.3,
-  musicVolume: 0.5,
-};
+import { createStore, type Store } from '../store';
+import { DEFAULT_SETTINGS, type Settings } from './schema';
+import { saveSettings, type SettingsStorage } from './storage';
 
 /** One event: the fields that change. */
 export interface SettingsEvent {
@@ -48,6 +27,14 @@ export function volumeOf(settings: Settings, group: VolumeGroup): number {
 
 export type SettingsStore = Store<Settings, SettingsEvent>;
 
+/** The settings store of ADR-0006: the `createStore` of the machine with a reducer of changes. */
 export function createSettingsStore(initial: Settings = DEFAULT_SETTINGS): SettingsStore {
   return createStore(settingsTransition, initial);
+}
+
+/** Saves the settings after every change. Returns the function that stops it. */
+export function persistSettings(store: SettingsStore, storage: SettingsStorage | null): () => void {
+  return store.subscribe(() => {
+    saveSettings(store.getState(), storage);
+  });
 }

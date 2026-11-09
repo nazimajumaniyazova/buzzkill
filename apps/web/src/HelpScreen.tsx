@@ -1,33 +1,15 @@
-import {
-  DEFAULT_GAMEPAD_BINDINGS,
-  DEFAULT_KEY_BINDINGS,
-  GAME_ACTIONS,
-  type GameAction,
-} from '@buzzkill/game';
+import type { KeyBindings } from '@buzzkill/engine';
+import { DEFAULT_GAMEPAD_BINDINGS, GAME_ACTIONS, type GameAction } from '@buzzkill/game';
 import { Button, Inline, KeyHint, Stack } from '@buzzkill/ui';
 import { Fragment, type JSX, useId } from 'react';
 
+import { ACTION_LABELS, KeyCap } from './controls';
+
 interface HelpScreenProps {
+  /** The player's keys, from the settings. */
+  readonly keyBindings: KeyBindings<GameAction>;
   readonly onBack: () => void;
 }
-
-const ACTION_LABELS: Readonly<Record<GameAction, string>> = {
-  moveUp: 'Move up',
-  moveDown: 'Move down',
-  fire: 'Shoot',
-  pause: 'Pause',
-};
-
-/** How a `KeyboardEvent.code` is called and printed; other codes print their name. */
-const KEY_CAPS: Readonly<Record<string, { readonly name: string; readonly symbol?: string }>> = {
-  ArrowUp: { name: 'Arrow up', symbol: '↑' },
-  ArrowDown: { name: 'Arrow down', symbol: '↓' },
-  ArrowLeft: { name: 'Arrow left', symbol: '←' },
-  ArrowRight: { name: 'Arrow right', symbol: '→' },
-  Space: { name: 'Space' },
-  Escape: { name: 'Escape', symbol: 'Esc' },
-  Enter: { name: 'Enter' },
-};
 
 /** The buttons of the W3C standard gamepad mapping the game and the menus use. */
 const BUTTON_NAMES: Readonly<Record<number, string>> = {
@@ -39,15 +21,6 @@ const BUTTON_NAMES: Readonly<Record<number, string>> = {
   14: 'D-pad left',
   15: 'D-pad right',
 };
-
-function keyCap(code: string): JSX.Element {
-  const cap = KEY_CAPS[code] ?? { name: code.replace(/^Key/, '') };
-  return cap.symbol === undefined ? (
-    <KeyHint>{cap.name}</KeyHint>
-  ) : (
-    <KeyHint symbol={cap.symbol}>{cap.name}</KeyHint>
-  );
-}
 
 function padCap(button: number): JSX.Element {
   return <KeyHint kind="gamepad">{BUTTON_NAMES[button] ?? `Button ${String(button)}`}</KeyHint>;
@@ -64,10 +37,11 @@ function alternatives(caps: readonly JSX.Element[]): JSX.Element[] {
 }
 
 /**
- * The `help` panel of the menu: the controls of the game from its default bindings, so the page
- * cannot drift from them, and the controls of the menus.
+ * The `help` panel of the menu: the keyboard controls from the player's own bindings and the
+ * gamepad controls from the game's, so the page cannot drift from either, and the controls of
+ * the menus.
  */
-export function HelpScreen({ onBack }: HelpScreenProps): JSX.Element {
+export function HelpScreen({ keyBindings, onBack }: HelpScreenProps): JSX.Element {
   const titleId = useId();
 
   return (
@@ -84,7 +58,11 @@ export function HelpScreen({ onBack }: HelpScreenProps): JSX.Element {
               {GAME_ACTIONS.map((action) => (
                 <div key={action}>
                   <dt>{ACTION_LABELS[action]}</dt>
-                  <dd>{alternatives(DEFAULT_KEY_BINDINGS[action].map(keyCap))}</dd>
+                  <dd>
+                    {alternatives(
+                      keyBindings[action].map((code) => <KeyCap key={code} code={code} />),
+                    )}
+                  </dd>
                 </div>
               ))}
             </dl>

@@ -4,16 +4,17 @@ import {
   computeCanvasFit,
   createActionInput,
   createCanvas2DRenderer,
+  type KeyBindings,
 } from '@buzzkill/engine';
 import {
   createBrowserHost,
   createGamepadSource,
   createKeyboardSource,
+  type KeyboardSource,
 } from '@buzzkill/engine/browser';
 import {
   createGame,
   DEFAULT_GAMEPAD_BINDINGS,
-  DEFAULT_KEY_BINDINGS,
   type Game,
   GAME_ACTIONS,
   type GameAction,
@@ -32,6 +33,8 @@ interface GameViewProps {
   readonly assets: GameAssets;
   /** The machine's word: `true` holds the game, `false` lets it go on. */
   readonly paused: boolean;
+  /** The player's keys, from the settings; a change applies to the run on screen. */
+  readonly keyBindings: KeyBindings<GameAction>;
   /** Where the game's own reports go: the pause, the resume and the end of the run. */
   readonly onEvent: (event: GameEvent) => void;
 }
@@ -40,14 +43,24 @@ interface GameViewProps {
  * The canvas and one run of the game on it. The effect that the run keys creates everything the
  * run needs and passes it to `createGame`: the input with its keyboard and gamepad sources, the
  * frame host, the Canvas 2D renderer with the game's drawing code, and the shared mixer, whose
- * volumes the settings set. The machine then drives the game through `paused`, and the game drives the
- * machine through the bridge, so each side learns of the other's pause without a loop: `pause`
- * and `resume` do nothing when the game is there already.
+ * volumes the settings set. The machine then drives the game through `paused`, and the game
+ * drives the machine through the bridge, so each side learns of the other's pause without a
+ * loop: `pause` and `resume` do nothing when the game is there already.
  */
-export function GameView({ run, assets, paused, onEvent }: GameViewProps): JSX.Element {
+export function GameView({
+  run,
+  assets,
+  paused,
+  keyBindings,
+  onEvent,
+}: GameViewProps): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null);
   const [unsupported, setUnsupported] = useState(false);
+  // The keys are read when a run starts and pushed to its keyboard source when they change;
+  // they are not a dependency of the run, so new keys never restart it.
+  const bindingsRef = useRef(keyBindings);
+  const keyboardRef = useRef<KeyboardSource<GameAction> | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -71,7 +84,8 @@ export function GameView({ run, assets, paused, onEvent }: GameViewProps): JSX.E
     window.addEventListener('resize', fit);
 
     const input = createActionInput(GAME_ACTIONS);
-    const keyboard = createKeyboardSource(input, DEFAULT_KEY_BINDINGS);
+    const keyboard = createKeyboardSource(input, bindingsRef.current);
+    keyboardRef.current = keyboard;
     const gamepad = createGamepadSource(input, { bindings: DEFAULT_GAMEPAD_BINDINGS });
     // Gamepads send no events: poll them right before the game samples each tick.
     const polledInput: ActionInput<GameAction> = {
@@ -97,10 +111,19 @@ export function GameView({ run, assets, paused, onEvent }: GameViewProps): JSX.E
     return () => {
       created.dispose();
       keyboard.dispose();
+      keyboardRef.current = null;
       gamepad.dispose();
       window.removeEventListener('resize', fit);
     };
   }, [run, assets]);
+
+  useEffect(() => {
+    if (bindingsRef.current === keyBindings) {
+      return;
+    }
+    bindingsRef.current = keyBindings;
+    keyboardRef.current?.setBindings(keyBindings);
+  }, [keyBindings]);
 
   // The bridge: what the game reports becomes events of the machine.
   useEffect(() => (game === null ? undefined : connectGame(game, onEvent)), [game, onEvent]);

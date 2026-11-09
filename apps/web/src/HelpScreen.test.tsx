@@ -1,3 +1,4 @@
+import { DEFAULT_KEY_BINDINGS } from '@buzzkill/game';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -21,7 +22,9 @@ function rows(name: string): string[] {
 
 describe('HelpScreen', () => {
   it('lists the keyboard and gamepad controls from the default bindings', async () => {
-    const { container } = render(<HelpScreen onBack={vi.fn()} />);
+    const { container } = render(
+      <HelpScreen keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />,
+    );
 
     expect(screen.getByRole('heading', { level: 1, name: 'Help' })).toBeInTheDocument();
     expect(rows('Keyboard')).toEqual([
@@ -41,16 +44,23 @@ describe('HelpScreen', () => {
   });
 
   it('prints the symbol of a key once and keeps its name for assistive technology', () => {
-    render(<HelpScreen onBack={vi.fn()} />);
+    render(<HelpScreen keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />);
 
     const keyboard = screen.getByRole('region', { name: 'Keyboard' });
     expect(within(keyboard).getAllByText('↑')).toHaveLength(1);
     expect(within(keyboard).getAllByText('Arrow up')).toHaveLength(1);
   });
 
+  it("shows the player's own keys", () => {
+    const keyBindings = { ...DEFAULT_KEY_BINDINGS, fire: ['KeyF', 'Digit1'] };
+    render(<HelpScreen keyBindings={keyBindings} onBack={vi.fn()} />);
+
+    expect(rows('Keyboard')[2]).toBe('Shoot: F or 1');
+  });
+
   it('goes back', () => {
     const onBack = vi.fn();
-    render(<HelpScreen onBack={onBack} />);
+    render(<HelpScreen keyBindings={DEFAULT_KEY_BINDINGS} onBack={onBack} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 

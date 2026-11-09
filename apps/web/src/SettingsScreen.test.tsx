@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { SettingsScreen } from './SettingsScreen';
-import { DEFAULT_SETTINGS } from './state/settings';
+import { DEFAULT_SETTINGS } from './state/settings/schema';
 
 describe('SettingsScreen', () => {
   it('shows the sound tab first, with the switch and the two volumes, and passes the accessibility check', async () => {
@@ -62,6 +62,51 @@ describe('SettingsScreen', () => {
     expect(screen.getByRole('radio', { name: 'Match the system' })).toBeChecked();
     fireEvent.click(screen.getByRole('radio', { name: 'Always night' }));
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ theme: 'night' });
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('offers the language on the display tab', () => {
+    const onChange = vi.fn();
+    render(<SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Display' }));
+
+    expect(screen.getByRole('radio', { name: 'English' })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: 'Русский' }));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ language: 'ru' });
+  });
+
+  it('offers the difficulty on the gameplay tab, and passes the accessibility check there', async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <SettingsScreen
+        settings={{ ...DEFAULT_SETTINGS, difficulty: 'hard' }}
+        onChange={onChange}
+        onBack={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Gameplay' }));
+
+    expect(screen.getByRole('radio', { name: 'Hard' })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: 'Easy' }));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ difficulty: 'easy' });
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('edits the keys on the controls tab and reports them as one change', async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Controls' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Shoot, key 2: J' }));
+    fireEvent.keyDown(document.body, { key: 'f', code: 'KeyF' });
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({
+      keyBindings: { ...DEFAULT_SETTINGS.keyBindings, fire: ['Space', 'KeyF'] },
+    });
     expect(await axe(container)).toHaveNoViolations();
   });
 
