@@ -39,8 +39,8 @@ interface GameViewProps {
 /**
  * The canvas and one run of the game on it. The effect that the run keys creates everything the
  * run needs and passes it to `createGame`: the input with its keyboard and gamepad sources, the
- * frame host, the Canvas 2D renderer with the game's drawing code, and the shared mixer at the
- * run's volume. The machine then drives the game through `paused`, and the game drives the
+ * frame host, the Canvas 2D renderer with the game's drawing code, and the shared mixer, whose
+ * volumes the settings set. The machine then drives the game through `paused`, and the game drives the
  * machine through the bridge, so each side learns of the other's pause without a loop: `pause`
  * and `resume` do nothing when the game is there already.
  */
@@ -82,7 +82,6 @@ export function GameView({ run, assets, paused, onEvent }: GameViewProps): JSX.E
       },
     };
 
-    assets.audio.setVolume('effects', run.volume);
     const created = createGame({
       settings: { heroId: run.heroId, mode: run.mode },
       seed: run.seed,
@@ -119,7 +118,7 @@ export function GameView({ run, assets, paused, onEvent }: GameViewProps): JSX.E
   }, [game, paused]);
 
   return (
-    <>
+    <main aria-label="Game">
       <canvas ref={canvasRef} className="game-canvas">
         Buzzkill game screen
       </canvas>
@@ -130,6 +129,6 @@ export function GameView({ run, assets, paused, onEvent }: GameViewProps): JSX.E
       ) : (
         game !== null && <GameHud game={game} />
       )}
-    </>
+    </main>
   );
 }

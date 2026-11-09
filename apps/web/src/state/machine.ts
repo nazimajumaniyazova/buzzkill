@@ -14,8 +14,6 @@ export interface GameAssets {
 export interface RunChoice {
   readonly heroId: HeroId;
   readonly mode: GameMode;
-  /** Volume of the sound effects, from 0 (muted) to 1. */
-  readonly volume: number;
 }
 
 /** One run as the player set it up, plus the seed that makes it reproducible. */
@@ -23,11 +21,14 @@ export interface Run extends RunChoice {
   readonly seed: number;
 }
 
+/** The screens of the menu: the main menu and the two it opens. */
+export type MenuPanel = 'main' | 'settings' | 'help';
+
 /**
  * The flow of the shell (ADR-0006). `boot` loads the assets, with the failures of the last attempt
- * while it waits for a retry; every later state carries the assets; the four run states carry
- * the run, and the two final ones its result. A pause dialog on the menu or a game over without a
- * run cannot be written.
+ * while it waits for a retry; every later state carries the assets; `menu` says which of its
+ * panels is open; the four run states carry the run, and the two final ones its result. A pause
+ * dialog on the menu or a game over without a run cannot be written.
  */
 export type AppState =
   | {
@@ -35,7 +36,7 @@ export type AppState =
       readonly attempt: number;
       readonly failures: readonly AssetFailure[] | null;
     }
-  | { readonly name: 'menu'; readonly assets: GameAssets }
+  | { readonly name: 'menu'; readonly panel: MenuPanel; readonly assets: GameAssets }
   | { readonly name: 'heroSelect'; readonly assets: GameAssets }
   | { readonly name: 'playing'; readonly assets: GameAssets; readonly run: Run }
   | { readonly name: 'paused'; readonly assets: GameAssets; readonly run: Run }
@@ -57,14 +58,17 @@ export type RunState = Extract<AppState, { readonly run: Run }>;
 
 /**
  * What moves the flow: the outcome of the boot (`booted`, `bootFailed`), the player's choices
- * (`retry`, `selectHero`, `back`, `play`, `pause`, `resume`, `quit`) and what the game reports
- * through the bridge (`gamePaused`, `gameResumed`, `runEnded`). A command and the game's own
- * report of the same fact are separate events, so the table shows who may cause what.
+ * (`retry`, `openSettings`, `openHelp`, `selectHero`, `back`, `play`, `pause`, `resume`, `quit`)
+ * and what the game reports through the bridge (`gamePaused`, `gameResumed`, `runEnded`). A
+ * command and the game's own report of the same fact are separate events, so the table shows who
+ * may cause what.
  */
 export type AppEvent =
   | { readonly type: 'booted'; readonly assets: GameAssets }
   | { readonly type: 'bootFailed'; readonly failures: readonly AssetFailure[] }
   | { readonly type: 'retry' }
+  | { readonly type: 'openSettings' }
+  | { readonly type: 'openHelp' }
   | { readonly type: 'selectHero' }
   | { readonly type: 'back' }
   | { readonly type: 'play'; readonly run: Run }
@@ -95,7 +99,7 @@ export function isRunState(state: AppState): state is RunState {
 export function transition(state: AppState, event: AppEvent): AppState {
   switch (event.type) {
     case 'booted':
-      return state.name === 'boot' ? { name: 'menu', assets: event.assets } : state;
+      return state.name === 'boot' ? { name: 'menu', panel: 'main', assets: event.assets } : state;
     case 'bootFailed':
       return state.name === 'boot'
         ? { name: 'boot', attempt: state.attempt, failures: event.failures }
@@ -104,10 +108,21 @@ export function transition(state: AppState, event: AppEvent): AppState {
       return state.name === 'boot' && state.failures !== null
         ? { name: 'boot', attempt: state.attempt + 1, failures: null }
         : state;
+    case 'openSettings':
+      return state.name === 'menu' && state.panel === 'main'
+        ? { ...state, panel: 'settings' }
+        : state;
+    case 'openHelp':
+      return state.name === 'menu' && state.panel === 'main' ? { ...state, panel: 'help' } : state;
     case 'selectHero':
-      return state.name === 'menu' ? { name: 'heroSelect', assets: state.assets } : state;
+      return state.name === 'menu' && state.panel === 'main'
+        ? { name: 'heroSelect', assets: state.assets }
+        : state;
     case 'back':
-      return state.name === 'heroSelect' ? { name: 'menu', assets: state.assets } : state;
+      if (state.name === 'heroSelect' || (state.name === 'menu' && state.panel !== 'main')) {
+        return { name: 'menu', panel: 'main', assets: state.assets };
+      }
+      return state;
     case 'play':
       return state.name === 'heroSelect' ||
         state.name === 'levelComplete' ||
@@ -125,7 +140,7 @@ export function transition(state: AppState, event: AppEvent): AppState {
         ? { name: 'playing', assets: state.assets, run: state.run }
         : state;
     case 'quit':
-      return isRunState(state) ? { name: 'menu', assets: state.assets } : state;
+      return isRunState(state) ? { name: 'menu', panel: 'main', assets: state.assets } : state;
     case 'runEnded': {
       if (state.name !== 'playing') {
         return state;

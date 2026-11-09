@@ -11,14 +11,40 @@ body {
   background-color: var(--color-canvas);
 }
 
-.start-screen {
+.shell {
+  height: 100%;
+}
+
+.screen {
+  box-sizing: border-box;
   display: grid;
-  gap: var(--space-stack-lg);
-  justify-items: center;
-  align-content: center;
+  place-content: center;
   min-height: 100%;
   padding: var(--space-inset-lg);
   text-align: center;
+}
+
+.screen h1,
+.screen h2,
+.screen p {
+  margin: 0;
+}
+
+/* The controls of the help: an action and its keys per row. */
+.controls {
+  display: grid;
+  grid-template-columns: max-content auto;
+  gap: var(--space-stack-sm) var(--space-inline-lg);
+  margin: 0;
+  text-align: start;
+}
+
+.controls div {
+  display: contents;
+}
+
+.controls dd {
+  margin: 0;
 }
 
 .game-canvas {
@@ -27,15 +53,6 @@ body {
   inset: 0;
   display: block;
   margin: auto;
-}
-
-.screen {
-  display: grid;
-  gap: var(--space-stack-lg);
-  place-content: center;
-  min-height: 100%;
-  padding: var(--space-inset-lg);
-  text-align: center;
 }
 
 .hud {
@@ -61,21 +78,4 @@ body {
   margin: 0;
   font-weight: bold;
   font-variant-numeric: tabular-nums;
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  gap: var(--space-stack-lg);
-  place-content: center;
-  color: var(--color-on-overlay);
-  text-align: center;
-  background-color: var(--color-overlay);
-}
-
-.actions {
-  display: flex;
-  gap: var(--space-inline-lg);
-  justify-content: center;
 }

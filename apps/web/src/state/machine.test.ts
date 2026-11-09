@@ -21,8 +21,8 @@ import {
 const assets = { sprites: {}, audio: {} } as GameAssets;
 const otherAssets = { sprites: {}, audio: {} } as GameAssets;
 
-const run: Run = { heroId: 'male', mode: 'day', volume: 0.3, seed: 1 };
-const nextRun: Run = { heroId: 'female', mode: 'night', volume: 0.5, seed: 2 };
+const run: Run = { heroId: 'male', mode: 'day', seed: 1 };
+const nextRun: Run = { heroId: 'female', mode: 'night', seed: 2 };
 
 const failures: readonly AssetFailure[] = [
   { id: 'projectile', kind: 'image', url: '/projectile.png', reason: 'http', message: 'HTTP 404' },
@@ -42,7 +42,7 @@ function resultWith(status: RunResult['status']): RunResult {
 /** One example of every state; the `satisfies` keeps the list complete. */
 const states = {
   boot: { name: 'boot', attempt: 0, failures: null },
-  menu: { name: 'menu', assets },
+  menu: { name: 'menu', panel: 'main', assets },
   heroSelect: { name: 'heroSelect', assets },
   playing: { name: 'playing', assets, run },
   paused: { name: 'paused', assets, run },
@@ -50,13 +50,18 @@ const states = {
   gameOver: { name: 'gameOver', assets, run, result: resultWith('lost') },
 } satisfies Record<AppState['name'], AppState>;
 
+/** The other flavours of `boot` and `menu`, for the rows that need them. */
 const failedBoot: AppState = { name: 'boot', attempt: 0, failures };
+const settingsMenu: AppState = { name: 'menu', panel: 'settings', assets };
+const helpMenu: AppState = { name: 'menu', panel: 'help', assets };
 
 /** One example of every event; the `satisfies` keeps the list complete. */
 const events = {
   booted: { type: 'booted', assets },
   bootFailed: { type: 'bootFailed', failures },
   retry: { type: 'retry' },
+  openSettings: { type: 'openSettings' },
+  openHelp: { type: 'openHelp' },
   selectHero: { type: 'selectHero' },
   back: { type: 'back' },
   play: { type: 'play', run: nextRun },
@@ -79,7 +84,11 @@ const TRANSITIONS: readonly Row[] = [
   { from: states.boot, event: events.booted, to: 'menu' },
   { from: states.boot, event: events.bootFailed, to: 'boot' },
   { from: failedBoot, event: events.retry, to: 'boot' },
+  { from: states.menu, event: events.openSettings, to: 'menu' },
+  { from: states.menu, event: events.openHelp, to: 'menu' },
   { from: states.menu, event: events.selectHero, to: 'heroSelect' },
+  { from: settingsMenu, event: events.back, to: 'menu' },
+  { from: helpMenu, event: events.back, to: 'menu' },
   { from: states.heroSelect, event: events.back, to: 'menu' },
   { from: states.heroSelect, event: events.play, to: 'playing' },
   { from: states.playing, event: events.pause, to: 'paused' },
@@ -125,10 +134,10 @@ describe('transition', () => {
     expect(transition(state, event)).toBe(state);
   });
 
-  it('carries the loaded assets from boot into the menu and keeps them from then on', () => {
+  it('carries the loaded assets from boot into the main menu and keeps them from then on', () => {
     const menu = transition(states.boot, events.booted);
 
-    expect(menu).toEqual({ name: 'menu', assets });
+    expect(menu).toEqual({ name: 'menu', panel: 'main', assets });
     expect(transition(menu, events.selectHero)).toEqual({ name: 'heroSelect', assets });
     expect(transition(states.menu, { type: 'booted', assets: otherAssets })).toBe(states.menu);
   });
@@ -142,6 +151,19 @@ describe('transition', () => {
 
   it('ignores retry while the boot is still loading', () => {
     expect(transition(states.boot, events.retry)).toBe(states.boot);
+  });
+
+  it('opens the settings and the help from the main menu only, and back returns to it', () => {
+    expect(transition(states.menu, events.openSettings)).toEqual(settingsMenu);
+    expect(transition(states.menu, events.openHelp)).toEqual(helpMenu);
+    expect(transition(settingsMenu, events.back)).toEqual(states.menu);
+    expect(transition(helpMenu, events.back)).toEqual(states.menu);
+    expect(transition(states.heroSelect, events.back)).toEqual(states.menu);
+
+    expect(transition(states.menu, events.back)).toBe(states.menu);
+    expect(transition(settingsMenu, events.openHelp)).toBe(settingsMenu);
+    expect(transition(helpMenu, events.openSettings)).toBe(helpMenu);
+    expect(transition(settingsMenu, events.selectHero)).toBe(settingsMenu);
   });
 
   it('starts the run of the play event, also over a finished one', () => {
@@ -192,12 +214,12 @@ describe('transition', () => {
     expect(transition(states.playing, event)).toBe(states.playing);
   });
 
-  it('drops the run on quit and keeps the assets', () => {
+  it('drops the run on quit and returns to the main menu with the assets', () => {
     const afterQuit = [states.playing, states.paused, states.levelComplete, states.gameOver].map(
       (state) => transition(state, events.quit),
     );
 
-    expect(afterQuit).toEqual(Array<AppState>(4).fill({ name: 'menu', assets }));
+    expect(afterQuit).toEqual(Array<AppState>(4).fill({ name: 'menu', panel: 'main', assets }));
   });
 });
 
@@ -218,13 +240,14 @@ describe('invariants of the flow', () => {
   const choice = fc.record({
     heroId: fc.constantFrom('male', 'female'),
     mode: fc.constantFrom('day', 'night'),
-    volume: fc.double({ min: 0, max: 1, noNaN: true }),
     seed: fc.nat(),
   });
   const step: fc.Arbitrary<AppEvent> = fc.oneof(
     fc.constant(events.booted),
     fc.constant(events.bootFailed),
     fc.constant(events.retry),
+    fc.constant(events.openSettings),
+    fc.constant(events.openHelp),
     fc.constant(events.selectHero),
     fc.constant(events.back),
     fc.record({ type: fc.constant('play' as const), run: choice }),
@@ -249,8 +272,16 @@ describe('invariants of the flow', () => {
       case 'boot':
         return previous.name === 'boot' ? null : `back to boot from ${previous.name}`;
       case 'menu':
-      case 'heroSelect':
+        if (state.panel !== 'main') {
+          return previous.name === 'menu' && previous.panel === 'main'
+            ? null
+            : `${state.panel} opened from ${previous.name}`;
+        }
         return null;
+      case 'heroSelect':
+        return previous.name === 'menu' && previous.panel === 'main'
+          ? null
+          : `hero select from ${previous.name}`;
       case 'playing':
         if (previous.name === 'paused') {
           return state.run === previousRun ? null : 'resume changed the run';

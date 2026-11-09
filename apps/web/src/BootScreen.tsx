@@ -1,7 +1,7 @@
 import { type AssetFailure, createAudioMixer, loadAssets } from '@buzzkill/engine';
 import { createBrowserAssetDecoders, createBrowserAudioContext } from '@buzzkill/engine/browser';
 import type { GameSound } from '@buzzkill/game';
-import { Button } from '@buzzkill/ui';
+import { Button, Inline, Stack } from '@buzzkill/ui';
 import { type JSX, useEffect, useState } from 'react';
 
 import { GAME_ASSETS } from './game/assets';
@@ -72,17 +72,19 @@ export function BootScreen({ attempt, failures, onEvent, onRetry }: BootScreenPr
   if (failures !== null) {
     return (
       <div className="screen" role="alert">
-        <h1>The game could not load</h1>
-        <ul>
-          {failures.map((failure) => (
-            <li key={failure.id}>
-              {failure.url.split('/').at(-1)}: {REASONS[failure.reason]}
-            </li>
-          ))}
-        </ul>
-        <div className="actions">
-          <Button onClick={onRetry}>Try again</Button>
-        </div>
+        <Stack gap="lg" align="center">
+          <h1>The game could not load</h1>
+          <ul>
+            {failures.map((failure) => (
+              <li key={failure.id}>
+                {failure.url.split('/').at(-1)}: {REASONS[failure.reason]}
+              </li>
+            ))}
+          </ul>
+          <Inline justify="center">
+            <Button onClick={onRetry}>Try again</Button>
+          </Inline>
+        </Stack>
       </div>
     );
   }

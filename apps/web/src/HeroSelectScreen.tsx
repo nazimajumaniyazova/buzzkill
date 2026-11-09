@@ -1,5 +1,5 @@
 import type { GameMode, HeroId } from '@buzzkill/game';
-import { Button, RadioGroup, type RadioOption, Slider } from '@buzzkill/ui';
+import { Button, Inline, RadioGroup, type RadioOption, Stack } from '@buzzkill/ui';
 import { type JSX, type SubmitEvent, useId, useState } from 'react';
 
 import type { RunChoice } from './state/machine';
@@ -19,59 +19,46 @@ const MODES = [
   { value: 'night', label: 'Night' },
 ] as const satisfies readonly RadioOption<GameMode>[];
 
-const percent = (value: number): string => `${String(Math.round(value * 100))} %`;
-
-/**
- * The `heroSelect` state: hero, time of day and volume, then Start. Plain and keyboard-reachable;
- * the design-system version arrives with #108.
- */
+/** The `heroSelect` state: the hero and the time of day, then Start. */
 export function HeroSelectScreen({ onStart, onBack }: HeroSelectScreenProps): JSX.Element {
   const titleId = useId();
   const [heroId, setHeroId] = useState<HeroId>('male');
   const [mode, setMode] = useState<GameMode>('day');
-  const [volume, setVolume] = useState(0.3);
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
-    onStart({ heroId, mode, volume });
+    onStart({ heroId, mode });
   };
 
   return (
-    <form className="start-screen" aria-labelledby={titleId} onSubmit={handleSubmit}>
-      <h1 id={titleId}>Choose your hero</h1>
-
-      <RadioGroup
-        label="Hero"
-        name="hero"
-        options={HEROES}
-        value={heroId}
-        onValueChange={setHeroId}
-      />
-      <RadioGroup
-        label="Time of day"
-        name="mode"
-        options={MODES}
-        value={mode}
-        onValueChange={setMode}
-      />
-      <Slider
-        label="Sound volume"
-        min={0}
-        max={1}
-        step={0.1}
-        value={volume}
-        onValueChange={setVolume}
-        formatValue={percent}
-      />
-
-      <div className="actions">
-        <Button type="submit" size="lg">
-          Start
-        </Button>
-        <Button variant="secondary" onClick={onBack}>
-          Back
-        </Button>
-      </div>
+    <form className="screen" aria-labelledby={titleId} onSubmit={handleSubmit}>
+      <Stack gap="xl" align="center">
+        <h1 id={titleId}>Choose your hero</h1>
+        <Stack gap="lg" align="center">
+          <RadioGroup
+            label="Hero"
+            name="hero"
+            options={HEROES}
+            value={heroId}
+            onValueChange={setHeroId}
+          />
+          <RadioGroup
+            label="Time of day"
+            name="mode"
+            options={MODES}
+            value={mode}
+            onValueChange={setMode}
+          />
+        </Stack>
+        <Inline gap="lg" justify="center">
+          <Button type="submit" size="lg">
+            Start
+          </Button>
+          <Button variant="secondary" onClick={onBack}>
+            Back
+          </Button>
+        </Inline>
+      </Stack>
     </form>
   );
 }
