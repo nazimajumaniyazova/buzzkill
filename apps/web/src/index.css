@@ -47,6 +47,28 @@ body {
   margin: 0;
 }
 
+/* The key bindings of the settings: an action and its keys per row. */
+.bindings {
+  border-collapse: collapse;
+  text-align: start;
+}
+
+.bindings caption {
+  padding-block-end: var(--space-stack-sm);
+  font-weight: bold;
+  text-align: start;
+}
+
+.bindings th,
+.bindings td {
+  padding: var(--space-inset-sm) var(--space-inset-md);
+}
+
+.bindings thead th {
+  color: var(--color-text-muted);
+  font-weight: normal;
+}
+
 .game-canvas {
   /* The engine sets the size; auto margins center the letterboxed canvas in the window. */
   position: fixed;

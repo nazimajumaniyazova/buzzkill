@@ -1,4 +1,3 @@
-import { DEFAULT_KEY_BINDINGS } from '@buzzkill/game';
 import { type JSX, useEffect, useRef, useState } from 'react';
 
 import { BootScreen } from './BootScreen';
@@ -21,16 +20,15 @@ import {
   type MenuPanel,
   type RunChoice,
 } from './state/machine';
+import { browserStorage, loadSettings } from './state/settings/storage';
 import {
   createSettingsStore,
-  DEFAULT_SETTINGS,
+  persistSettings,
   type SettingsStore,
   volumeOf,
-} from './state/settings';
+} from './state/settings/store';
 import { useStore } from './state/use-store';
-import { applyTheme, readThemeChoice, writeThemeChoice } from './theme';
-
-const PAUSE_KEYS: readonly string[] = DEFAULT_KEY_BINDINGS.pause;
+import { applyTheme } from './theme';
 
 const RUN_OVER_TITLES = {
   levelComplete: 'Level complete',
@@ -40,7 +38,7 @@ const RUN_OVER_TITLES = {
 interface AppProps {
   /** The store of the flow. The app creates its own when none is given; a test starts anywhere. */
   readonly store?: AppStore;
-  /** The settings store; the app creates its own, with the stored theme, when none is given. */
+  /** The settings store; the app creates its own from `localStorage` when none is given. */
   readonly settings?: SettingsStore;
 }
 
@@ -67,13 +65,12 @@ function backEvent(state: AppState): AppEvent | null {
 /**
  * Application shell: renders the screen of the machine's state (ADR-0006) and nothing else. The
  * screens and the game report through `send`; the effects here are the ones the whole page needs:
- * the theme, the mixer's volumes, the keys that go back, and the gamepad in the menus.
+ * saving the settings, the theme, the mixer's volumes, the keys that go back, and the gamepad in
+ * the menus.
  */
 export function App({ store: givenStore, settings: givenSettings }: AppProps): JSX.Element {
   const [ownStore] = useState(() => createAppStore());
-  const [ownSettings] = useState(() =>
-    createSettingsStore({ ...DEFAULT_SETTINGS, theme: readThemeChoice() }),
-  );
+  const [ownSettings] = useState(() => createSettingsStore(loadSettings(browserStorage())));
   const store = givenStore ?? ownStore;
   const settingsStore = givenSettings ?? ownSettings;
   const state = useStore(store, whole);
@@ -89,17 +86,8 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     applyTheme(run === null ? settings.theme : run.mode);
   }, [run, settings.theme]);
 
-  // The theme keeps its own key in localStorage until #110 persists the whole settings object.
-  useEffect(() => {
-    let written = settingsStore.getState().theme;
-    return settingsStore.subscribe(() => {
-      const { theme } = settingsStore.getState();
-      if (theme !== written) {
-        written = theme;
-        writeThemeChoice(theme);
-      }
-    });
-  }, [settingsStore]);
+  // Every change of the settings is saved at once, under the versioned schema (#110).
+  useEffect(() => persistSettings(settingsStore, browserStorage()), [settingsStore]);
 
   // The mixer follows the settings from the moment the assets exist, during a run too.
   useEffect(() => {
@@ -110,13 +98,14 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     assets.audio.setVolume('music', volumeOf(settings, 'music'));
   }, [assets, settings]);
 
-  // The loop does not sample input while paused, so the pause key resumes from here.
+  // The loop does not sample input while paused, so the player's pause key resumes from here.
+  const pauseKeys = settings.keyBindings.pause;
   useEffect(() => {
     if (state.name !== 'paused') {
       return;
     }
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (PAUSE_KEYS.includes(event.code)) {
+      if (pauseKeys.includes(event.code)) {
         event.preventDefault();
         send({ type: 'resume' });
       }
@@ -125,7 +114,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [state.name, send]);
+  }, [state.name, send, pauseKeys]);
 
   // Escape leaves a screen the way its Back button does; the dialogs handle Escape themselves.
   const escapeGoesBack =
@@ -202,7 +191,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
           />
         );
       case 'help':
-        return <HelpScreen onBack={back} />;
+        return <HelpScreen keyBindings={settings.keyBindings} onBack={back} />;
     }
   };
 
@@ -242,6 +231,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
               run={state.run}
               assets={state.assets}
               paused={state.name === 'paused'}
+              keyBindings={settings.keyBindings}
               onEvent={send}
             />
             {state.name === 'paused' && (

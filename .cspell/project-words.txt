@@ -42,3 +42,4 @@ vitejs
 vitest
 WASD
 WCAG
+Русский

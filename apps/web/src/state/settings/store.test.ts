@@ -1,13 +1,9 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  createSettingsStore,
-  DEFAULT_SETTINGS,
-  type Settings,
-  settingsTransition,
-  volumeOf,
-} from './settings';
+import { DEFAULT_SETTINGS, type Settings } from './schema';
+import type { SettingsStorage } from './storage';
+import { createSettingsStore, persistSettings, settingsTransition, volumeOf } from './store';
 
 describe('settingsTransition', () => {
   it('merges the changed fields and keeps the rest', () => {
@@ -16,7 +12,7 @@ describe('settingsTransition', () => {
       changes: { theme: 'night', effectsVolume: 1 },
     });
 
-    expect(next).toEqual({ theme: 'night', muted: false, effectsVolume: 1, musicVolume: 0.5 });
+    expect(next).toEqual({ ...DEFAULT_SETTINGS, theme: 'night', effectsVolume: 1 });
   });
 
   it('returns the same object when nothing differs, so the store stays quiet', () => {
@@ -59,5 +55,37 @@ describe('createSettingsStore', () => {
     const store = createSettingsStore({ ...DEFAULT_SETTINGS, theme: 'day' });
 
     expect(store.getState().theme).toBe('day');
+  });
+});
+
+describe('persistSettings', () => {
+  function createStorage() {
+    const setItem = vi.fn<SettingsStorage['setItem']>();
+    const storage: SettingsStorage = { getItem: () => null, setItem, removeItem: vi.fn() };
+    return { storage, setItem };
+  }
+
+  it('saves every change, and nothing while nothing changes', () => {
+    const { storage, setItem } = createStorage();
+    const store = createSettingsStore();
+    persistSettings(store, storage);
+    expect(setItem).not.toHaveBeenCalled();
+
+    store.send({ type: 'change', changes: { theme: 'night' } });
+    store.send({ type: 'change', changes: { theme: 'night' } });
+
+    expect(setItem).toHaveBeenCalledOnce();
+    expect(JSON.parse(setItem.mock.calls[0]?.[1] ?? '')).toMatchObject({ theme: 'night' });
+  });
+
+  it('stops saving once disconnected', () => {
+    const { storage, setItem } = createStorage();
+    const store = createSettingsStore();
+    const disconnect = persistSettings(store, storage);
+
+    disconnect();
+    store.send({ type: 'change', changes: { theme: 'night' } });
+
+    expect(setItem).not.toHaveBeenCalled();
   });
 });

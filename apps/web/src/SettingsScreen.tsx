@@ -10,7 +10,8 @@ import {
 } from '@buzzkill/ui';
 import { type JSX, useId } from 'react';
 
-import type { Settings } from './state/settings';
+import { KeyBindingsEditor } from './KeyBindingsEditor';
+import type { Difficulty, Language, Settings } from './state/settings/schema';
 import type { ThemeChoice } from './theme';
 
 interface SettingsScreenProps {
@@ -25,11 +26,23 @@ const THEMES = [
   { value: 'night', label: 'Always night' },
 ] as const satisfies readonly RadioOption<ThemeChoice>[];
 
+const LANGUAGE_OPTIONS = [
+  { value: 'en', label: 'English' },
+  { value: 'ru', label: 'Русский' },
+] as const satisfies readonly RadioOption<Language>[];
+
+const DIFFICULTY_OPTIONS = [
+  { value: 'easy', label: 'Easy' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'hard', label: 'Hard' },
+] as const satisfies readonly RadioOption<Difficulty>[];
+
 const percent = (value: number): string => `${String(Math.round(value * 100))} %`;
 
 /**
- * The `settings` panel of the menu: the sound and the display, one tab each. Every change goes to
- * the settings store at once, so the mixer and the theme follow while the player is still here.
+ * The `settings` panel of the menu, one tab per kind: sound, display, gameplay and controls.
+ * Every change goes to the settings store at once, which saves it; the mixer and the theme follow
+ * while the player is still here, and the keys apply to the next run.
  */
 export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenProps): JSX.Element {
   const titleId = useId();
@@ -82,14 +95,52 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
               value: 'display',
               label: 'Display',
               panel: (
+                <Stack gap="lg">
+                  <RadioGroup
+                    label="Theme"
+                    name="theme"
+                    orientation="vertical"
+                    options={THEMES}
+                    value={settings.theme}
+                    onValueChange={(theme) => {
+                      onChange({ theme });
+                    }}
+                  />
+                  <RadioGroup
+                    label="Language"
+                    name="language"
+                    options={LANGUAGE_OPTIONS}
+                    value={settings.language}
+                    onValueChange={(language) => {
+                      onChange({ language });
+                    }}
+                  />
+                </Stack>
+              ),
+            },
+            {
+              value: 'gameplay',
+              label: 'Gameplay',
+              panel: (
                 <RadioGroup
-                  label="Theme"
-                  name="theme"
-                  orientation="vertical"
-                  options={THEMES}
-                  value={settings.theme}
-                  onValueChange={(theme) => {
-                    onChange({ theme });
+                  label="Difficulty"
+                  name="difficulty"
+                  options={DIFFICULTY_OPTIONS}
+                  value={settings.difficulty}
+                  onValueChange={(difficulty) => {
+                    onChange({ difficulty });
+                  }}
+                />
+              ),
+            },
+            {
+              value: 'controls',
+              label: 'Controls',
+              panel: (
+                <KeyBindingsEditor
+                  bindings={settings.keyBindings}
+                  onChange={(keyBindings) => {
+                    onChange({ keyBindings });
                   }}
                 />
               ),

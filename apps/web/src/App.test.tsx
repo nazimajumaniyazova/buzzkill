@@ -9,7 +9,8 @@ import { App } from './App';
 import type { BootEvent } from './BootScreen';
 import type { GameEvent } from './state/bridge';
 import { createAppStore, type GameAssets, type Run } from './state/machine';
-import { createSettingsStore, DEFAULT_SETTINGS } from './state/settings';
+import { DEFAULT_SETTINGS } from './state/settings/schema';
+import { createSettingsStore } from './state/settings/store';
 
 const unlock = vi.fn(() => Promise.resolve());
 const setVolume = vi.fn();
@@ -318,7 +319,7 @@ describe('App', () => {
     render(<App />);
     click('Finish boot');
     expect(document.documentElement).not.toHaveAttribute('data-theme');
-    expect(localStorage.getItem('buzzkill.theme')).toBeNull();
+    expect(localStorage.getItem('buzzkill.settings')).toBeNull();
 
     click('Settings');
     fireEvent.click(screen.getByRole('tab', { name: 'Display' }));
@@ -326,14 +327,76 @@ describe('App', () => {
 
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
     expect(screen.getByRole('radio', { name: 'Always night' })).toBeChecked();
-    expect(localStorage.getItem('buzzkill.theme')).toBe('night');
+    expect(JSON.parse(localStorage.getItem('buzzkill.settings') ?? '{}')).toMatchObject({
+      version: 1,
+      theme: 'night',
+    });
   });
 
-  it("restores the stored theme and uses the run's time of day while a run is on screen", () => {
+  it('keeps every setting across a reload', () => {
+    const view = render(<App />);
+    click('Finish boot');
+    click('Settings');
+    fireEvent.click(screen.getByRole('tab', { name: 'Gameplay' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Controls' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Shoot, key 2: J' }));
+    fireEvent.keyDown(document.body, { key: 'f', code: 'KeyF' });
+    view.unmount();
+
+    render(<App />);
+    click('Finish boot');
+    click('Settings');
+    fireEvent.click(screen.getByRole('tab', { name: 'Gameplay' }));
+    expect(screen.getByRole('radio', { name: 'Hard' })).toBeChecked();
+    fireEvent.click(screen.getByRole('tab', { name: 'Controls' }));
+    expect(screen.getByRole('button', { name: 'Shoot, key 2: F' })).toBeInTheDocument();
+  });
+
+  it("shows the player's keys in the help", () => {
+    render(
+      <App
+        settings={createSettingsStore({
+          ...DEFAULT_SETTINGS,
+          keyBindings: { ...DEFAULT_SETTINGS.keyBindings, fire: ['KeyF', 'KeyJ'] },
+        })}
+      />,
+    );
+    click('Finish boot');
+    click('Help');
+
+    expect(screen.getByRole('region', { name: 'Keyboard' })).toHaveTextContent('F or J');
+  });
+
+  it("resumes on the player's pause key, not on the default one it replaced", () => {
+    const run: Run = { heroId: 'male', mode: 'day', seed: 3 };
+    render(
+      <App
+        store={createAppStore({ name: 'paused', assets, run })}
+        settings={createSettingsStore({
+          ...DEFAULT_SETTINGS,
+          keyBindings: { ...DEFAULT_SETTINGS.keyBindings, pause: ['KeyQ', 'KeyE'] },
+        })}
+      />,
+    );
+
+    fireEvent.keyDown(document, { key: 'p', code: 'KeyP' });
+    expect(screen.getByRole('dialog', { name: 'Paused' })).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'q', code: 'KeyQ' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it("moves the theme of #75 into the settings and uses the run's time of day while a run is on screen", () => {
     localStorage.setItem('buzzkill.theme', 'night');
     render(<App />);
     click('Finish boot');
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
+    expect(localStorage.getItem('buzzkill.theme')).toBeNull();
+    expect(JSON.parse(localStorage.getItem('buzzkill.settings') ?? '{}')).toMatchObject({
+      version: 1,
+      theme: 'night',
+    });
 
     click('Play');
     click('Start');

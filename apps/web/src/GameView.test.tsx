@@ -1,5 +1,5 @@
-import { type AudioMixer, createAudioMixer } from '@buzzkill/engine';
-import type { GameSound } from '@buzzkill/game';
+import { type AudioMixer, createAudioMixer, type KeyBindings } from '@buzzkill/engine';
+import { DEFAULT_KEY_BINDINGS, type GameAction, type GameSound } from '@buzzkill/game';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -88,23 +88,31 @@ describe('GameView', () => {
   /** The events reported so far, by type. */
   const reported = (): GameEvent['type'][] => onEvent.mock.calls.map(([event]) => event.type);
 
-  function renderView(props: Partial<{ run: Run; paused: boolean }> = {}) {
+  interface ViewProps {
+    readonly run: Run;
+    readonly paused: boolean;
+    readonly keyBindings: KeyBindings<GameAction>;
+  }
+
+  function renderView(props: Partial<ViewProps> = {}) {
     const view = render(
       <GameView
         run={props.run ?? run}
         assets={assets}
         paused={props.paused ?? false}
+        keyBindings={props.keyBindings ?? DEFAULT_KEY_BINDINGS}
         onEvent={onEvent}
       />,
     );
     return {
       ...view,
-      rerender(next: Partial<{ run: Run; paused: boolean }>): void {
+      rerender(next: Partial<ViewProps>): void {
         view.rerender(
           <GameView
             run={next.run ?? props.run ?? run}
             assets={assets}
             paused={next.paused ?? false}
+            keyBindings={next.keyBindings ?? props.keyBindings ?? DEFAULT_KEY_BINDINGS}
             onEvent={onEvent}
           />,
         );
@@ -139,6 +147,39 @@ describe('GameView', () => {
     // Every frame starts with the day sky.
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, 1280, 720);
     expect(onEvent).not.toHaveBeenCalled();
+  });
+
+  it("shoots on the player's own key, not on the default one it replaced", () => {
+    const frames = installFrames();
+    renderView({ keyBindings: { ...DEFAULT_KEY_BINDINGS, fire: ['KeyF', 'KeyJ'] } });
+    frames.run(1);
+
+    fireEvent.keyDown(window, { code: 'Space' });
+    frames.run(2);
+    fireEvent.keyUp(window, { code: 'Space' });
+    expect(play).not.toHaveBeenCalledWith('shot');
+
+    fireEvent.keyDown(window, { code: 'KeyF' });
+    frames.run(2);
+    fireEvent.keyUp(window, { code: 'KeyF' });
+    expect(play).toHaveBeenCalledWith('shot');
+  });
+
+  it('applies new keys to the run on screen', () => {
+    const frames = installFrames();
+    const view = renderView();
+    frames.run(1);
+
+    view.rerender({ keyBindings: { ...DEFAULT_KEY_BINDINGS, fire: ['KeyF', 'KeyJ'] } });
+    fireEvent.keyDown(window, { code: 'Space' });
+    frames.run(2);
+    fireEvent.keyUp(window, { code: 'Space' });
+    expect(play).not.toHaveBeenCalledWith('shot');
+
+    fireEvent.keyDown(window, { code: 'KeyF' });
+    frames.run(2);
+    fireEvent.keyUp(window, { code: 'KeyF' });
+    expect(play).toHaveBeenCalledWith('shot');
   });
 
   it('shoots on Space: a sound and one round less', () => {
