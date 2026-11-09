@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.10.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.9.0...v0.10.0) (2026-11-09)
+
+
+### Features
+
+* **web:** keep the settings under a versioned schema with migrations ([#120](https://github.com/nazimajumaniyazova/buzzkill/issues/120)) ([51407d0](https://github.com/nazimajumaniyazova/buzzkill/commit/51407d0e04ecf21a9f882c2846f1c430dcde58ef)), closes [#110](https://github.com/nazimajumaniyazova/buzzkill/issues/110)
+
+
+### Performance
+
+* **web:** subscribe each HUD value through its own selector ([#119](https://github.com/nazimajumaniyazova/buzzkill/issues/119)) ([9bf9e0d](https://github.com/nazimajumaniyazova/buzzkill/commit/9bf9e0d3a58f53219ed05370f7ef36580f2c6c09)), closes [#109](https://github.com/nazimajumaniyazova/buzzkill/issues/109)
+
 ## [0.9.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.8.0...v0.9.0) (2026-11-09)
 
 
