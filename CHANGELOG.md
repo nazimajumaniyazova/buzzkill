@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.7.0...v0.8.0) (2026-11-09)
+
+
+### Features
+
+* **ui:** add toast notifications with live-region announcements ([#102](https://github.com/nazimajumaniyazova/buzzkill/issues/102)) ([ca2eedb](https://github.com/nazimajumaniyazova/buzzkill/commit/ca2eedb9627956c44242df96cc4f72b6d99d7378)), closes [#84](https://github.com/nazimajumaniyazova/buzzkill/issues/84)
+
 ## [0.7.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.6.0...v0.7.0) (2026-11-09)
 
 
