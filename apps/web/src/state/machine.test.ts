@@ -2,7 +2,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import type { AssetFailure } from '@buzzkill/engine';
 import type { RunResult } from '@buzzkill/game';
 import { fc, test } from '@fast-check/vitest';
 import { describe, expect, it } from 'vitest';
@@ -24,10 +23,6 @@ const otherAssets = { sprites: {}, audio: {} } as GameAssets;
 const run: Run = { heroId: 'male', mode: 'day', seed: 1 };
 const nextRun: Run = { heroId: 'female', mode: 'night', seed: 2 };
 
-const failures: readonly AssetFailure[] = [
-  { id: 'projectile', kind: 'image', url: '/projectile.png', reason: 'http', message: 'HTTP 404' },
-];
-
 function resultWith(status: RunResult['status']): RunResult {
   return {
     score: 42,
@@ -41,30 +36,27 @@ function resultWith(status: RunResult['status']): RunResult {
 
 /** One example of every state; the `satisfies` keeps the list complete. */
 const states = {
-  boot: { name: 'boot', attempt: 0, failures: null },
-  menu: { name: 'menu', panel: 'main', assets },
-  heroSelect: { name: 'heroSelect', assets },
+  menu: { name: 'menu', panel: 'main' },
+  heroSelect: { name: 'heroSelect' },
+  loading: { name: 'loading', run },
   playing: { name: 'playing', assets, run },
   paused: { name: 'paused', assets, run },
   levelComplete: { name: 'levelComplete', assets, run, result: resultWith('won') },
   gameOver: { name: 'gameOver', assets, run, result: resultWith('lost') },
 } satisfies Record<AppState['name'], AppState>;
 
-/** The other flavours of `boot` and `menu`, for the rows that need them. */
-const failedBoot: AppState = { name: 'boot', attempt: 0, failures };
-const settingsMenu: AppState = { name: 'menu', panel: 'settings', assets };
-const helpMenu: AppState = { name: 'menu', panel: 'help', assets };
+/** The other panels of `menu`, for the rows that need them. */
+const settingsMenu: AppState = { name: 'menu', panel: 'settings' };
+const helpMenu: AppState = { name: 'menu', panel: 'help' };
 
 /** One example of every event; the `satisfies` keeps the list complete. */
 const events = {
-  booted: { type: 'booted', assets },
-  bootFailed: { type: 'bootFailed', failures },
-  retry: { type: 'retry' },
   openSettings: { type: 'openSettings' },
   openHelp: { type: 'openHelp' },
   selectHero: { type: 'selectHero' },
   back: { type: 'back' },
   play: { type: 'play', run: nextRun },
+  gameLoaded: { type: 'gameLoaded', assets: otherAssets },
   pause: { type: 'pause' },
   resume: { type: 'resume' },
   gamePaused: { type: 'gamePaused' },
@@ -81,16 +73,15 @@ interface Row {
 
 /** The transition table: every pair of state and event that changes the state. */
 const TRANSITIONS: readonly Row[] = [
-  { from: states.boot, event: events.booted, to: 'menu' },
-  { from: states.boot, event: events.bootFailed, to: 'boot' },
-  { from: failedBoot, event: events.retry, to: 'boot' },
   { from: states.menu, event: events.openSettings, to: 'menu' },
   { from: states.menu, event: events.openHelp, to: 'menu' },
   { from: states.menu, event: events.selectHero, to: 'heroSelect' },
   { from: settingsMenu, event: events.back, to: 'menu' },
   { from: helpMenu, event: events.back, to: 'menu' },
   { from: states.heroSelect, event: events.back, to: 'menu' },
-  { from: states.heroSelect, event: events.play, to: 'playing' },
+  { from: states.heroSelect, event: events.play, to: 'loading' },
+  { from: states.loading, event: events.gameLoaded, to: 'playing' },
+  { from: states.loading, event: events.back, to: 'heroSelect' },
   { from: states.playing, event: events.pause, to: 'paused' },
   { from: states.playing, event: events.gamePaused, to: 'paused' },
   {
@@ -119,8 +110,8 @@ const forbidden = Object.values(states).flatMap((state) =>
 );
 
 describe('transition', () => {
-  it('starts in boot, loading', () => {
-    expect(initialState).toEqual({ name: 'boot', attempt: 0, failures: null });
+  it('starts on the main menu, before the game has loaded', () => {
+    expect(initialState).toEqual({ name: 'menu', panel: 'main' });
   });
 
   it.each(TRANSITIONS.map((row) => [`${row.from.name} + ${row.event.type} -> ${row.to}`, row]))(
@@ -134,23 +125,21 @@ describe('transition', () => {
     expect(transition(state, event)).toBe(state);
   });
 
-  it('carries the loaded assets from boot into the main menu and keeps them from then on', () => {
-    const menu = transition(states.boot, events.booted);
+  it('waits for the game with the chosen run, then starts that run with the loaded assets', () => {
+    const loading = transition(states.heroSelect, events.play);
 
-    expect(menu).toEqual({ name: 'menu', panel: 'main', assets });
-    expect(transition(menu, events.selectHero)).toEqual({ name: 'heroSelect', assets });
-    expect(transition(states.menu, { type: 'booted', assets: otherAssets })).toBe(states.menu);
+    expect(loading).toEqual({ name: 'loading', run: nextRun });
+    expect(transition(loading, events.gameLoaded)).toEqual({
+      name: 'playing',
+      assets: otherAssets,
+      run: nextRun,
+    });
   });
 
-  it('records a failed boot and starts another attempt on retry', () => {
-    const failed = transition(states.boot, events.bootFailed);
-
-    expect(failed).toEqual({ name: 'boot', attempt: 0, failures });
-    expect(transition(failed, events.retry)).toEqual({ name: 'boot', attempt: 1, failures: null });
-  });
-
-  it('ignores retry while the boot is still loading', () => {
-    expect(transition(states.boot, events.retry)).toBe(states.boot);
+  it('returns from the wait to the hero select, and ignores a load that ends elsewhere', () => {
+    expect(transition(states.loading, events.back)).toEqual({ name: 'heroSelect' });
+    expect(transition(states.heroSelect, events.gameLoaded)).toBe(states.heroSelect);
+    expect(transition(states.playing, events.gameLoaded)).toBe(states.playing);
   });
 
   it('opens the settings and the help from the main menu only, and back returns to it', () => {
@@ -166,12 +155,7 @@ describe('transition', () => {
     expect(transition(settingsMenu, events.selectHero)).toBe(settingsMenu);
   });
 
-  it('starts the run of the play event, also over a finished one', () => {
-    expect(transition(states.heroSelect, events.play)).toEqual({
-      name: 'playing',
-      assets,
-      run: nextRun,
-    });
+  it('starts the next run at once over a finished one, with the assets it has', () => {
     expect(transition(states.levelComplete, events.play)).toEqual({
       name: 'playing',
       assets,
@@ -214,17 +198,17 @@ describe('transition', () => {
     expect(transition(states.playing, event)).toBe(states.playing);
   });
 
-  it('drops the run on quit and returns to the main menu with the assets', () => {
+  it('drops the run and its assets on quit and returns to the main menu', () => {
     const afterQuit = [states.playing, states.paused, states.levelComplete, states.gameOver].map(
       (state) => transition(state, events.quit),
     );
 
-    expect(afterQuit).toEqual(Array<AppState>(4).fill({ name: 'menu', panel: 'main', assets }));
+    expect(afterQuit).toEqual(Array<AppState>(4).fill({ name: 'menu', panel: 'main' }));
   });
 });
 
 describe('isRunState', () => {
-  it('tells the four states with a run from the three without', () => {
+  it('tells the four states of a run on screen from the other three', () => {
     const withRun = Object.values(states).filter(isRunState);
 
     expect(withRun.map((state) => state.name)).toEqual([
@@ -243,14 +227,15 @@ describe('invariants of the flow', () => {
     seed: fc.nat(),
   });
   const step: fc.Arbitrary<AppEvent> = fc.oneof(
-    fc.constant(events.booted),
-    fc.constant(events.bootFailed),
-    fc.constant(events.retry),
     fc.constant(events.openSettings),
     fc.constant(events.openHelp),
     fc.constant(events.selectHero),
     fc.constant(events.back),
     fc.record({ type: fc.constant('play' as const), run: choice }),
+    fc.record({
+      type: fc.constant('gameLoaded' as const),
+      assets: fc.constantFrom(assets, otherAssets),
+    }),
     fc.constant(events.pause),
     fc.constant(events.resume),
     fc.constant(events.gamePaused),
@@ -267,10 +252,9 @@ describe('invariants of the flow', () => {
     if (state === previous) {
       return null;
     }
-    const previousRun = isRunState(previous) ? previous.run : null;
+    const previousRun = 'run' in previous ? previous.run : null;
+    const previousAssets = isRunState(previous) ? previous.assets : null;
     switch (state.name) {
-      case 'boot':
-        return previous.name === 'boot' ? null : `back to boot from ${previous.name}`;
       case 'menu':
         if (state.panel !== 'main') {
           return previous.name === 'menu' && previous.panel === 'main'
@@ -279,48 +263,67 @@ describe('invariants of the flow', () => {
         }
         return null;
       case 'heroSelect':
-        return previous.name === 'menu' && previous.panel === 'main'
+        return (previous.name === 'menu' && previous.panel === 'main') ||
+          previous.name === 'loading'
           ? null
           : `hero select from ${previous.name}`;
+      case 'loading':
+        if (previous.name !== 'heroSelect' || event.type !== 'play') {
+          return `loading from ${previous.name} by ${event.type}`;
+        }
+        return state.run === event.run ? null : 'the wait holds a different run';
       case 'playing':
         if (previous.name === 'paused') {
-          return state.run === previousRun ? null : 'resume changed the run';
+          return state.run === previousRun && state.assets === previousAssets
+            ? null
+            : 'resume changed the run';
+        }
+        if (previous.name === 'loading') {
+          // The loaded assets join the run the player chose before the wait.
+          return event.type === 'gameLoaded' &&
+            state.run === previousRun &&
+            state.assets === event.assets
+            ? null
+            : `the wait ended by ${event.type} into another run`;
         }
         if (event.type !== 'play') {
           return `playing entered by ${event.type}`;
         }
-        return state.run === event.run ? null : 'play started a different run';
+        // Play again: the new run keeps the assets of the one that ended.
+        return state.run === event.run && state.assets === previousAssets
+          ? null
+          : 'play again changed the assets or started a different run';
       case 'paused':
         if (previous.name !== 'playing') {
           return `paused from ${previous.name}`;
         }
-        return state.run === previousRun ? null : 'pause changed the run';
+        return state.run === previousRun && state.assets === previousAssets
+          ? null
+          : 'pause changed the run';
       case 'levelComplete':
       case 'gameOver':
         if (previous.name !== 'playing' || event.type !== 'runEnded') {
           return `${state.name} from ${previous.name} by ${event.type}`;
         }
-        return state.run === previousRun ? null : 'the end changed the run';
+        return state.run === previousRun && state.assets === previousAssets
+          ? null
+          : 'the end changed the run';
     }
   }
 
   test.prop([fc.array(step, { maxLength: 60 })])(
-    'a run exists only in the run states, the assets never change, and each state has one way in',
+    'assets exist only with a run on screen, a run keeps them, and each state has its ways in',
     (sequence) => {
       const violations: string[] = [];
       let state: AppState = initialState;
-      let bootAssets: GameAssets | null = null;
       for (const event of sequence) {
         const previous = state;
         state = transition(state, event);
-        if ('run' in state !== isRunState(state)) {
-          violations.push(`run present in ${state.name}`);
+        if ('assets' in state !== isRunState(state)) {
+          violations.push(`assets present in ${state.name}`);
         }
-        if (state.name !== 'boot') {
-          bootAssets ??= state.assets;
-          if (state.assets !== bootAssets) {
-            violations.push(`assets changed in ${state.name}`);
-          }
+        if ('run' in state !== (isRunState(state) || state.name === 'loading')) {
+          violations.push(`run present in ${state.name}`);
         }
         const found = violation(previous, event, state);
         if (found !== null) {

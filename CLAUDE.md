@@ -38,7 +38,12 @@ runtime data flow.
   `satisfies` for configs, branded types where confusion is dangerous (`Seconds` vs `Milliseconds`).
   Enums are banned; use unions or `as const` objects.
 - **Boundaries.** The public API of a package is its `src/index.ts`; deep imports between packages
-  are forbidden.
+  are forbidden. `engine` and `game` declare `"sideEffects": false`: a module only declares at its
+  top level and nothing runs on import, so the bundler keeps what the menu does not use out of the
+  main chunk.
+- **Bundle.** The code that only a run needs stays in the game chunk, which downloads after the
+  menu (#112): `apps/web` reaches it through `src/game/import-chunk.ts`, and dependency-cruiser
+  rejects a static import of its modules.
 - **Design.** Composition over inheritance; entities are data (an enemy config is an object, not a
   class); dependencies arrive through constructors or factories, never through module singletons or
   globals; game rules (collisions, damage, score, difficulty) are pure functions; side effects

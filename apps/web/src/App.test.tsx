@@ -1,21 +1,22 @@
 import type { AssetFailure } from '@buzzkill/engine';
 import type { GamepadLike } from '@buzzkill/engine/browser';
 import type { RunResult } from '@buzzkill/game';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { App } from './App';
-import type { BootEvent } from './BootScreen';
+import { importGameChunk } from './game/import-chunk';
+import type { GameAssetsResult } from './game/load-assets';
+import { loadGameAssets } from './game/load-assets';
 import type { GameEvent } from './state/bridge';
 import { createAppStore, type GameAssets, type Run } from './state/machine';
 import { DEFAULT_SETTINGS } from './state/settings/schema';
 import { createSettingsStore } from './state/settings/store';
 
-const unlock = vi.fn(() => Promise.resolve());
-const setVolume = vi.fn();
-// The shell calls unlock and setVolume; the game view, which uses the rest, is replaced below.
-const assets = { sprites: {}, audio: { unlock, setVolume } } as unknown as GameAssets;
+const setVolume = vi.hoisted(() => vi.fn());
+// The shell calls setVolume; the game view, which uses the rest, is replaced below.
+const assets = vi.hoisted(() => ({ sprites: {}, audio: { setVolume } }) as unknown as GameAssets);
 
 const failure: AssetFailure = {
   id: 'projectile',
@@ -29,48 +30,22 @@ function resultWith(status: RunResult['status']): RunResult {
   return { score: 42, level: 1, ticks: 600, livesLeft: 0, status, hash: '0badf00d' };
 }
 
-// The boot and the game view are the two components with effects of their own; here they are
-// buttons that report what the real ones would.
-vi.mock('./BootScreen', () => ({
-  BootScreen: ({
-    attempt,
-    failures,
-    onEvent,
-    onRetry,
-  }: {
-    attempt: number;
-    failures: readonly AssetFailure[] | null;
-    onEvent: (event: BootEvent) => void;
-    onRetry: () => void;
-  }) => (
-    <div>
-      <p>
-        Boot attempt {attempt},{' '}
-        {failures === null ? 'loading' : `${String(failures.length)} failed`}
-      </p>
-      <button
-        type="button"
-        onClick={() => {
-          onEvent({ type: 'booted', assets });
-        }}
-      >
-        Finish boot
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onEvent({ type: 'bootFailed', failures: [failure] });
-        }}
-      >
-        Fail boot
-      </button>
-      <button type="button" onClick={onRetry}>
-        Try again
-      </button>
-    </div>
-  ),
+// The game chunk with the two modules below replaced, as a download that arrives at once. The
+// calls are counted: the menu must not download the game.
+vi.mock('./game/import-chunk', async () => {
+  const chunk = await import('./game/game-chunk');
+  return { importGameChunk: vi.fn(() => Promise.resolve(chunk)) };
+});
+
+// The game chunk itself: files that load at once unless a test says otherwise.
+vi.mock('./game/load-assets', () => ({
+  loadGameAssets: vi.fn((_context: AudioContext | null, onProgress: (fraction: number) => void) => {
+    onProgress(1);
+    return Promise.resolve<GameAssetsResult>({ ok: true, assets });
+  }),
 }));
 
+// The game view has effects of its own; here it is buttons that report what the real one would.
 vi.mock('./GameView', () => ({
   GameView: ({
     run,
@@ -114,17 +89,55 @@ vi.mock('./GameView', () => ({
   ),
 }));
 
+/** A load of the files that the test finishes: its progress, then success or failure. */
+function holdTheFiles() {
+  let report: (fraction: number) => void = () => undefined;
+  let settle: (result: GameAssetsResult) => void = () => undefined;
+  vi.mocked(loadGameAssets).mockImplementationOnce((_context, onProgress) => {
+    report = onProgress;
+    return new Promise((resolve) => {
+      settle = resolve;
+    });
+  });
+  return {
+    progress: (fraction: number) => {
+      act(() => {
+        report(fraction);
+      });
+    },
+    finish: async (result: GameAssetsResult) => {
+      await act(async () => {
+        settle(result);
+        await Promise.resolve();
+      });
+    },
+  };
+}
+
+/** Enough of an AudioContext for the loader, with its resume watched. */
+class FakeAudioContext {
+  static created: FakeAudioContext[] = [];
+  state = 'suspended';
+  resume = vi.fn(() => Promise.resolve());
+  constructor() {
+    FakeAudioContext.created.push(this);
+  }
+}
+
 const click = (name: string): void => {
   fireEvent.click(screen.getByRole('button', { name }));
 };
 
 const heading = (name: string): HTMLElement => screen.getByRole('heading', { level: 1, name });
 
-/** Boots and starts a run with the defaults: Mike, day. */
-function startRun(): void {
-  click('Finish boot');
+/** Waits for the game view: the chunk and the files load, and React renders the lazy view. */
+const gameView = (): Promise<HTMLElement> => screen.findByText(/^Game view:/);
+
+/** Starts a run with the defaults, Mike and day, and waits until it is on screen. */
+async function startRun(): Promise<void> {
   click('Play');
   click('Start');
+  await gameView();
 }
 
 /** A gamepad in the standard mapping, and frames that run when the test says so. */
@@ -166,11 +179,16 @@ function installGamepad() {
 }
 
 describe('App', () => {
-  afterEach(() => {
+  afterEach(async () => {
+    // A load that a test started ends here, inside act, before the next test counts the calls.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
     vi.unstubAllGlobals();
     Reflect.deleteProperty(navigator, 'getGamepads');
-    unlock.mockClear();
     setVolume.mockClear();
+    vi.mocked(importGameChunk).mockClear();
+    // Back to the files that load at once, dropping a held load that no call took.
+    vi.mocked(loadGameAssets).mockReset();
+    FakeAudioContext.created = [];
     vi.restoreAllMocks();
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
@@ -178,12 +196,8 @@ describe('App', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('boots first, then shows the main menu, and passes the accessibility check', async () => {
+  it('shows the main menu first, without downloading the game, and passes the accessibility check', async () => {
     const { container } = render(<App />);
-
-    expect(screen.getByText('Boot attempt 0, loading')).toBeInTheDocument();
-
-    click('Finish boot');
 
     expect(heading('Buzzkill')).toBeInTheDocument();
     expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
@@ -192,21 +206,101 @@ describe('App', () => {
       'Help',
     ]);
     expect(await axe(container)).toHaveNoViolations();
+    expect(importGameChunk).not.toHaveBeenCalled();
+    expect(loadGameAssets).not.toHaveBeenCalled();
   });
 
-  it('shows the failures of a boot and loads again on retry', () => {
+  it('starts loading the game when the pointer enters Play or Play gets focus, once', async () => {
+    render(<App />);
+    const play = screen.getByRole('button', { name: 'Play' });
+
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'Settings' }));
+    expect(importGameChunk).not.toHaveBeenCalled();
+
+    fireEvent.pointerEnter(play);
+    expect(importGameChunk).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(loadGameAssets).toHaveBeenCalledOnce();
+    });
+
+    act(() => {
+      play.focus();
+    });
+    click('Play');
+    expect(importGameChunk).toHaveBeenCalledOnce();
+    expect(heading('Choose your hero')).toBeInTheDocument();
+  });
+
+  it('starts loading on the Play click too, which touch screens give without a hover', () => {
     render(<App />);
 
-    click('Fail boot');
-    expect(screen.getByText('Boot attempt 0, 1 failed')).toBeInTheDocument();
+    click('Play');
+
+    expect(importGameChunk).toHaveBeenCalledOnce();
+  });
+
+  it('shows the progress when the run starts before the game has loaded, then starts it', async () => {
+    const files = holdTheFiles();
+    render(<App />);
+    click('Play');
+    click('Start');
+
+    const progress = await screen.findByRole('progressbar', { name: 'Loading' });
+    files.progress(0.5);
+    expect(progress).toHaveAttribute('value', '0.5');
+
+    await files.finish({ ok: true, assets });
+    expect(await gameView()).toHaveTextContent('Game view: male day');
+  });
+
+  it('lists what failed, loads it again on Try again, and starts the run once it is there', async () => {
+    const files = holdTheFiles();
+    render(<App />);
+    click('Play');
+    click('Start');
+    await waitFor(() => {
+      expect(loadGameAssets).toHaveBeenCalledOnce();
+    });
+
+    await files.finish({ ok: false, failures: [failure] });
+    expect(screen.getByRole('alert')).toHaveTextContent('projectile.png');
 
     click('Try again');
-    expect(screen.getByText('Boot attempt 1, loading')).toBeInTheDocument();
+    expect(await gameView()).toBeInTheDocument();
+    expect(loadGameAssets).toHaveBeenCalledTimes(2);
+  });
+
+  it('goes back from the loading screen to the hero select with Back or Escape', async () => {
+    holdTheFiles();
+    render(<App />);
+    click('Play');
+    click('Start');
+    await screen.findByRole('progressbar', { name: 'Loading' });
+
+    click('Back');
+    expect(heading('Choose your hero')).toBeInTheDocument();
+
+    click('Start');
+    expect(screen.getByRole('progressbar', { name: 'Loading' })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(heading('Choose your hero')).toBeInTheDocument();
+  });
+
+  it('starts a run at once, in the Start click, when the game has loaded already', async () => {
+    render(<App />);
+    await startRun();
+    click('Game pauses itself');
+    click('Quit to menu');
+
+    click('Play');
+    click('Start');
+
+    expect(screen.getByText(/^Game view:/)).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
 
   it('opens the hero select, the settings and the help from the menu; Back and Escape return', () => {
     render(<App />);
-    click('Finish boot');
 
     click('Play');
     expect(heading('Choose your hero')).toBeInTheDocument();
@@ -228,50 +322,61 @@ describe('App', () => {
     expect(heading('Buzzkill')).toBeInTheDocument();
   });
 
-  it('sets the mixer from the settings as soon as the assets exist, and follows every change', () => {
+  it('sets the mixer from the settings when a run starts, with the settings of that moment', async () => {
     render(<App />);
     expect(setVolume).not.toHaveBeenCalled();
 
-    click('Finish boot');
+    await startRun();
     expect(setVolume.mock.calls).toEqual([
       ['effects', 0.3],
       ['music', 0.5],
     ]);
 
+    click('Game pauses itself');
+    click('Quit to menu');
     click('Settings');
     setVolume.mockClear();
     fireEvent.click(screen.getByRole('switch', { name: 'Sound' }));
+    expect(setVolume).not.toHaveBeenCalled();
+
+    click('Back');
+    await startRun();
     expect(setVolume.mock.calls).toEqual([
       ['effects', 0],
       ['music', 0],
     ]);
-
-    setVolume.mockClear();
-    fireEvent.change(screen.getByRole('slider', { name: 'Effects volume' }), {
-      target: { value: '0.7' },
-    });
-    fireEvent.click(screen.getByRole('switch', { name: 'Sound' }));
-    expect(setVolume.mock.calls.at(-2)).toEqual(['effects', 0.7]);
-    expect(setVolume.mock.calls.at(-1)).toEqual(['music', 0.5]);
   });
 
-  it('starts the chosen run with the seed of the URL and starts the audio in the click', () => {
+  it('starts the audio inside the Start click, while the files are still loading', () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    holdTheFiles();
+    render(<App />);
+    click('Play');
+    expect(FakeAudioContext.created).toHaveLength(1);
+    expect(FakeAudioContext.created[0]?.resume).not.toHaveBeenCalled();
+
+    click('Start');
+
+    expect(FakeAudioContext.created[0]?.resume).toHaveBeenCalledOnce();
+    expect(FakeAudioContext.created).toHaveLength(1);
+    expect(screen.queryByText(/^Game view:/)).not.toBeInTheDocument();
+  });
+
+  it('starts the run the player chose, with the seed of the URL', async () => {
     window.history.replaceState(null, '', '/?seed=7');
     render(<App />);
-    click('Finish boot');
     click('Play');
 
     fireEvent.click(screen.getByRole('radio', { name: 'Julie' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Night' }));
     click('Start');
 
-    expect(screen.getByText('Game view: female night seed 7')).toBeInTheDocument();
-    expect(unlock).toHaveBeenCalledOnce();
+    expect(await gameView()).toHaveTextContent('Game view: female night seed 7');
   });
 
   it("pauses on the game's report, resumes by button or pause key, and quits to the menu", async () => {
     const { container } = render(<App />);
-    startRun();
+    await startRun();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     click('Game pauses itself');
@@ -296,9 +401,10 @@ describe('App', () => {
   });
 
   it('ends a lost run as game over and a won run as level complete, over the running view', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
     window.history.replaceState(null, '', '/?seed=7');
     const { container } = render(<App />);
-    startRun();
+    await startRun();
 
     click('Lose');
     const dialog = screen.getByRole('dialog', { name: 'Game over' });
@@ -308,7 +414,8 @@ describe('App', () => {
 
     click('Play again');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(unlock).toHaveBeenCalledTimes(2);
+    expect(FakeAudioContext.created[0]?.resume).toHaveBeenCalledTimes(2);
+    expect(loadGameAssets).toHaveBeenCalledOnce();
 
     click('Win');
     expect(screen.getByRole('dialog', { name: 'Level complete' })).toBeInTheDocument();
@@ -319,7 +426,6 @@ describe('App', () => {
 
   it('follows the system theme until the player picks one in the settings, then remembers it', () => {
     render(<App />);
-    click('Finish boot');
     expect(document.documentElement).not.toHaveAttribute('data-theme');
     expect(localStorage.getItem('buzzkill.settings')).toBeNull();
 
@@ -337,7 +443,6 @@ describe('App', () => {
 
   it('keeps every setting across a reload', () => {
     const view = render(<App />);
-    click('Finish boot');
     click('Settings');
     fireEvent.click(screen.getByRole('tab', { name: 'Gameplay' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
@@ -347,7 +452,6 @@ describe('App', () => {
     view.unmount();
 
     render(<App />);
-    click('Finish boot');
     click('Settings');
     fireEvent.click(screen.getByRole('tab', { name: 'Gameplay' }));
     expect(screen.getByRole('radio', { name: 'Hard' })).toBeChecked();
@@ -357,7 +461,6 @@ describe('App', () => {
 
   it('switches the language at once, without a reload, and the lang of the page follows', () => {
     render(<App />);
-    click('Finish boot');
     expect(document.documentElement).toHaveAttribute('lang', 'en');
 
     click('Settings');
@@ -379,7 +482,6 @@ describe('App', () => {
   it("starts in the browser's language until the player picks one", () => {
     vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['ru-RU', 'en-US']);
     const view = render(<App />);
-    click('Finish boot');
 
     expect(screen.getByRole('button', { name: 'Играть' })).toBeInTheDocument();
     expect(document.documentElement).toHaveAttribute('lang', 'ru');
@@ -391,15 +493,14 @@ describe('App', () => {
       JSON.stringify({ version: 1, ...DEFAULT_SETTINGS, language: 'en' }),
     );
     render(<App />);
-    click('Finish boot');
     expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
   });
 
-  it('titles the end of a run and writes its score in the language of the settings', () => {
+  it('titles the end of a run and writes its score in the language of the settings', async () => {
     render(<App settings={createSettingsStore({ ...DEFAULT_SETTINGS, language: 'ru' })} />);
-    click('Finish boot');
     click('Играть');
     click('Начать');
+    await gameView();
 
     click('Lose');
     expect(screen.getByRole('dialog', { name: 'Игра окончена' })).toHaveAccessibleDescription(
@@ -420,7 +521,6 @@ describe('App', () => {
         })}
       />,
     );
-    click('Finish boot');
     click('Help');
 
     expect(screen.getByRole('region', { name: 'Keyboard' })).toHaveTextContent('F or J');
@@ -445,10 +545,9 @@ describe('App', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it("moves the theme of #75 into the settings and uses the run's time of day while a run is on screen", () => {
+  it("moves the theme of #75 into the settings and uses the run's time of day while a run is on screen", async () => {
     localStorage.setItem('buzzkill.theme', 'night');
     render(<App />);
-    click('Finish boot');
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
     expect(localStorage.getItem('buzzkill.theme')).toBeNull();
     expect(JSON.parse(localStorage.getItem('buzzkill.settings') ?? '{}')).toMatchObject({
@@ -456,8 +555,7 @@ describe('App', () => {
       theme: 'night',
     });
 
-    click('Play');
-    click('Start');
+    await startRun();
     expect(document.documentElement).toHaveAttribute('data-theme', 'day');
 
     click('Lose');
@@ -467,7 +565,7 @@ describe('App', () => {
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
   });
 
-  it('renders the state of the stores it is given', () => {
+  it('renders the state of the stores it is given, the game view once its code is in place', async () => {
     const run: Run = { heroId: 'female', mode: 'night', seed: 3 };
     render(
       <App
@@ -477,14 +575,13 @@ describe('App', () => {
     );
 
     expect(screen.getByRole('dialog', { name: 'Paused' })).toBeInTheDocument();
-    expect(screen.getByText('Game view: female night seed 3, held')).toBeInTheDocument();
     expect(setVolume).toHaveBeenCalledWith('effects', 0);
+    expect(await screen.findByText('Game view: female night seed 3, held')).toBeInTheDocument();
   });
 
   it('lets a gamepad move focus in the menu, select with A and go back with B', () => {
     const { tap } = installGamepad();
     render(<App />);
-    click('Finish boot');
 
     tap(13);
     expect(screen.getByRole('button', { name: 'Play' })).toHaveFocus();
@@ -492,6 +589,8 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Settings' })).toHaveFocus();
     tap(12);
     expect(screen.getByRole('button', { name: 'Play' })).toHaveFocus();
+    // Focus on Play preloads the game, from the pad as from the keyboard.
+    expect(importGameChunk).toHaveBeenCalledOnce();
 
     tap(0);
     expect(heading('Choose your hero')).toBeInTheDocument();

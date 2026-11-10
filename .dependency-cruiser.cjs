@@ -64,6 +64,29 @@ module.exports = {
       },
     },
     {
+      name: 'game-chunk-loads-on-demand',
+      severity: 'error',
+      comment:
+        'The code of a run is a chunk of its own that downloads after the menu (#112). The shell ' +
+        'reaches it only through the dynamic import in src/game/import-chunk.ts; a static import ' +
+        'of one of its modules from outside would pull it into the main chunk. Types are free.',
+      from: {
+        path: '^apps/web/src/',
+        pathNot: [
+          '^apps/web/src/(GameView|GameHud)\\.tsx$',
+          '^apps/web/src/game/(game-chunk|load-assets|assets|sprites|draw-game)\\.ts$',
+          '\\.test\\.tsx?$',
+        ],
+      },
+      to: {
+        path: [
+          '^apps/web/src/(GameView|GameHud)\\.tsx$',
+          '^apps/web/src/game/(game-chunk|load-assets|assets|sprites|draw-game)\\.ts$',
+        ],
+        dependencyTypesNot: ['type-only', 'dynamic-import'],
+      },
+    },
+    {
       name: 'not-to-test',
       severity: 'error',
       comment: 'Production code must not import tests, stories or test utilities.',

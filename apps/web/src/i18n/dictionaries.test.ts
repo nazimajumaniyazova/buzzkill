@@ -100,11 +100,11 @@ describe('the messages with values', () => {
   });
 
   it('name the file and the reason of a failed load', () => {
-    expect(english.boot.failure({ file: 'shot.wav', reason: english.boot.reasons.decode })).toBe(
-      'shot.wav: the file is damaged',
-    );
-    expect(russian.boot.failure({ file: 'shot.wav', reason: russian.boot.reasons.decode })).toBe(
-      'shot.wav: файл повреждён',
-    );
+    expect(
+      english.loading.failure({ file: 'shot.wav', reason: english.loading.reasons.decode }),
+    ).toBe('shot.wav: the file is damaged');
+    expect(
+      russian.loading.failure({ file: 'shot.wav', reason: russian.loading.reasons.decode }),
+    ).toBe('shot.wav: файл повреждён');
   });
 });

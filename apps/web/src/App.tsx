@@ -1,22 +1,22 @@
-import { type JSX, useEffect, useRef, useState } from 'react';
+import { type JSX, lazy, Suspense, useEffect, useRef, useState } from 'react';
 
-import { BootScreen } from './BootScreen';
+import { importGameChunk } from './game/import-chunk';
 import { seedForRun } from './game/run-options';
 import { createGamepadNavigation } from './gamepad-navigation';
-import { GameView } from './GameView';
 import { HelpScreen } from './HelpScreen';
 import { HeroSelectScreen } from './HeroSelectScreen';
 import { i18nFor, I18nProvider } from './i18n/i18n';
+import { LoadingScreen } from './LoadingScreen';
 import { MenuScreen } from './MenuScreen';
 import { PauseDialog } from './PauseDialog';
 import { RunOverDialog } from './RunOverDialog';
 import { SettingsScreen } from './SettingsScreen';
+import { createGameLoader } from './state/game-loader';
 import {
   type AppEvent,
   type AppState,
   type AppStore,
   createAppStore,
-  type GameAssets,
   isRunState,
   type MenuPanel,
   type RunChoice,
@@ -44,15 +44,22 @@ interface AppProps {
 
 const whole = <T,>(value: T): T => value;
 
+/** The game view comes with the game chunk (#112): the menus render without its code. */
+const GameView = lazy(() => importGameChunk().then(({ GameView }) => ({ default: GameView })));
+
+const reload = (): void => {
+  window.location.reload();
+};
+
 /** The way back from a screen or a dialog, for Escape and the gamepad's B button; `null` without one. */
 function backEvent(state: AppState): AppEvent | null {
   switch (state.name) {
-    case 'boot':
     case 'playing':
       return null;
     case 'menu':
       return state.panel === 'main' ? null : { type: 'back' };
     case 'heroSelect':
+    case 'loading':
       return { type: 'back' };
     case 'paused':
       return { type: 'resume' };
@@ -65,8 +72,8 @@ function backEvent(state: AppState): AppEvent | null {
 /**
  * Application shell: renders the screen of the machine's state (ADR-0006) and nothing else. The
  * screens and the game report through `send`; the effects here are the ones the whole page needs:
- * saving the settings, the theme, the language, the mixer's volumes, the keys that go back, and
- * the gamepad in the menus.
+ * saving the settings, the theme, the language, the mixer's volumes, the start of a run once the
+ * game has loaded, the keys that go back, and the gamepad in the menus.
  */
 export function App({ store: givenStore, settings: givenSettings }: AppProps): JSX.Element {
   const [ownStore] = useState(() => createAppStore());
@@ -75,14 +82,16 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
       loadSettings(browserStorage(), defaultSettings(window.navigator.languages)),
     ),
   );
+  const [gameLoader] = useState(() => createGameLoader());
   const store = givenStore ?? ownStore;
   const settingsStore = givenSettings ?? ownSettings;
   const state = useStore(store, whole);
   const settings = useStore(settingsStore, whole);
+  const gameLoad = useStore(gameLoader, whole);
   const { send } = store;
   const rootRef = useRef<HTMLDivElement>(null);
   const run = isRunState(state) ? state.run : null;
-  const assets = state.name === 'boot' ? null : state.assets;
+  const assets = isRunState(state) ? state.assets : null;
   const i18n = i18nFor(settings.language);
 
   // The theme of the page (#75): the player's setting on the menus, the run's own time of day
@@ -99,7 +108,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
   // Every change of the settings is saved at once, under the versioned schema (#110).
   useEffect(() => persistSettings(settingsStore, browserStorage()), [settingsStore]);
 
-  // The mixer follows the settings from the moment the assets exist, during a run too.
+  // The mixer follows the settings while a run is on screen, from its first frame.
   useEffect(() => {
     if (assets === null) {
       return;
@@ -107,6 +116,13 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     assets.audio.setVolume('effects', volumeOf(settings, 'effects'));
     assets.audio.setVolume('music', volumeOf(settings, 'music'));
   }, [assets, settings]);
+
+  // The chosen run starts as soon as the game has loaded, or at once when it already had.
+  useEffect(() => {
+    if (state.name === 'loading' && gameLoad.status === 'ready') {
+      send({ type: 'gameLoaded', assets: gameLoad.assets });
+    }
+  }, [state.name, gameLoad, send]);
 
   // The loop does not sample input while paused, so the player's pause key resumes from here.
   const pauseKeys = settings.keyBindings.pause;
@@ -128,7 +144,9 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
 
   // Escape leaves a screen the way its Back button does; the dialogs handle Escape themselves.
   const escapeGoesBack =
-    state.name === 'heroSelect' || (state.name === 'menu' && state.panel !== 'main');
+    state.name === 'heroSelect' ||
+    state.name === 'loading' ||
+    (state.name === 'menu' && state.panel !== 'main');
   useEffect(() => {
     if (!escapeGoesBack) {
       return;
@@ -164,9 +182,11 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     };
   }, [navigating, store]);
 
-  const play = (gameAssets: GameAssets, choice: RunChoice): void => {
-    // Browsers start audio only in response to a gesture, and this click is one.
-    void gameAssets.audio.unlock();
+  const play = (choice: RunChoice): void => {
+    // Loads the game if no hover did, or again after a failure. Browsers start audio only in
+    // response to a gesture, and this click is one, even while the game is still loading.
+    gameLoader.load();
+    gameLoader.unlockAudio();
     send({ type: 'play', run: { ...choice, seed: seedForRun(window.location.search) } });
   };
 
@@ -180,8 +200,10 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
         return (
           <MenuScreen
             onPlay={() => {
+              gameLoader.load();
               send({ type: 'selectHero' });
             }}
+            onPreload={gameLoader.load}
             onSettings={() => {
               send({ type: 'openSettings' });
             }}
@@ -205,45 +227,34 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     }
   };
 
+  const loadingScreen = (
+    <LoadingScreen load={gameLoad} onRetry={gameLoader.load} onReload={reload} onBack={back} />
+  );
+
   const screen = (): JSX.Element => {
     switch (state.name) {
-      case 'boot':
-        return (
-          <BootScreen
-            attempt={state.attempt}
-            failures={state.failures}
-            onEvent={send}
-            onRetry={() => {
-              send({ type: 'retry' });
-            }}
-          />
-        );
       case 'menu':
         return menuPanel(state.panel);
       case 'heroSelect':
-        return (
-          <HeroSelectScreen
-            onStart={(choice) => {
-              play(state.assets, choice);
-            }}
-            onBack={() => {
-              send({ type: 'back' });
-            }}
-          />
-        );
+        return <HeroSelectScreen onStart={play} onBack={back} />;
+      case 'loading':
+        return loadingScreen;
       case 'playing':
       case 'paused':
       case 'levelComplete':
       case 'gameOver':
         return (
           <>
-            <GameView
-              run={state.run}
-              assets={state.assets}
-              paused={state.name === 'paused'}
-              keyBindings={settings.keyBindings}
-              onEvent={send}
-            />
+            {/* The loading screen stays until React has the code of the game view in place. */}
+            <Suspense fallback={loadingScreen}>
+              <GameView
+                run={state.run}
+                assets={state.assets}
+                paused={state.name === 'paused'}
+                keyBindings={settings.keyBindings}
+                onEvent={send}
+              />
+            </Suspense>
             {state.name === 'paused' && (
               <PauseDialog
                 onResume={() => {
@@ -259,7 +270,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 title={i18n.t.runOver.titles[state.name]}
                 result={state.result}
                 onPlayAgain={() => {
-                  play(state.assets, state.run);
+                  play(state.run);
                 }}
                 onQuit={() => {
                   send({ type: 'quit' });

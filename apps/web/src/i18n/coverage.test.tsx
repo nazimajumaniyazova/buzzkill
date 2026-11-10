@@ -1,29 +1,23 @@
-import type * as engine from '@buzzkill/engine';
 import { DEFAULT_KEY_BINDINGS, type Game, type GameHud as Hud } from '@buzzkill/game';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { JSX, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BootScreen } from '../BootScreen';
 import { KEY_SYMBOLS } from '../controls';
 import { GameHud } from '../GameHud';
 import { GameView } from '../GameView';
 import { HelpScreen } from '../HelpScreen';
 import { HeroSelectScreen } from '../HeroSelectScreen';
+import { LoadingScreen } from '../LoadingScreen';
 import { MenuScreen } from '../MenuScreen';
 import { PauseDialog } from '../PauseDialog';
 import { RunOverDialog } from '../RunOverDialog';
 import { SettingsScreen } from '../SettingsScreen';
+import type { GameLoad } from '../state/game-loader';
 import type { GameAssets } from '../state/machine';
 import { DEFAULT_SETTINGS } from '../state/settings/schema';
 import { en, type Messages } from './en';
 import { createI18n, I18nProvider, LANGUAGE_NAMES } from './i18n';
-
-// The boot screen loads nothing here: its loading state is enough.
-vi.mock('@buzzkill/engine', async (importOriginal) => ({
-  ...(await importOriginal<typeof engine>()),
-  loadAssets: () => new Promise(() => undefined),
-}));
 
 /**
  * A pseudo-language: English with every string of the dictionary, and every result of its
@@ -128,31 +122,36 @@ describe('every text on screen comes from the dictionary', () => {
     expect(foreignText()).toEqual(['Status', 'Hard-coded']);
   });
 
-  it('in the boot, loading and failed', () => {
-    const view = renderMarked(
-      <BootScreen attempt={0} failures={null} onEvent={vi.fn()} onRetry={vi.fn()} />,
+  it('in the loading screen, loading and after either failure', () => {
+    const loading = (load: GameLoad) => (
+      <I18nProvider i18n={marked}>
+        <LoadingScreen load={load} onRetry={vi.fn()} onReload={vi.fn()} onBack={vi.fn()} />
+      </I18nProvider>
     );
+    const view = render(loading({ status: 'loading', fraction: 0.5 }));
     expect(foreignText()).toEqual([]);
 
     view.rerender(
-      <I18nProvider i18n={marked}>
-        <BootScreen
-          attempt={0}
-          failures={[
-            { id: 'shot', kind: 'audio', url: '/a/shot.wav', reason: 'decode', message: 'Bad' },
-            { id: 'bat', kind: 'image', url: '/a/bat.png', reason: 'network', message: 'Lost' },
-          ]}
-          onEvent={vi.fn()}
-          onRetry={vi.fn()}
-        />
-      </I18nProvider>,
+      loading({
+        status: 'assetsFailed',
+        failures: [
+          { id: 'shot', kind: 'audio', url: '/a/shot.wav', reason: 'decode', message: 'Bad' },
+          { id: 'bat', kind: 'image', url: '/a/bat.png', reason: 'network', message: 'Lost' },
+        ],
+      }),
     );
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(foreignText()).toEqual([]);
+
+    view.rerender(loading({ status: 'codeFailed' }));
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(foreignText()).toEqual([]);
   });
 
   it('in the menu', () => {
-    renderMarked(<MenuScreen onPlay={vi.fn()} onSettings={vi.fn()} onHelp={vi.fn()} />);
+    renderMarked(
+      <MenuScreen onPlay={vi.fn()} onPreload={vi.fn()} onSettings={vi.fn()} onHelp={vi.fn()} />,
+    );
 
     expect(foreignText()).toEqual([]);
   });
