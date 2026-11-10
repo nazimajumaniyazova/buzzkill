@@ -2,6 +2,7 @@ import type { AssetFailure } from '@buzzkill/engine';
 import type { GameAction, GameMode, HeroId } from '@buzzkill/game';
 
 import type { ErrorArea } from '../errors/report-error';
+import type { MotionChoice } from '../motion';
 import type { Difficulty } from '../state/settings/schema';
 import type { ThemeChoice } from '../theme';
 import type { Format } from './format';
@@ -91,6 +92,12 @@ function english(format: Format) {
         day: 'Always day',
         night: 'Always night',
       } satisfies Record<ThemeChoice, string>,
+      motion: 'Motion',
+      motions: {
+        system: 'Match the system',
+        reduced: 'Reduced',
+        full: 'Full',
+      } satisfies Record<MotionChoice, string>,
       language: 'Language',
       difficulty: 'Difficulty',
       difficulties: {
@@ -98,6 +105,8 @@ function english(format: Format) {
         normal: 'Normal',
         hard: 'Hard',
       } satisfies Record<Difficulty, string>,
+      gameSpeed: 'Game speed',
+      gameSpeedHint: `A slower game leaves more time to react. Only games at ${format.percent(1)} enter the leaderboard.`,
     },
     keyEditor: {
       caption: 'Keyboard',
@@ -181,6 +190,13 @@ function english(format: Format) {
       score: (score: number) => `Score: ${format.number(score)}`,
       playAgain: 'Play again',
       quit: 'Back to menu',
+    },
+    announce: {
+      levelStart: (level: number) => `Level ${format.number(level)}. Go!`,
+      lifeLost: (lives: number) =>
+        `Hit! ${format.number(lives)} ${format.plural(lives, { one: 'life', other: 'lives' })} left.`,
+      levelComplete: (score: number) => `Level complete. Score: ${format.number(score)}.`,
+      gameOver: (score: number) => `Game over. Score: ${format.number(score)}.`,
     },
     error: {
       title: 'Something went wrong',

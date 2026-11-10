@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
@@ -38,6 +38,9 @@ describe('SettingsScreen', () => {
       'aria-valuetext',
       '30 %',
     );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Игра' }));
+    expect(screen.getByRole('radio', { name: '100 %' })).toBeChecked();
   });
 
   it('reports every sound change as the fields that changed', () => {
@@ -79,7 +82,8 @@ describe('SettingsScreen', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Display' }));
 
-    expect(screen.getByRole('radio', { name: 'Match the system' })).toBeChecked();
+    const theme = within(screen.getByRole('group', { name: 'Theme' }));
+    expect(theme.getByRole('radio', { name: 'Match the system' })).toBeChecked();
     fireEvent.click(screen.getByRole('radio', { name: 'Always night' }));
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ theme: 'night' });
     expect(await axe(container)).toHaveNoViolations();
@@ -94,6 +98,47 @@ describe('SettingsScreen', () => {
     expect(screen.getByRole('radio', { name: 'English' })).toBeChecked();
     fireEvent.click(screen.getByRole('radio', { name: 'Русский' }));
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ language: 'ru' });
+  });
+
+  it('offers the motion on the display tab, the system by default', () => {
+    const onChange = vi.fn();
+    render(<SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Display' }));
+    const motion = within(screen.getByRole('group', { name: 'Motion' }));
+
+    expect(motion.getAllByRole('radio').map((radio) => radio.getAttribute('value'))).toEqual([
+      'system',
+      'reduced',
+      'full',
+    ]);
+    expect(motion.getByRole('radio', { name: 'Match the system' })).toBeChecked();
+    fireEvent.click(motion.getByRole('radio', { name: 'Reduced' }));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ motion: 'reduced' });
+  });
+
+  it('offers the game speed on the gameplay tab, with what a slower game means', () => {
+    const onChange = vi.fn();
+    render(
+      <SettingsScreen
+        settings={{ ...DEFAULT_SETTINGS, gameSpeed: 0.75 }}
+        onChange={onChange}
+        onBack={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Gameplay' }));
+    const speed = within(screen.getByRole('group', { name: 'Game speed' }));
+
+    expect(speed.getAllByRole('radio').map((radio) => radio.getAttribute('value'))).toEqual([
+      '1',
+      '0.75',
+      '0.5',
+    ]);
+    expect(speed.getByRole('radio', { name: '75%' })).toBeChecked();
+    expect(screen.getByText(/Only games at 100% enter the leaderboard\.$/)).toBeInTheDocument();
+    fireEvent.click(speed.getByRole('radio', { name: '50%' }));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ gameSpeed: 0.5 });
   });
 
   it('offers the difficulty on the gameplay tab, and passes the accessibility check there', async () => {

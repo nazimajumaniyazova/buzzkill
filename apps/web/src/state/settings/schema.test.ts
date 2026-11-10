@@ -26,6 +26,8 @@ describe('DEFAULT_SETTINGS', () => {
       musicVolume: 0.5,
       difficulty: 'normal',
       language: 'en',
+      motion: 'system',
+      gameSpeed: 1,
       keyBindings: DEFAULT_KEY_BINDINGS,
     });
   });
@@ -44,6 +46,8 @@ describe('parseSettings', () => {
       musicVolume: 0,
       difficulty: 'hard',
       language: 'ru',
+      motion: 'reduced',
+      gameSpeed: 0.5,
       keyBindings: {
         moveUp: ['KeyW', 'ArrowUp'],
         moveDown: ['KeyS', 'ArrowDown'],
@@ -53,6 +57,29 @@ describe('parseSettings', () => {
     };
 
     expect(parseSettings(stored(settings))).toEqual(settings);
+  });
+
+  it('reads settings saved before the motion and the game speed existed, with their defaults', () => {
+    // What 0.12.0 saved: the same version, without the two fields.
+    const saved = Object.fromEntries(
+      Object.entries(stored({ ...DEFAULT_SETTINGS, theme: 'night' })).filter(
+        ([key]) => key !== 'motion' && key !== 'gameSpeed',
+      ),
+    );
+
+    expect(parseSettings(saved)).toEqual({ ...DEFAULT_SETTINGS, theme: 'night' });
+  });
+
+  it('takes only the paces it offers and the three motion choices', () => {
+    expect(parseSettings({ ...stored(), gameSpeed: 0.75, motion: 'full' })).toMatchObject({
+      gameSpeed: 0.75,
+      motion: 'full',
+    });
+    expect(parseSettings({ ...stored(), gameSpeed: 2, motion: 'none' })).toMatchObject({
+      gameSpeed: 1,
+      motion: 'system',
+    });
+    expect(parseSettings({ ...stored(), gameSpeed: '0.5' })).toMatchObject({ gameSpeed: 1 });
   });
 
   it('replaces a broken field with its default and keeps the others', () => {

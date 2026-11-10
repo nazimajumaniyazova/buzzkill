@@ -1,9 +1,16 @@
 import { type AudioMixer, createAudioMixer, type KeyBindings } from '@buzzkill/engine';
 import type * as GameModule from '@buzzkill/game';
-import { createGame, DEFAULT_KEY_BINDINGS, type GameAction, type GameSound } from '@buzzkill/game';
+import {
+  createGame,
+  DEFAULT_KEY_BINDINGS,
+  type Game,
+  type GameAction,
+  type GameSound,
+} from '@buzzkill/game';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { AnnouncerProvider, createAnnouncer } from './announcer';
 import { ErrorBoundary } from './ErrorBoundary';
 import { reportError } from './errors/report-error';
 import { createGameSprites } from './game/sprites';
@@ -45,7 +52,7 @@ const sprites = createGameSprites<ImageBitmap>({
   fireExplosion: image,
 });
 
-const run: Run = { heroId: 'male', mode: 'day', seed: 1 };
+const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1 };
 
 /**
  * Animation frames that run only when the test says so, 50 ms apart: the first frame sets the
@@ -333,6 +340,46 @@ describe('GameView', () => {
     expect(types(added)).toContain('keydown');
     expect(types(removed)).toEqual(types(added));
     vi.mocked(reportError).mockClear();
+  });
+
+  /** The run the last render created. */
+  const lastGame = (): Game => vi.mocked(createGame).mock.results.at(-1)?.value as Game;
+
+  it('runs the ticks of normal speed at every pace, half as many a second at 50%', () => {
+    const frames = installFrames();
+    const view = renderView();
+    // The first frame sets the time; ten more of 50 ms are half a second.
+    frames.run(11);
+    const atFull = lastGame().result();
+    view.unmount();
+
+    renderView({ run: { ...run, speed: 0.5 } });
+    frames.run(11);
+    // Half, give or take the tick that the rounding of the clock moves.
+    expect(Math.abs(lastGame().result().ticks * 2 - atFull.ticks)).toBeLessThanOrEqual(1);
+    // More frames reach the same tick, and there the same state, as normal speed did.
+    for (let i = 0; i < 20 && lastGame().result().ticks < atFull.ticks; i += 1) {
+      frames.run(1);
+    }
+    expect(lastGame().result()).toEqual(atFull);
+  });
+
+  it('tells screen readers that the run starts', () => {
+    installFrames();
+    render(
+      <AnnouncerProvider announcer={createAnnouncer()}>
+        <GameView
+          run={run}
+          assets={assets}
+          paused={false}
+          keyBindings={DEFAULT_KEY_BINDINGS}
+          onEvent={onEvent}
+        />
+      </AnnouncerProvider>,
+    );
+
+    const [polite] = screen.getAllByRole('log');
+    expect(polite).toHaveTextContent('Level 1. Go!');
   });
 
   it('explains when the browser has no 2D canvas context', () => {

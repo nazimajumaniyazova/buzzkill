@@ -16,6 +16,10 @@ const UNCHOSEN = ':root:not([data-theme])';
 const DARK = '(prefers-color-scheme: dark)';
 const MORE_CONTRAST = '(prefers-contrast: more)';
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+/** The root while the player has not asked for full motion, so a system preference may reduce it. */
+const MOTION_NOT_FULL = ":root:not([data-motion='full'])";
+/** The root when the player asked for reduced motion, whatever the system says. */
+const MOTION_REDUCED = ":root[data-motion='reduced']";
 
 /** Native controls and scrollbars follow the theme through `color-scheme`. */
 const COLOR_SCHEME: Readonly<Record<ThemeName, string>> = { day: 'light', night: 'dark' };
@@ -63,7 +67,8 @@ function media(query: string, rules: readonly (readonly string[])[]): string[] {
  * Renders the stylesheet of the tokens (#74, #75): every layer on `:root` with the default
  * theme's colors, each other theme as a `[data-theme]` block, the dark theme again for a dark
  * system preference while no theme is chosen, and the preference overrides for more contrast
- * and reduced motion. The output is already in the form Prettier and Stylelint keep, so the
+ * and reduced motion. Motion follows the system preference unless `data-motion` on the root says
+ * `full`, and `data-motion='reduced'` reduces it regardless. The output is already in the form Prettier and Stylelint keep, so the
  * committed file never changes under the hooks.
  */
 export function renderTokensCss(source: Tokens = tokens): string {
@@ -89,7 +94,8 @@ export function renderTokensCss(source: Tokens = tokens): string {
       themes.map((theme) => rule(selectorOf(theme), contrastMore[theme], 1)),
     ),
     media(`${MORE_CONTRAST} and ${DARK}`, [rule(UNCHOSEN, contrastMore[DARK_THEME], 1)]),
-    media(REDUCED_MOTION, [rule(':root', reducedMotion, 1)]),
+    media(REDUCED_MOTION, [rule(MOTION_NOT_FULL, reducedMotion, 1)]),
+    rule(MOTION_REDUCED, reducedMotion, 0),
   ];
   return `${[NOTICE, ...blocks.map((lines) => lines.join('\n'))].join('\n\n')}\n`;
 }

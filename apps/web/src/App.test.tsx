@@ -72,6 +72,7 @@ vi.mock('./GameView', async () => {
             Game view: {run.heroId} {run.mode} seed {run.seed}
             {paused ? ', held' : ''}
           </p>
+          <p>Speed {run.speed}</p>
           <button
             type="button"
             onClick={() => {
@@ -214,6 +215,7 @@ describe('App', () => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.removeAttribute('lang');
+    document.documentElement.removeAttribute('data-motion');
     window.history.replaceState(null, '', '/');
   });
 
@@ -548,7 +550,7 @@ describe('App', () => {
   });
 
   it("resumes on the player's pause key, not on the default one it replaced", () => {
-    const run: Run = { heroId: 'male', mode: 'day', seed: 3 };
+    const run: Run = { heroId: 'male', mode: 'day', seed: 3, speed: 1 };
     render(
       <App
         store={createAppStore({ name: 'paused', assets, run })}
@@ -587,7 +589,7 @@ describe('App', () => {
   });
 
   it('renders the state of the stores it is given, the game view once its code is in place', async () => {
-    const run: Run = { heroId: 'female', mode: 'night', seed: 3 };
+    const run: Run = { heroId: 'female', mode: 'night', seed: 3, speed: 1 };
     render(
       <App
         store={createAppStore({ name: 'paused', assets, run })}
@@ -628,6 +630,29 @@ describe('App', () => {
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(heading('Buzzkill')).toBeInTheDocument();
     vi.mocked(reportError).mockClear();
+  });
+
+  it('keeps the live regions on every screen, applies the motion setting and paces the next run', async () => {
+    render(<App />);
+    expect(screen.getAllByRole('log')).toHaveLength(2);
+    expect(document.documentElement).not.toHaveAttribute('data-motion');
+
+    click('Settings');
+    fireEvent.click(screen.getByRole('tab', { name: 'Display' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Reduced' }));
+    expect(document.documentElement).toHaveAttribute('data-motion', 'reduced');
+    expect(screen.getAllByRole('log')).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Gameplay' }));
+    fireEvent.click(screen.getByRole('radio', { name: '50%' }));
+    click('Back');
+    await startRun();
+
+    expect(screen.getByText('Speed 0.5')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('buzzkill.settings') ?? '{}')).toMatchObject({
+      motion: 'reduced',
+      gameSpeed: 0.5,
+    });
   });
 
   it('lets a gamepad leave the error screen of a failed run with B', () => {
