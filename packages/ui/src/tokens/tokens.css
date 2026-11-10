@@ -262,9 +262,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root {
+  :root:not([data-motion='full']) {
     --motion-fast: var(--duration-none);
     --motion-normal: var(--duration-none);
     --motion-slow: var(--duration-none);
   }
+}
+
+:root[data-motion='reduced'] {
+  --motion-fast: var(--duration-none);
+  --motion-normal: var(--duration-none);
+  --motion-slow: var(--duration-none);
 }

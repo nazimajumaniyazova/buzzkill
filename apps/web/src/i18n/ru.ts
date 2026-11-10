@@ -81,6 +81,12 @@ export const ru: Dictionary = (format): Messages => ({
       day: 'Всегда день',
       night: 'Всегда ночь',
     },
+    motion: 'Движение',
+    motions: {
+      system: 'Как в системе',
+      reduced: 'Уменьшенное',
+      full: 'Полное',
+    },
     language: 'Язык',
     difficulty: 'Сложность',
     difficulties: {
@@ -88,6 +94,8 @@ export const ru: Dictionary = (format): Messages => ({
       normal: 'Обычная',
       hard: 'Сложная',
     },
+    gameSpeed: 'Скорость игры',
+    gameSpeedHint: `На меньшей скорости больше времени на реакцию. В таблицу рекордов попадают только игры на ${format.percent(1)}.`,
   },
   keyEditor: {
     caption: 'Клавиатура',
@@ -152,6 +160,20 @@ export const ru: Dictionary = (format): Messages => ({
     score: (score) => `Счёт: ${format.number(score)}`,
     playAgain: 'Играть снова',
     quit: 'В меню',
+  },
+  announce: {
+    levelStart: (level) => `Уровень ${format.number(level)}. Вперёд!`,
+    lifeLost: (lives) => {
+      const left = format.number(lives);
+      return `Попадание! ${format.plural(lives, {
+        one: `Осталась ${left} жизнь`,
+        few: `Осталось ${left} жизни`,
+        many: `Осталось ${left} жизней`,
+        other: `Осталось ${left} жизни`,
+      })}.`;
+    },
+    levelComplete: (score) => `Уровень пройден. Счёт: ${format.number(score)}.`,
+    gameOver: (score) => `Игра окончена. Счёт: ${format.number(score)}.`,
   },
   error: {
     title: 'Что-то пошло не так',

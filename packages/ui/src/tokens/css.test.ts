@@ -105,9 +105,19 @@ describe('renderTokensCss', () => {
     );
   });
 
-  it('zeroes the motion tokens under prefers-reduced-motion: reduce', () => {
+  it('zeroes the motion tokens under prefers-reduced-motion: reduce, unless the page asks for full motion', () => {
     expect(css).toContain(
-      ['@media (prefers-reduced-motion: reduce) {', nested(':root', reducedMotion), '}'].join('\n'),
+      [
+        '@media (prefers-reduced-motion: reduce) {',
+        nested(":root:not([data-motion='full'])", reducedMotion),
+        '}',
+      ].join('\n'),
+    );
+  });
+
+  it("zeroes the motion tokens under data-motion='reduced' whatever the system says", () => {
+    expect(topLevelBlock(css, ":root[data-motion='reduced']")).toEqual(
+      collect(reducedMotion).map((token) => declaration(token)),
     );
   });
 

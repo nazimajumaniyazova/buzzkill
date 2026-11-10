@@ -2,6 +2,7 @@ import type { AudioMixer } from '@buzzkill/engine';
 import type { GameMode, GameSound, HeroId, RunResult } from '@buzzkill/game';
 
 import type { GameSprites } from '../game/sprites';
+import type { GameSpeed } from './settings/schema';
 import { createStore, type Store } from './store';
 
 /** What a run draws and plays: loaded once, on demand (#112), and shared by every run of the visit. */
@@ -19,6 +20,8 @@ export interface RunChoice {
 /** One run as the player set it up, plus the seed that makes it reproducible. */
 export interface Run extends RunChoice {
   readonly seed: number;
+  /** The pace from the settings when the run started; it stays with the run (ADR-0014). */
+  readonly speed: GameSpeed;
 }
 
 /** The screens of the menu: the main menu and the two it opens. */

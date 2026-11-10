@@ -20,8 +20,8 @@ import {
 const assets = { sprites: {}, audio: {} } as GameAssets;
 const otherAssets = { sprites: {}, audio: {} } as GameAssets;
 
-const run: Run = { heroId: 'male', mode: 'day', seed: 1 };
-const nextRun: Run = { heroId: 'female', mode: 'night', seed: 2 };
+const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1 };
+const nextRun: Run = { heroId: 'female', mode: 'night', seed: 2, speed: 1 };
 
 function resultWith(status: RunResult['status']): RunResult {
   return {
@@ -244,6 +244,7 @@ describe('invariants of the flow', () => {
     heroId: fc.constantFrom('male', 'female'),
     mode: fc.constantFrom('day', 'night'),
     seed: fc.nat(),
+    speed: fc.constantFrom(1, 0.75, 0.5),
   });
   const step: fc.Arbitrary<AppEvent> = fc.oneof(
     fc.constant(events.openSettings),

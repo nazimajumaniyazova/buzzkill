@@ -23,7 +23,10 @@ toolbar switches the preview.
 
 - `prefers-contrast: more` moves the text and border colors of each theme to the far end of the
   palette.
-- `prefers-reduced-motion: reduce` sets every motion token to zero.
+- `prefers-reduced-motion: reduce` sets every motion token to zero, unless the root element
+  carries `data-motion="full"`.
+- `data-motion="reduced"` sets every motion token to zero whatever the system says. The web app
+  sets either attribute from the player's motion setting and removes it to match the system.
 
 Both are overrides of semantic tokens, written in the token source next to the themes, and the
 tests check the contrast of every semantic pair in both themes and under more contrast. The

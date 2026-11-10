@@ -1,5 +1,6 @@
 import { type JSX, lazy, Suspense, useEffect, useRef, useState } from 'react';
 
+import { AnnouncerProvider, createAnnouncer } from './announcer';
 import { ErrorBoundary } from './ErrorBoundary';
 import { ErrorScreen } from './ErrorScreen';
 import { importGameChunk } from './game/import-chunk';
@@ -10,6 +11,7 @@ import { HeroSelectScreen } from './HeroSelectScreen';
 import { i18nFor, I18nProvider } from './i18n/i18n';
 import { LoadingScreen } from './LoadingScreen';
 import { MenuScreen } from './MenuScreen';
+import { applyMotion } from './motion';
 import { PauseDialog } from './PauseDialog';
 import { RunOverDialog } from './RunOverDialog';
 import { SettingsScreen } from './SettingsScreen';
@@ -87,6 +89,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     ),
   );
   const [gameLoader] = useState(() => createGameLoader());
+  const [announcer] = useState(() => createAnnouncer());
   const store = givenStore ?? ownStore;
   const settingsStore = givenSettings ?? ownSettings;
   const state = useStore(store, whole);
@@ -103,6 +106,11 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
   useEffect(() => {
     applyTheme(run === null ? settings.theme : run.mode);
   }, [run, settings.theme]);
+
+  // Reduced or full motion for the interface, or the system's preference (#114).
+  useEffect(() => {
+    applyMotion(settings.motion);
+  }, [settings.motion]);
 
   // The language of the page for assistive technology, hyphenation and fonts (ADR-0013).
   useEffect(() => {
@@ -194,7 +202,15 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     // response to a gesture, and this click is one, even while the game is still loading.
     gameLoader.load();
     gameLoader.unlockAudio();
-    send({ type: 'play', run: { ...choice, seed: seedForRun(window.location.search) } });
+    send({
+      type: 'play',
+      run: {
+        heroId: choice.heroId,
+        mode: choice.mode,
+        seed: seedForRun(window.location.search),
+        speed: settings.gameSpeed,
+      },
+    });
   };
 
   const back = (): void => {
@@ -308,9 +324,11 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
 
   return (
     <I18nProvider i18n={i18n}>
-      <div ref={rootRef} className="shell">
-        {screen()}
-      </div>
+      <AnnouncerProvider announcer={announcer}>
+        <div ref={rootRef} className="shell">
+          {screen()}
+        </div>
+      </AnnouncerProvider>
     </I18nProvider>
   );
 }

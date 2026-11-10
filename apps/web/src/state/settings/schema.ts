@@ -2,6 +2,7 @@ import type { KeyBindings } from '@buzzkill/engine';
 import { DEFAULT_KEY_BINDINGS, type GameAction } from '@buzzkill/game';
 import * as z from 'zod/mini';
 
+import type { MotionChoice } from '../../motion';
 import type { ThemeChoice } from '../../theme';
 
 /** The version of the stored settings object. A new version comes with a step in `MIGRATIONS`. */
@@ -14,6 +15,16 @@ const LANGUAGES = ['en', 'ru'] as const;
 export type Language = (typeof LANGUAGES)[number];
 
 const THEMES = ['system', 'day', 'night'] as const satisfies readonly ThemeChoice[];
+
+const MOTIONS = ['system', 'reduced', 'full'] as const satisfies readonly MotionChoice[];
+
+/**
+ * The paces a run can take, as a fraction of normal speed (#114). The simulation runs the same
+ * ticks at every pace; only the time between them grows. Only runs at 1 enter the leaderboard of
+ * stage 8 (ADR-0014).
+ */
+export const GAME_SPEEDS = [1, 0.75, 0.5] as const;
+export type GameSpeed = (typeof GAME_SPEEDS)[number];
 
 /** Every action has exactly this many keys; the settings screen shows a slot for each. */
 export const KEYS_PER_ACTION = 2;
@@ -31,6 +42,10 @@ export interface Settings {
   readonly difficulty: Difficulty;
   /** The language of every string (ADR-0013); the browser's language until the player picks one. */
   readonly language: Language;
+  /** Reduced or full motion, or the system's `prefers-reduced-motion` (#114). */
+  readonly motion: MotionChoice;
+  /** The pace of the next run, as a fraction of normal speed (#114, ADR-0014). */
+  readonly gameSpeed: GameSpeed;
   /** `KeyboardEvent.code` values, `KEYS_PER_ACTION` per action, no key bound twice. */
   readonly keyBindings: KeyBindings<GameAction>;
 }
@@ -42,6 +57,8 @@ export const DEFAULT_SETTINGS: Settings = {
   musicVolume: 0.5,
   difficulty: 'normal',
   language: 'en',
+  motion: 'system',
+  gameSpeed: 1,
   keyBindings: DEFAULT_KEY_BINDINGS,
 };
 
@@ -99,6 +116,8 @@ function storedSettingsSchema(defaults: Settings) {
     musicVolume: volume(defaults.musicVolume),
     difficulty: z.catch(z.enum(DIFFICULTIES), defaults.difficulty),
     language: z.catch(z.enum(LANGUAGES), defaults.language),
+    motion: z.catch(z.enum(MOTIONS), defaults.motion),
+    gameSpeed: z.catch(z.literal(GAME_SPEEDS), defaults.gameSpeed),
     // A fresh copy each time: the schema's output is mutable, the defaults are not.
     keyBindings: z.catch(keyBindingsSchema, () => ({
       moveUp: [...defaults.keyBindings.moveUp],
@@ -122,7 +141,26 @@ export function parseSettings(
   if (!result.success) {
     return null;
   }
-  const { theme, muted, effectsVolume, musicVolume, difficulty, language, keyBindings } =
-    result.data;
-  return { theme, muted, effectsVolume, musicVolume, difficulty, language, keyBindings };
+  const {
+    theme,
+    muted,
+    effectsVolume,
+    musicVolume,
+    difficulty,
+    language,
+    motion,
+    gameSpeed,
+    keyBindings,
+  } = result.data;
+  return {
+    theme,
+    muted,
+    effectsVolume,
+    musicVolume,
+    difficulty,
+    language,
+    motion,
+    gameSpeed,
+    keyBindings,
+  };
 }

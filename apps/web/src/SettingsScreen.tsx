@@ -3,7 +3,13 @@ import { type JSX, useId } from 'react';
 
 import { labelled, LANGUAGE_NAMES, useI18n } from './i18n/i18n';
 import { KeyBindingsEditor } from './KeyBindingsEditor';
-import type { Difficulty, Language, Settings } from './state/settings/schema';
+import type { MotionChoice } from './motion';
+import {
+  type Difficulty,
+  GAME_SPEEDS,
+  type Language,
+  type Settings,
+} from './state/settings/schema';
 import type { ThemeChoice } from './theme';
 
 interface SettingsScreenProps {
@@ -15,6 +21,7 @@ interface SettingsScreenProps {
 const THEMES = ['system', 'day', 'night'] as const satisfies readonly ThemeChoice[];
 const LANGUAGES = ['en', 'ru'] as const satisfies readonly Language[];
 const DIFFICULTIES = ['easy', 'normal', 'hard'] as const satisfies readonly Difficulty[];
+const MOTIONS = ['system', 'reduced', 'full'] as const satisfies readonly MotionChoice[];
 
 /**
  * The `settings` panel of the menu, one tab per kind: sound, display, gameplay and controls.
@@ -85,6 +92,16 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
                     }}
                   />
                   <RadioGroup
+                    label={t.settings.motion}
+                    name="motion"
+                    orientation="vertical"
+                    options={labelled(MOTIONS, t.settings.motions)}
+                    value={settings.motion}
+                    onValueChange={(motion) => {
+                      onChange({ motion });
+                    }}
+                  />
+                  <RadioGroup
                     label={t.settings.language}
                     name="language"
                     options={labelled(LANGUAGES, LANGUAGE_NAMES)}
@@ -100,15 +117,36 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
               value: 'gameplay',
               label: t.settings.tabs.gameplay,
               panel: (
-                <RadioGroup
-                  label={t.settings.difficulty}
-                  name="difficulty"
-                  options={labelled(DIFFICULTIES, t.settings.difficulties)}
-                  value={settings.difficulty}
-                  onValueChange={(difficulty) => {
-                    onChange({ difficulty });
-                  }}
-                />
+                <Stack gap="lg">
+                  <RadioGroup
+                    label={t.settings.difficulty}
+                    name="difficulty"
+                    options={labelled(DIFFICULTIES, t.settings.difficulties)}
+                    value={settings.difficulty}
+                    onValueChange={(difficulty) => {
+                      onChange({ difficulty });
+                    }}
+                  />
+                  <Stack gap="sm">
+                    {/* The radios hold strings; the setting is the number they name. */}
+                    <RadioGroup
+                      label={t.settings.gameSpeed}
+                      name="gameSpeed"
+                      options={GAME_SPEEDS.map((speed) => ({
+                        value: String(speed),
+                        label: format.percent(speed),
+                      }))}
+                      value={String(settings.gameSpeed)}
+                      onValueChange={(value) => {
+                        const gameSpeed = GAME_SPEEDS.find((speed) => String(speed) === value);
+                        if (gameSpeed !== undefined) {
+                          onChange({ gameSpeed });
+                        }
+                      }}
+                    />
+                    <p>{t.settings.gameSpeedHint}</p>
+                  </Stack>
+                </Stack>
               ),
             },
             {

@@ -23,7 +23,10 @@ import {
 } from '@buzzkill/game';
 import { type JSX, useEffect, useRef, useState } from 'react';
 
+import { useAnnounce } from './announcer';
+import { announceRun } from './game/announce-run';
 import { createGameDrawer } from './game/draw-game';
+import { pacedHost } from './game/paced-host';
 import { GAME_VERSION } from './game/run-options';
 import { GameHud } from './GameHud';
 import { useI18n } from './i18n/i18n';
@@ -61,6 +64,7 @@ export function GameView({
   onEvent,
 }: GameViewProps): JSX.Element {
   const { t } = useI18n();
+  const announce = useAnnounce();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null);
   const [unsupported, setUnsupported] = useState(false);
@@ -123,7 +127,8 @@ export function GameView({
         },
       };
 
-      const browserHost = createBrowserHost();
+      // The run's pace (#114): its own clock, the same ticks.
+      const browserHost = pacedHost(createBrowserHost(), run.speed);
       const host: GameLoopHost = {
         ...browserHost,
         requestFrame: (callback) =>
@@ -165,6 +170,12 @@ export function GameView({
     bindingsRef.current = keyBindings;
     keyboardRef.current?.setBindings(keyBindings);
   }, [keyBindings]);
+
+  // Screen readers hear the start of the run, each life lost and its end (#114).
+  useEffect(
+    () => (game === null ? undefined : announceRun(game, announce, t.announce)),
+    [game, announce, t.announce],
+  );
 
   // The bridge: what the game reports becomes events of the machine.
   useEffect(() => (game === null ? undefined : connectGame(game, onEvent)), [game, onEvent]);

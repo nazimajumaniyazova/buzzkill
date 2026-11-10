@@ -247,7 +247,7 @@ describe('every text on screen comes from the dictionary', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
     renderMarked(
       <GameView
-        run={{ heroId: 'male', mode: 'day', seed: 1 }}
+        run={{ heroId: 'male', mode: 'day', seed: 1, speed: 1 }}
         assets={{} as GameAssets}
         paused={false}
         keyBindings={DEFAULT_KEY_BINDINGS}
