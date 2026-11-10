@@ -26,6 +26,7 @@ miniplex
 Nazima
 nvmrc
 PractRand
+RGBA
 scroller
 splitmix
 statechart

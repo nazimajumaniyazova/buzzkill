@@ -1,8 +1,9 @@
 import type { AssetManifest } from '@buzzkill/engine';
 import type { GameSound } from '@buzzkill/game';
 
-// The 2023 art the owner may publish. The heroes, the background and the first day enemy were
-// drawn by other team members, so they are placeholders until the CC0 art of stage 6.
+// The 2023 files, downloaded for the team project from a source nobody recorded, so their license
+// is unknown; stage 6 replaces them (#132, docs/assets.md). The heroes, the background and the
+// first day enemy were drawn by other team members or are over 1 MB, so they are placeholders.
 import shotSound from '../assets/bullet-sound.wav';
 import enemyBat2 from '../assets/enemy_bat_2.png';
 import enemyBat3 from '../assets/enemy_bat_3.png';

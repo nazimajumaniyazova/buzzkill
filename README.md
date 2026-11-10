@@ -40,5 +40,7 @@ The game engine was written by me; since then the project has been rebuilt and e
 - [Architecture](docs/architecture.md): C4 diagrams, dependency rules between the packages, runtime
   data flow, what exists today.
 - [Architecture Decision Records](docs/adr/README.md): the decisions and the alternatives rejected.
+- [Assets](docs/assets.md): every image and sound the game uses, where it is used and where it
+  came from.
 - [Contributing](CONTRIBUTING.md): how to run the project locally and how changes get in.
 - [Security policy](SECURITY.md) and [Changelog](CHANGELOG.md).
