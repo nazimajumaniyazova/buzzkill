@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { App } from './App';
+import { reportError } from './errors/report-error';
 import { importGameChunk } from './game/import-chunk';
 import type { GameAssetsResult } from './game/load-assets';
 import { loadGameAssets } from './game/load-assets';
@@ -45,49 +46,69 @@ vi.mock('./game/load-assets', () => ({
   }),
 }));
 
-// The game view has effects of its own; here it is buttons that report what the real one would.
-vi.mock('./GameView', () => ({
-  GameView: ({
-    run,
-    paused,
-    onEvent,
-  }: {
-    run: Run;
-    paused: boolean;
-    onEvent: (event: GameEvent) => void;
-  }) => (
-    <main aria-label="Game">
-      <p>
-        Game view: {run.heroId} {run.mode} seed {run.seed}
-        {paused ? ', held' : ''}
-      </p>
-      <button
-        type="button"
-        onClick={() => {
-          onEvent({ type: 'gamePaused' });
-        }}
-      >
-        Game pauses itself
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onEvent({ type: 'runEnded', result: resultWith('lost') });
-        }}
-      >
-        Lose
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onEvent({ type: 'runEnded', result: resultWith('won') });
-        }}
-      >
-        Win
-      </button>
-    </main>
-  ),
-}));
+vi.mock('./errors/report-error', () => ({ reportError: vi.fn() }));
+
+// The game view has effects of its own; here it is buttons that report what the real one would,
+// and one that breaks its next render, as a failed run would.
+vi.mock('./GameView', async () => {
+  const { useState } = await import('react');
+  return {
+    GameView: function FakeGameView({
+      run,
+      paused,
+      onEvent,
+    }: {
+      run: Run;
+      paused: boolean;
+      onEvent: (event: GameEvent) => void;
+    }) {
+      const [broken, setBroken] = useState(false);
+      if (broken) {
+        throw new Error('The game view broke');
+      }
+      return (
+        <main aria-label="Game">
+          <p>
+            Game view: {run.heroId} {run.mode} seed {run.seed}
+            {paused ? ', held' : ''}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              onEvent({ type: 'gamePaused' });
+            }}
+          >
+            Game pauses itself
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onEvent({ type: 'runEnded', result: resultWith('lost') });
+            }}
+          >
+            Lose
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onEvent({ type: 'runEnded', result: resultWith('won') });
+            }}
+          >
+            Win
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setBroken(true);
+            }}
+          >
+            Break the run
+          </button>
+        </main>
+      );
+    },
+  };
+});
 
 /** A load of the files that the test finishes: its progress, then success or failure. */
 function holdTheFiles() {
@@ -577,6 +598,46 @@ describe('App', () => {
     expect(screen.getByRole('dialog', { name: 'Paused' })).toBeInTheDocument();
     expect(setVolume).toHaveBeenCalledWith('effects', 0);
     expect(await screen.findByText('Game view: female night seed 3, held')).toBeInTheDocument();
+  });
+
+  it('shows the error screen when a run fails, and Restart or Escape returns to the menu', async () => {
+    // As in main.tsx: the boundary reports what it catches.
+    const { container } = render(<App />, { onCaughtError: () => undefined });
+    await startRun();
+
+    click('Break the run');
+
+    expect(heading('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('The run stopped on an error');
+    expect(screen.getByRole('button', { name: 'Restart' })).toHaveFocus();
+    expect(screen.queryByRole('main', { name: 'Game' })).not.toBeInTheDocument();
+    expect(reportError).toHaveBeenCalledExactlyOnceWith(
+      new Error('The game view broke'),
+      expect.objectContaining({ source: 'game' }),
+    );
+    expect(await axe(container)).toHaveNoViolations();
+
+    click('Restart');
+    expect(heading('Buzzkill')).toBeInTheDocument();
+
+    // A run that fails while paused takes its dialog with it.
+    await startRun();
+    click('Game pauses itself');
+    click('Break the run');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(heading('Buzzkill')).toBeInTheDocument();
+    vi.mocked(reportError).mockClear();
+  });
+
+  it('lets a gamepad leave the error screen of a failed run with B', () => {
+    const { tap } = installGamepad();
+    render(<App store={createAppStore({ name: 'failed' })} />);
+    expect(heading('Something went wrong')).toBeInTheDocument();
+
+    tap(1);
+
+    expect(heading('Buzzkill')).toBeInTheDocument();
   });
 
   it('lets a gamepad move focus in the menu, select with A and go back with B', () => {

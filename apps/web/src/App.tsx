@@ -1,5 +1,7 @@
 import { type JSX, lazy, Suspense, useEffect, useRef, useState } from 'react';
 
+import { ErrorBoundary } from './ErrorBoundary';
+import { ErrorScreen } from './ErrorScreen';
 import { importGameChunk } from './game/import-chunk';
 import { seedForRun } from './game/run-options';
 import { createGamepadNavigation } from './gamepad-navigation';
@@ -66,6 +68,8 @@ function backEvent(state: AppState): AppEvent | null {
     case 'levelComplete':
     case 'gameOver':
       return { type: 'quit' };
+    case 'failed':
+      return { type: 'restart' };
   }
 }
 
@@ -142,25 +146,28 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     };
   }, [state.name, send, pauseKeys]);
 
-  // Escape leaves a screen the way its Back button does; the dialogs handle Escape themselves.
+  // Escape leaves a screen the way its Back or Restart button does; the dialogs handle Escape
+  // themselves.
   const escapeGoesBack =
     state.name === 'heroSelect' ||
     state.name === 'loading' ||
+    state.name === 'failed' ||
     (state.name === 'menu' && state.panel !== 'main');
   useEffect(() => {
     if (!escapeGoesBack) {
       return;
     }
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        send({ type: 'back' });
+      const back = backEvent(store.getState());
+      if (event.key === 'Escape' && back !== null) {
+        store.send(back);
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [escapeGoesBack, send]);
+  }, [escapeGoesBack, store]);
 
   // The gamepad moves focus in the menus and the dialogs; during play the game reads the pad.
   const navigating = state.name !== 'playing';
@@ -239,12 +246,29 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
         return <HeroSelectScreen onStart={play} onBack={back} />;
       case 'loading':
         return loadingScreen;
+      case 'failed':
+        return (
+          <ErrorScreen
+            area="game"
+            onRestart={() => {
+              send({ type: 'restart' });
+            }}
+          />
+        );
       case 'playing':
       case 'paused':
       case 'levelComplete':
       case 'gameOver':
         return (
-          <>
+          // An error in the run makes the boundary send `runFailed`, and the screen of `failed`
+          // replaces this branch at once, so the boundary itself shows nothing (#113).
+          <ErrorBoundary
+            area="game"
+            fallback={null}
+            onError={() => {
+              send({ type: 'runFailed' });
+            }}
+          >
             {/* The loading screen stays until React has the code of the game view in place. */}
             <Suspense fallback={loadingScreen}>
               <GameView
@@ -277,7 +301,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 }}
               />
             )}
-          </>
+          </ErrorBoundary>
         );
     }
   };

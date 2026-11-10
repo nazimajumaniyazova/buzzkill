@@ -1,6 +1,7 @@
 import type { AssetFailure } from '@buzzkill/engine';
 import type { GameAction, GameMode, HeroId } from '@buzzkill/game';
 
+import type { ErrorArea } from '../errors/report-error';
 import type { Difficulty } from '../state/settings/schema';
 import type { ThemeChoice } from '../theme';
 import type { Format } from './format';
@@ -180,6 +181,15 @@ function english(format: Format) {
       score: (score: number) => `Score: ${format.number(score)}`,
       playAgain: 'Play again',
       quit: 'Back to menu',
+    },
+    error: {
+      title: 'Something went wrong',
+      areas: {
+        shell:
+          'Buzzkill stopped on an error we did not expect. Restart opens the menu again; your settings are safe.',
+        game: 'The run stopped on an error we did not expect. Restart takes you back to the menu; your settings are safe.',
+      } satisfies Record<ErrorArea, string>,
+      restart: 'Restart',
     },
   };
 }

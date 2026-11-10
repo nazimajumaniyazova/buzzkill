@@ -54,7 +54,8 @@ runtime data flow.
 - **Hot loop.** No allocations per frame (object pools, reused vectors); plain `for` loops instead of
   `forEach`/`map`/`filter` with closures over large collections; no DOM layout reads during a frame.
 - **Errors.** Expected failures (network, storage, asset loading) are returned as typed results and
-  shown to the user; unexpected ones reach an error boundary and are logged.
+  shown to the user; unexpected ones reach an error boundary and leave through `reportError` in
+  `apps/web/src/errors`, the one place to log or send them (#113).
 - **Security.** No `innerHTML` or `insertAdjacentHTML` with data (ESLint bans them), JSX only;
   nicknames and anything from the server are untrusted; secrets only in git-ignored env files.
 - **CSS.** Colors and spacing only through design tokens (`var(--…)`); Stylelint enforces it outside

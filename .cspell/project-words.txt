@@ -36,6 +36,7 @@ Supabase
 Turborepo
 typecheck
 typechecks
+unhandledrejection
 unhover
 unrs
 unstub

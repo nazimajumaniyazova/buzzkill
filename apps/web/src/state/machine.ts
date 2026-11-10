@@ -28,8 +28,9 @@ export type MenuPanel = 'main' | 'settings' | 'help';
  * The flow of the shell (ADR-0006). It starts on the menu, before the game's code and files have
  * downloaded (#112); `menu` says which of its panels is open. `loading` holds the run the player
  * chose while the game finishes loading. The four run states carry the loaded assets and the run,
- * and the two final ones its result. A pause dialog on the menu, a game over without a run or a
- * run without its assets cannot be written.
+ * and the two final ones its result. `failed` is the error screen of a run that stopped on an
+ * unexpected error (#113); the run is gone by then. A pause dialog on the menu, a game over
+ * without a run or a run without its assets cannot be written.
  */
 export type AppState =
   | { readonly name: 'menu'; readonly panel: MenuPanel }
@@ -48,16 +49,18 @@ export type AppState =
       readonly assets: GameAssets;
       readonly run: Run;
       readonly result: RunResult;
-    };
+    }
+  | { readonly name: 'failed' };
 
 /** The states of a run on screen: the canvas is there and a `Game` exists. */
 export type RunState = Extract<AppState, { readonly assets: GameAssets }>;
 
 /**
  * What moves the flow: the player's choices (`openSettings`, `openHelp`, `selectHero`, `back`,
- * `play`, `pause`, `resume`, `quit`), the end of the game's loading (`gameLoaded`) and what the
- * game reports through the bridge (`gamePaused`, `gameResumed`, `runEnded`). A command and the
- * game's own report of the same fact are separate events, so the table shows who may cause what.
+ * `play`, `pause`, `resume`, `quit`, `restart`), the end of the game's loading (`gameLoaded`),
+ * what the game reports through the bridge (`gamePaused`, `gameResumed`, `runEnded`) and the
+ * error boundary around the run (`runFailed`). A command and the game's own report of the same
+ * fact are separate events, so the table shows who may cause what.
  */
 export type AppEvent =
   | { readonly type: 'openSettings' }
@@ -71,7 +74,9 @@ export type AppEvent =
   | { readonly type: 'gamePaused' }
   | { readonly type: 'gameResumed' }
   | { readonly type: 'runEnded'; readonly result: RunResult }
-  | { readonly type: 'quit' };
+  | { readonly type: 'quit' }
+  | { readonly type: 'runFailed' }
+  | { readonly type: 'restart' };
 
 export const initialState: AppState = { name: 'menu', panel: 'main' };
 
@@ -130,6 +135,11 @@ export function transition(state: AppState, event: AppEvent): AppState {
         : state;
     case 'quit':
       return isRunState(state) ? { name: 'menu', panel: 'main' } : state;
+    case 'runFailed':
+      // Leaving the run states unmounts the game view, which disposes the run.
+      return isRunState(state) ? { name: 'failed' } : state;
+    case 'restart':
+      return state.name === 'failed' ? { name: 'menu', panel: 'main' } : state;
     case 'runEnded': {
       if (state.name !== 'playing') {
         return state;

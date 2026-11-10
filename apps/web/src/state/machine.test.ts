@@ -43,6 +43,7 @@ const states = {
   paused: { name: 'paused', assets, run },
   levelComplete: { name: 'levelComplete', assets, run, result: resultWith('won') },
   gameOver: { name: 'gameOver', assets, run, result: resultWith('lost') },
+  failed: { name: 'failed' },
 } satisfies Record<AppState['name'], AppState>;
 
 /** The other panels of `menu`, for the rows that need them. */
@@ -63,6 +64,8 @@ const events = {
   gameResumed: { type: 'gameResumed' },
   runEnded: { type: 'runEnded', result: resultWith('lost') },
   quit: { type: 'quit' },
+  runFailed: { type: 'runFailed' },
+  restart: { type: 'restart' },
 } satisfies Record<AppEvent['type'], AppEvent>;
 
 interface Row {
@@ -98,6 +101,11 @@ const TRANSITIONS: readonly Row[] = [
   { from: states.levelComplete, event: events.quit, to: 'menu' },
   { from: states.gameOver, event: events.play, to: 'playing' },
   { from: states.gameOver, event: events.quit, to: 'menu' },
+  { from: states.playing, event: events.runFailed, to: 'failed' },
+  { from: states.paused, event: events.runFailed, to: 'failed' },
+  { from: states.levelComplete, event: events.runFailed, to: 'failed' },
+  { from: states.gameOver, event: events.runFailed, to: 'failed' },
+  { from: states.failed, event: events.restart, to: 'menu' },
 ];
 
 const allowed = new Set(TRANSITIONS.map(({ from, event }) => `${from.name} ${event.type}`));
@@ -198,6 +206,17 @@ describe('transition', () => {
     expect(transition(states.playing, event)).toBe(states.playing);
   });
 
+  it('drops a run that failed, whatever state it was in, and restarts on the main menu', () => {
+    const afterFailure = [states.playing, states.paused, states.levelComplete, states.gameOver].map(
+      (state) => transition(state, events.runFailed),
+    );
+
+    expect(afterFailure).toEqual(Array<AppState>(4).fill({ name: 'failed' }));
+    expect(transition(states.failed, events.restart)).toEqual({ name: 'menu', panel: 'main' });
+    expect(transition(states.loading, events.runFailed)).toBe(states.loading);
+    expect(transition(states.menu, events.restart)).toBe(states.menu);
+  });
+
   it('drops the run and its assets on quit and returns to the main menu', () => {
     const afterQuit = [states.playing, states.paused, states.levelComplete, states.gameOver].map(
       (state) => transition(state, events.quit),
@@ -208,7 +227,7 @@ describe('transition', () => {
 });
 
 describe('isRunState', () => {
-  it('tells the four states of a run on screen from the other three', () => {
+  it('tells the four states of a run on screen from the other four', () => {
     const withRun = Object.values(states).filter(isRunState);
 
     expect(withRun.map((state) => state.name)).toEqual([
@@ -245,6 +264,8 @@ describe('invariants of the flow', () => {
       result: fc.constantFrom('playing', 'won', 'lost').map(resultWith),
     }),
     fc.constant(events.quit),
+    fc.constant(events.runFailed),
+    fc.constant(events.restart),
   );
 
   /** What a step broke, or `null`. */
@@ -300,6 +321,10 @@ describe('invariants of the flow', () => {
         return state.run === previousRun && state.assets === previousAssets
           ? null
           : 'pause changed the run';
+      case 'failed':
+        return isRunState(previous) && event.type === 'runFailed'
+          ? null
+          : `failed from ${previous.name} by ${event.type}`;
       case 'levelComplete':
       case 'gameOver':
         if (previous.name !== 'playing' || event.type !== 'runEnded') {

@@ -4,6 +4,7 @@ import type { JSX, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { KEY_SYMBOLS } from '../controls';
+import { ErrorScreen } from '../ErrorScreen';
 import { GameHud } from '../GameHud';
 import { GameView } from '../GameView';
 import { HelpScreen } from '../HelpScreen';
@@ -226,6 +227,19 @@ describe('every text on screen comes from the dictionary', () => {
   it('in the HUD', () => {
     renderMarked(<GameHud game={createStillGame()} />);
 
+    expect(foreignText()).toEqual([]);
+  });
+
+  it('in the error screens of the shell and of a run', () => {
+    const view = renderMarked(<ErrorScreen area="shell" onRestart={vi.fn()} />);
+    expect(foreignText()).toEqual([]);
+
+    view.rerender(
+      <I18nProvider i18n={marked}>
+        <ErrorScreen area="game" onRestart={vi.fn()} />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(foreignText()).toEqual([]);
   });
 
