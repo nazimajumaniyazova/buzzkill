@@ -184,3 +184,87 @@ below is facts gathered from the pull requests of the stage (#86 to #104)._
   request. The canvas drawing code reads the same tokens object as the components, so the HUD and
   the health bar take their colors from one source. The stage took 12 pull requests and 7 releases
   (v0.2.0 to v0.8.0) over two days.
+
+## Stage 5 — App shell
+
+_Completed on 2026-11-10 with release v0.13.0. The three answers are the owner's; the STAR drafts
+below are facts gathered from the pull requests of the stage (#115 to #128): nine pull requests and
+six releases (v0.9.0 to v0.13.0) over two days, and the tests of the repository grew from 495 to 841._
+
+### What did I learn?
+
+### What was hard?
+
+### What would I do differently?
+
+### STAR stories
+
+#### ADR-0006: State management of the application shell
+
+- **Situation:** In the 2023 code the flow of the screens was spread over a `choice === null`
+  switch in `App`, a loading phase in the game session and dialogs that the HUD rendered from the
+  game's status. Stage 5 needed a menu, a hero select, a run that pauses and ends, settings that
+  survive a reload and a change of format, and later a loading and an error screen. The
+  candidates were XState 5 with its React binding (15.9 kB gzip), `@xstate/store` (4.1 kB), a
+  machine of our own, and Zustand with its persist middleware for the settings.
+- **Task:** Model the flow and the settings so that impossible states cannot be written, the flow
+  can be tested as a table, and the 150 kB gzip budget of the shell stays untouched.
+- **Action:** A typed state machine of our own, chosen by the owner. `AppState` and `AppEvent`
+  are discriminated unions and `transition` is one pure function; a store module of 50 lines and a
+  15-line hook over `useSyncExternalStore` hold it. The tests check every allowed transition,
+  every pair of state and event that must change nothing, invariants over random sequences of
+  events with fast-check, and that the Mermaid diagram in `docs/architecture.md` draws exactly the
+  transitions of the table. The settings use the same store with a versioned Zod schema, a
+  migration of the old theme key and a fallback per field; the HUD subscribes one selector per
+  value.
+- **Result:** No dependency added. The machine grew during the stage without a rewrite: `boot`
+  gave way to `loading` when the game moved into a chunk of its own (#112), and `failed` came with
+  the error boundary (#113). It ends the stage with 8 states, 14 events and 128 tests, and each
+  change was caught by the completeness checks of the table and by the diagram test. The settings
+  gained the motion and the game speed without a new schema version. In ten seconds of play, 32
+  HUD changes make 32 React commits and no render of `App`, `GameView` or `GameHud` (#109).
+
+#### ADR-0013: Internationalization of the shell
+
+- **Situation:** The shell had about 80 strings for the player, two languages and no
+  translators. `@vitejs/plugin-react` 6 compiles with Oxc and has no Babel step. The candidates
+  were i18next with react-i18next (up to 25 kB gzip), Lingui 6 (a 4 kB runtime, but its macros
+  bring Babel back into the build) and a typed dictionary of our own.
+- **Task:** Translate every string, make a missing translation a compile error, format numbers,
+  percentages and plurals per language with `Intl`, switch the language without a reload, and keep
+  hard-coded text from coming back.
+- **Action:** A dictionary of our own, chosen by the owner. The English file is the source of
+  truth and its type is the type of every dictionary; the Russian one declares that type as its
+  return type, so a missing key, an extra key and a message with other parameters all fail to
+  compile. A message with values is a function over `Intl.NumberFormat` and `Intl.PluralRules`.
+  One object per language keeps the React context stable, so the render budget of the HUD holds.
+  Three guards keep the text in the dictionary: ESLint rejects text between tags and string
+  literals in the props that reach the player, a pseudo-language test renders every screen with
+  every string marked and fails on a letter outside the marks, and a test fails when a Russian
+  string equals the English one outside a short list.
+- **Result:** 111 entries per language when it landed and 127 at the end of the stage (113
+  strings and 14 messages, the announcements for screen readers among them), each new one added in
+  both languages under the same checks. The main chunk grew by 3.1 kB gzip (97.07 to 100.15 kB),
+  where a library would have cost up to 25 kB. The language starts as the browser's and is a
+  setting under the versioned schema.
+
+#### ADR-0014: Game speed and the leaderboard
+
+- **Situation:** The in-game accessibility of #114 asked for a slower game. The simulation is
+  deterministic: fixed 60 Hz ticks, replays that record the input of each tick, and a server in
+  stage 8 that will verify a record by simulating its replay again. A slower game is easier, and
+  the server cannot know the pace a run was played at.
+- **Task:** Offer slower paces without touching the simulation, and decide how they meet the
+  leaderboard.
+- **Action:** The pace lives in the shell. `pacedHost` wraps the frame host of the engine's loop
+  and gives it a clock that runs at 100, 75 or 50 % of real time, so the loop runs the same ticks
+  with the same `dt`, further apart. A test runs a game at 50 % until the tick that a game at
+  100 % reached and compares the two results, hash included. The run carries its speed from the
+  settings. Of three options for the leaderboard (only 100 % in the global top, one top with the
+  speed shown, a top per speed), the owner chose the first: slower runs will count as personal
+  records.
+- **Result:** No line of `packages/engine` or `packages/game` changed, and the golden replays
+  stayed as they were. The pacing is a module of 28 lines and one multiplication per frame, and the
+  whole of #114 (the announcements, the motion setting and the game speed) added 0.86 kB gzip to
+  the main chunk. The rule waits for stage 8, written down with its limit: like any pace on a
+  client, the speed a record reports cannot be proven.
