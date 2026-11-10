@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.11.1...v0.12.0) (2026-11-10)
+
+
+### Features
+
+* **web:** catch unexpected errors with a Restart screen ([#126](https://github.com/nazimajumaniyazova/buzzkill/issues/126)) ([cb27a21](https://github.com/nazimajumaniyazova/buzzkill/commit/cb27a213aade74d1f9ff28c693bfee4f288af0d5)), closes [#113](https://github.com/nazimajumaniyazova/buzzkill/issues/113)
+
 ## [0.11.1](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.11.0...v0.11.1) (2026-11-10)
 
 
