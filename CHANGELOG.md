@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.11.0...v0.11.1) (2026-11-10)
+
+
+### Performance
+
+* **web:** load the game chunk and its files after the menu ([#124](https://github.com/nazimajumaniyazova/buzzkill/issues/124)) ([2fe0e02](https://github.com/nazimajumaniyazova/buzzkill/commit/2fe0e0246ee083299168a4b56958a5fef3bc013d)), closes [#112](https://github.com/nazimajumaniyazova/buzzkill/issues/112)
+
 ## [0.11.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.10.0...v0.11.0) (2026-11-10)
 
 
