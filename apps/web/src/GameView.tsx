@@ -4,6 +4,7 @@ import {
   computeCanvasFit,
   createActionInput,
   createCanvas2DRenderer,
+  type GameLoopHost,
   type KeyBindings,
 } from '@buzzkill/engine';
 import {
@@ -47,6 +48,10 @@ interface GameViewProps {
  * volumes the settings set. The machine then drives the game through `paused`, and the game
  * drives the machine through the bridge, so each side learns of the other's pause without a
  * loop: `pause` and `resume` do nothing when the game is there already.
+ *
+ * An error in a frame runs outside React, where it would stop the loop without a word; it is kept
+ * and thrown in the next render, so the error boundary around the run sees it (#113). A run that
+ * fails to start releases what it had taken before the error goes on.
  */
 export function GameView({
   run,
@@ -63,6 +68,7 @@ export function GameView({
   // they are not a dependency of the run, so new keys never restart it.
   const bindingsRef = useRef(keyBindings);
   const keyboardRef = useRef<KeyboardSource<GameAction> | null>(null);
+  const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -72,51 +78,84 @@ export function GameView({
       return;
     }
 
-    const renderer = createCanvas2DRenderer(context, WORLD);
-    const fit = (): void => {
-      const result = computeCanvasFit({
-        logical: WORLD,
-        viewport: { width: window.innerWidth, height: window.innerHeight },
-        devicePixelRatio: window.devicePixelRatio,
+    // What the run holds, released in reverse order on unmount, or at once when it fails to start.
+    const cleanups: (() => void)[] = [];
+    const release = (): void => {
+      for (const cleanup of cleanups.splice(0).reverse()) {
+        cleanup();
+      }
+    };
+
+    try {
+      const renderer = createCanvas2DRenderer(context, WORLD);
+      const fit = (): void => {
+        const result = computeCanvasFit({
+          logical: WORLD,
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          devicePixelRatio: window.devicePixelRatio,
+        });
+        applyCanvasFit(canvas, result);
+        renderer.setScale(result.scale);
+      };
+      fit();
+      window.addEventListener('resize', fit);
+      cleanups.push(() => {
+        window.removeEventListener('resize', fit);
       });
-      applyCanvasFit(canvas, result);
-      renderer.setScale(result.scale);
-    };
-    fit();
-    window.addEventListener('resize', fit);
 
-    const input = createActionInput(GAME_ACTIONS);
-    const keyboard = createKeyboardSource(input, bindingsRef.current);
-    keyboardRef.current = keyboard;
-    const gamepad = createGamepadSource(input, { bindings: DEFAULT_GAMEPAD_BINDINGS });
-    // Gamepads send no events: poll them right before the game samples each tick.
-    const polledInput: ActionInput<GameAction> = {
-      ...input,
-      sample() {
-        gamepad.poll();
-        return input.sample();
-      },
-    };
+      const input = createActionInput(GAME_ACTIONS);
+      const keyboard = createKeyboardSource(input, bindingsRef.current);
+      keyboardRef.current = keyboard;
+      cleanups.push(() => {
+        keyboard.dispose();
+        keyboardRef.current = null;
+      });
+      const gamepad = createGamepadSource(input, { bindings: DEFAULT_GAMEPAD_BINDINGS });
+      cleanups.push(() => {
+        gamepad.dispose();
+      });
+      // Gamepads send no events: poll them right before the game samples each tick.
+      const polledInput: ActionInput<GameAction> = {
+        ...input,
+        sample() {
+          gamepad.poll();
+          return input.sample();
+        },
+      };
 
-    const created = createGame({
-      settings: { heroId: run.heroId, mode: run.mode },
-      seed: run.seed,
-      gameVersion: GAME_VERSION,
-      input: polledInput,
-      host: createBrowserHost(),
-      renderer: createGameDrawer(renderer, assets.sprites),
-      audio: assets.audio,
-    });
-    setGame(created);
-    created.start();
+      const browserHost = createBrowserHost();
+      const host: GameLoopHost = {
+        ...browserHost,
+        requestFrame: (callback) =>
+          browserHost.requestFrame((timeMs) => {
+            try {
+              callback(timeMs);
+            } catch (error) {
+              setCrash({ error });
+            }
+          }),
+      };
 
-    return () => {
-      created.dispose();
-      keyboard.dispose();
-      keyboardRef.current = null;
-      gamepad.dispose();
-      window.removeEventListener('resize', fit);
-    };
+      const created = createGame({
+        settings: { heroId: run.heroId, mode: run.mode },
+        seed: run.seed,
+        gameVersion: GAME_VERSION,
+        input: polledInput,
+        host,
+        renderer: createGameDrawer(renderer, assets.sprites),
+        audio: assets.audio,
+      });
+      cleanups.push(() => {
+        created.dispose();
+      });
+      setGame(created);
+      created.start();
+    } catch (error) {
+      release();
+      throw error;
+    }
+
+    return release;
   }, [run, assets]);
 
   useEffect(() => {
@@ -141,6 +180,10 @@ export function GameView({
       game.resume();
     }
   }, [game, paused]);
+
+  if (crash !== null) {
+    throw crash.error;
+  }
 
   return (
     <main aria-label={t.game.label}>

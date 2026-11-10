@@ -1,12 +1,23 @@
 import { type AudioMixer, createAudioMixer, type KeyBindings } from '@buzzkill/engine';
-import { DEFAULT_KEY_BINDINGS, type GameAction, type GameSound } from '@buzzkill/game';
+import type * as GameModule from '@buzzkill/game';
+import { createGame, DEFAULT_KEY_BINDINGS, type GameAction, type GameSound } from '@buzzkill/game';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ErrorBoundary } from './ErrorBoundary';
+import { reportError } from './errors/report-error';
 import { createGameSprites } from './game/sprites';
 import { GameView } from './GameView';
 import type { GameEvent } from './state/bridge';
 import type { GameAssets, Run } from './state/machine';
+
+// The real game, with createGame watched so that a test can make a start fail.
+vi.mock('@buzzkill/game', async (importOriginal) => {
+  const actual = await importOriginal<typeof GameModule>();
+  return { ...actual, createGame: vi.fn(actual.createGame) };
+});
+
+vi.mock('./errors/report-error', () => ({ reportError: vi.fn() }));
 
 // jsdom has no canvas: a context that accepts every call the renderer makes.
 const context = {
@@ -258,6 +269,70 @@ describe('GameView', () => {
     view.unmount();
 
     expect(frames.pending()).toBe(0);
+  });
+
+  /** The game view under the error boundary of the run, as App puts it. */
+  function renderGuarded() {
+    const onError = vi.fn();
+    render(
+      <ErrorBoundary area="game" fallback={<p>The run stopped</p>} onError={onError}>
+        <GameView
+          run={run}
+          assets={assets}
+          paused={false}
+          keyBindings={DEFAULT_KEY_BINDINGS}
+          onEvent={onEvent}
+        />
+      </ErrorBoundary>,
+      // As in main.tsx: the boundary reports what it catches.
+      { onCaughtError: () => undefined },
+    );
+    return { onError };
+  }
+
+  it('hands an error thrown in a frame to the error boundary, which ends the run', () => {
+    const frames = installFrames();
+    const { onError } = renderGuarded();
+    frames.run(2);
+    expect(frames.pending()).toBe(1);
+
+    context.clearRect.mockImplementationOnce(() => {
+      throw new Error('Drawing failed');
+    });
+    frames.run(1);
+
+    expect(screen.getByText('The run stopped')).toBeInTheDocument();
+    expect(reportError).toHaveBeenCalledExactlyOnceWith(new Error('Drawing failed'), {
+      source: 'game',
+      componentStack: expect.stringContaining('GameView') as unknown,
+    });
+    expect(onError).toHaveBeenCalledOnce();
+    // The view unmounted and disposed the run: no frame is waiting.
+    expect(frames.pending()).toBe(0);
+    vi.mocked(reportError).mockClear();
+  });
+
+  it('releases what a run took when it fails to start, and hands the error to the boundary', () => {
+    installFrames();
+    vi.mocked(createGame).mockImplementationOnce(() => {
+      throw new Error('The run did not start');
+    });
+    const added = vi.spyOn(window, 'addEventListener');
+    const removed = vi.spyOn(window, 'removeEventListener');
+
+    renderGuarded();
+
+    expect(screen.getByText('The run stopped')).toBeInTheDocument();
+    expect(reportError).toHaveBeenCalledExactlyOnceWith(
+      new Error('The run did not start'),
+      expect.objectContaining({ source: 'game' }),
+    );
+    // Every listener the run added before the error is gone: resize, the keyboard, the gamepad.
+    const types = (spy: typeof added): string[] => spy.mock.calls.map(([type]) => type).sort();
+    expect(types(added)).toContain('resize');
+    expect(types(added)).toContain('keydown');
+    expect(types(removed)).toEqual(types(added));
+    vi.mocked(reportError).mockClear();
   });
 
   it('explains when the browser has no 2D canvas context', () => {
