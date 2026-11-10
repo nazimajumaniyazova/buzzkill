@@ -54,6 +54,9 @@ runtime data flow.
   nicknames and anything from the server are untrusted; secrets only in git-ignored env files.
 - **CSS.** Colors and spacing only through design tokens (`var(--…)`); Stylelint enforces it outside
   `packages/ui/src/tokens`.
+- **Text.** Every string the player reads in `apps/web` comes from the dictionary in `src/i18n`
+  through `useI18n()`, with numbers, plurals and dates through its `Intl` formatters; a new string
+  goes into English and Russian together (ADR-0013). ESLint and a pseudo-language test enforce it.
 - **Documentation.** JSDoc on the public API of each package; comments explain why, not what;
   a significant decision becomes an ADR in `docs/adr/`.
 

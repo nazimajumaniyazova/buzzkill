@@ -19,6 +19,7 @@ continue from 0010.
 | [0012](0012-benchmarks-in-ci.md)        | Benchmarks in CI                          | Accepted |
 | [0005](0005-styling.md)                 | Styling approach for the design system    | Accepted |
 | [0006](0006-state-management.md)        | State management of the application shell | Accepted |
+| [0013](0013-internationalization.md)    | Internationalization of the shell         | Accepted |
 
 ## Template
 

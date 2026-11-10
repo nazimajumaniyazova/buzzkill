@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { GameHud } from './GameHud';
+import { i18nFor, I18nProvider } from './i18n/i18n';
 
 /** A game whose HUD the test sets by hand. */
 function createFakeGame() {
@@ -63,6 +64,28 @@ describe('GameHud', () => {
     ]);
     expect(values()).toEqual(['0', '5 of 5', '20']);
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('names and writes the values in the language of its provider', () => {
+    const fake = createFakeGame();
+    render(
+      <I18nProvider i18n={i18nFor('ru')}>
+        <GameHud game={fake.game} />
+      </I18nProvider>,
+    );
+    fake.update({ score: 12345, lives: 3 });
+
+    const hud = screen.getByRole('region', { name: 'Состояние игры' });
+    expect(
+      within(hud)
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual(['Счёт', 'Жизни', 'Патроны']);
+    expect(
+      within(hud)
+        .getAllByRole('definition')
+        .map((value) => value.textContent),
+    ).toEqual(['12 345', '3 из 5', '20']);
   });
 
   it('renders the values the game publishes', () => {

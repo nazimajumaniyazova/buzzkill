@@ -30,27 +30,30 @@ function readStored(storage: SettingsStorage): unknown {
 
 /**
  * The stored settings, migrated to the current version and validated. Anything missing, broken,
- * from a newer build or unreadable gives the defaults, with no error for the player. When a
+ * from a newer build or unreadable gives `defaults`, with no error for the player. When a
  * migration ran, the result is written back at once, so the old form is read only once.
  */
-export function loadSettings(storage: SettingsStorage | null): Settings {
+export function loadSettings(
+  storage: SettingsStorage | null,
+  defaults: Settings = DEFAULT_SETTINGS,
+): Settings {
   if (storage === null) {
-    return DEFAULT_SETTINGS;
+    return defaults;
   }
   let stored: unknown;
   try {
     stored = readStored(storage);
   } catch {
     // Blocked storage or broken JSON. The data stays for a newer build or a human to look at.
-    return DEFAULT_SETTINGS;
+    return defaults;
   }
   if (stored === undefined) {
-    return DEFAULT_SETTINGS;
+    return defaults;
   }
   const current = migrateSettings(stored);
-  const settings = parseSettings(current);
+  const settings = parseSettings(current, defaults);
   if (settings === null) {
-    return DEFAULT_SETTINGS;
+    return defaults;
   }
   // `migrateSettings` returns the stored object itself when it is of the current version.
   if (current !== stored) {

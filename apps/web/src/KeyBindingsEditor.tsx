@@ -3,8 +3,10 @@ import { DEFAULT_KEY_BINDINGS, GAME_ACTIONS, type GameAction } from '@buzzkill/g
 import { Button, Inline, Stack } from '@buzzkill/ui';
 import { type JSX, useEffect, useState } from 'react';
 
-import { ACTION_LABELS, KeyCap, keyName } from './controls';
-import { remapKey } from './state/settings/bindings';
+import { KeyCap, keyName } from './controls';
+import type { Messages } from './i18n/en';
+import { useI18n } from './i18n/i18n';
+import { remapKey, type RemapResult } from './state/settings/bindings';
 import { KEYS_PER_ACTION } from './state/settings/schema';
 
 interface KeyBindingsEditorProps {
@@ -17,6 +19,45 @@ interface Slot {
   readonly slot: number;
 }
 
+/** What the status line says, kept as data so that it follows a change of the language. */
+type Notice =
+  | { readonly kind: 'prompt'; readonly action: GameAction }
+  | { readonly kind: 'cancelled' }
+  | {
+      readonly kind: 'bound';
+      readonly action: GameAction;
+      readonly code: string;
+      readonly displaced: RemapResult['displaced'];
+    }
+  | { readonly kind: 'reset' };
+
+function noticeText(notice: Notice | null, t: Messages): string {
+  if (notice === null) {
+    return '';
+  }
+  switch (notice.kind) {
+    case 'prompt':
+      return t.keyEditor.prompt(t.actions[notice.action]);
+    case 'cancelled':
+      return t.keyEditor.cancelled;
+    case 'reset':
+      return t.keyEditor.resetDone;
+    case 'bound': {
+      const key = keyName(notice.code, t.keys);
+      const bound = t.keyEditor.bound({ action: t.actions[notice.action], key });
+      if (notice.displaced === null) {
+        return bound;
+      }
+      const moved = t.keyEditor.displaced({
+        key,
+        action: t.actions[notice.displaced.action],
+        newKey: keyName(notice.displaced.code, t.keys),
+      });
+      return `${bound} ${moved}`;
+    }
+  }
+}
+
 const SLOTS = Array.from({ length: KEYS_PER_ACTION }, (_, slot) => slot);
 
 /**
@@ -26,8 +67,9 @@ const SLOTS = Array.from({ length: KEYS_PER_ACTION }, (_, slot) => slot);
  * silent and never leaves an action without keys.
  */
 export function KeyBindingsEditor({ bindings, onChange }: KeyBindingsEditorProps): JSX.Element {
+  const { t } = useI18n();
   const [waiting, setWaiting] = useState<Slot | null>(null);
-  const [message, setMessage] = useState('');
+  const [notice, setNotice] = useState<Notice | null>(null);
 
   useEffect(() => {
     if (waiting === null) {
@@ -38,14 +80,14 @@ export function KeyBindingsEditor({ bindings, onChange }: KeyBindingsEditorProps
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.code === 'Tab') {
         setWaiting(null);
-        setMessage('');
+        setNotice(null);
         return;
       }
       event.preventDefault();
       event.stopPropagation();
       if (event.code === 'Escape' || event.code === '') {
         setWaiting(null);
-        setMessage('No change.');
+        setNotice({ kind: 'cancelled' });
         return;
       }
       const { action, slot } = waiting;
@@ -53,14 +95,8 @@ export function KeyBindingsEditor({ bindings, onChange }: KeyBindingsEditorProps
       if (result.bindings !== bindings) {
         onChange(result.bindings);
       }
-      const label = ACTION_LABELS[action];
-      const name = keyName(event.code);
-      const moved =
-        result.displaced === null
-          ? ''
-          : ` ${name} was taken from ${ACTION_LABELS[result.displaced.action]}, which now uses ${keyName(result.displaced.code)}.`;
       setWaiting(null);
-      setMessage(`${label} now uses ${name}.${moved}`);
+      setNotice({ kind: 'bound', action, code: event.code, displaced: result.displaced });
     };
     window.addEventListener('keydown', onKeyDown, true);
     return () => {
@@ -71,13 +107,13 @@ export function KeyBindingsEditor({ bindings, onChange }: KeyBindingsEditorProps
   return (
     <Stack gap="md">
       <table className="bindings">
-        <caption>Keyboard</caption>
+        <caption>{t.keyEditor.caption}</caption>
         <thead>
           <tr>
-            <th scope="col">Action</th>
+            <th scope="col">{t.keyEditor.action}</th>
             {SLOTS.map((slot) => (
               <th key={slot} scope="col">
-                Key {slot + 1}
+                {t.keyEditor.slot(slot + 1)}
               </th>
             ))}
           </tr>
@@ -85,22 +121,23 @@ export function KeyBindingsEditor({ bindings, onChange }: KeyBindingsEditorProps
         <tbody>
           {GAME_ACTIONS.map((action) => (
             <tr key={action}>
-              <th scope="row">{ACTION_LABELS[action]}</th>
+              <th scope="row">{t.actions[action]}</th>
               {SLOTS.map((slot) => {
                 const code = bindings[action][slot] ?? '';
                 const isWaiting = waiting?.action === action && waiting.slot === slot;
-                const label = `${ACTION_LABELS[action]}, key ${String(slot + 1)}`;
                 return (
                   <td key={slot}>
                     <Button
                       variant="secondary"
                       size="sm"
-                      aria-label={`${label}: ${isWaiting ? 'waiting for a key' : keyName(code)}`}
+                      aria-label={t.keyEditor.button({
+                        action: t.actions[action],
+                        slot: slot + 1,
+                        key: isWaiting ? t.keyEditor.waitingName : keyName(code, t.keys),
+                      })}
                       onClick={() => {
                         setWaiting({ action, slot });
-                        setMessage(
-                          `Press a key for ${ACTION_LABELS[action]}, or Escape to cancel.`,
-                        );
+                        setNotice({ kind: 'prompt', action });
                       }}
                       onBlur={() => {
                         if (isWaiting) {
@@ -108,7 +145,7 @@ export function KeyBindingsEditor({ bindings, onChange }: KeyBindingsEditorProps
                         }
                       }}
                     >
-                      {isWaiting ? 'Press a key…' : <KeyCap code={code} />}
+                      {isWaiting ? t.keyEditor.waiting : <KeyCap code={code} />}
                     </Button>
                   </td>
                 );
@@ -117,17 +154,17 @@ export function KeyBindingsEditor({ bindings, onChange }: KeyBindingsEditorProps
           ))}
         </tbody>
       </table>
-      <p role="status">{message}</p>
+      <p role="status">{noticeText(notice, t)}</p>
       <Inline>
         <Button
           variant="secondary"
           onClick={() => {
             setWaiting(null);
             onChange(DEFAULT_KEY_BINDINGS);
-            setMessage('The default keys are back.');
+            setNotice({ kind: 'reset' });
           }}
         >
-          Reset keys
+          {t.keyEditor.reset}
         </Button>
       </Inline>
     </Stack>

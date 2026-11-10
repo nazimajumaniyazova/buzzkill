@@ -1,7 +1,8 @@
 import type { GameMode, HeroId } from '@buzzkill/game';
-import { Button, Inline, RadioGroup, type RadioOption, Stack } from '@buzzkill/ui';
+import { Button, Inline, RadioGroup, Stack } from '@buzzkill/ui';
 import { type JSX, type SubmitEvent, useId, useState } from 'react';
 
+import { labelled, useI18n } from './i18n/i18n';
 import type { RunChoice } from './state/machine';
 
 interface HeroSelectScreenProps {
@@ -9,19 +10,13 @@ interface HeroSelectScreenProps {
   readonly onBack: () => void;
 }
 
-const HEROES = [
-  { value: 'male', label: 'Mike' },
-  { value: 'female', label: 'Julie' },
-] as const satisfies readonly RadioOption<HeroId>[];
-
-const MODES = [
-  { value: 'day', label: 'Day' },
-  { value: 'night', label: 'Night' },
-] as const satisfies readonly RadioOption<GameMode>[];
+const HEROES = ['male', 'female'] as const satisfies readonly HeroId[];
+const MODES = ['day', 'night'] as const satisfies readonly GameMode[];
 
 /** The `heroSelect` state: the hero and the time of day, then Start. */
 export function HeroSelectScreen({ onStart, onBack }: HeroSelectScreenProps): JSX.Element {
   const titleId = useId();
+  const { t } = useI18n();
   const [heroId, setHeroId] = useState<HeroId>('male');
   const [mode, setMode] = useState<GameMode>('day');
 
@@ -33,29 +28,29 @@ export function HeroSelectScreen({ onStart, onBack }: HeroSelectScreenProps): JS
   return (
     <form className="screen" aria-labelledby={titleId} onSubmit={handleSubmit}>
       <Stack gap="xl" align="center">
-        <h1 id={titleId}>Choose your hero</h1>
+        <h1 id={titleId}>{t.heroSelect.title}</h1>
         <Stack gap="lg" align="center">
           <RadioGroup
-            label="Hero"
+            label={t.heroSelect.hero}
             name="hero"
-            options={HEROES}
+            options={labelled(HEROES, t.heroSelect.heroes)}
             value={heroId}
             onValueChange={setHeroId}
           />
           <RadioGroup
-            label="Time of day"
+            label={t.heroSelect.timeOfDay}
             name="mode"
-            options={MODES}
+            options={labelled(MODES, t.heroSelect.modes)}
             value={mode}
             onValueChange={setMode}
           />
         </Stack>
         <Inline gap="lg" justify="center">
           <Button type="submit" size="lg">
-            Start
+            {t.heroSelect.start}
           </Button>
           <Button variant="secondary" onClick={onBack}>
-            Back
+            {t.common.back}
           </Button>
         </Inline>
       </Stack>

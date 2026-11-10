@@ -2,6 +2,8 @@ import type { RunResult } from '@buzzkill/game';
 import { Button, Dialog, Inline } from '@buzzkill/ui';
 import type { JSX } from 'react';
 
+import { useI18n } from './i18n/i18n';
+
 interface RunOverDialogProps {
   /** "Level complete" or "Game over": the state the run ended in. */
   readonly title: string;
@@ -20,12 +22,20 @@ export function RunOverDialog({
   onPlayAgain,
   onQuit,
 }: RunOverDialogProps): JSX.Element {
+  const { t } = useI18n();
+
   return (
-    <Dialog open title={title} description={`Score: ${String(result.score)}`} onClose={onQuit}>
+    <Dialog
+      open
+      title={title}
+      description={t.runOver.score(result.score)}
+      closeLabel={t.common.close}
+      onClose={onQuit}
+    >
       <Inline gap="lg" justify="center">
-        <Button onClick={onPlayAgain}>Play again</Button>
+        <Button onClick={onPlayAgain}>{t.runOver.playAgain}</Button>
         <Button variant="secondary" onClick={onQuit}>
-          Back to menu
+          {t.runOver.quit}
         </Button>
       </Inline>
     </Dialog>

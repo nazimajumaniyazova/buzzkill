@@ -6,6 +6,7 @@ import { type JSX, useEffect, useState } from 'react';
 
 import { GAME_ASSETS } from './game/assets';
 import { createGameSprites } from './game/sprites';
+import { useI18n } from './i18n/i18n';
 import type { AppEvent } from './state/machine';
 
 /** How the boot ends. */
@@ -20,14 +21,6 @@ interface BootScreenProps {
   readonly onRetry: () => void;
 }
 
-const REASONS: Readonly<Record<AssetFailure['reason'], string>> = {
-  network: 'the network request failed',
-  http: 'the server returned an error',
-  decode: 'the file is damaged',
-  unavailable: 'this browser cannot play it',
-  unknown: 'an unexpected error',
-};
-
 /**
  * The boot: loads every asset with a progress bar and reports `booted` with the sprites and the
  * mixer, or `bootFailed` with what failed, which this screen then lists next to a retry. The audio
@@ -35,6 +28,7 @@ const REASONS: Readonly<Record<AssetFailure['reason'], string>> = {
  * playing on the first Play click, through `audio.unlock`.
  */
 export function BootScreen({ attempt, failures, onEvent, onRetry }: BootScreenProps): JSX.Element {
+  const { t, format } = useI18n();
   const [fraction, setFraction] = useState(0);
 
   useEffect(() => {
@@ -73,16 +67,19 @@ export function BootScreen({ attempt, failures, onEvent, onRetry }: BootScreenPr
     return (
       <div className="screen" role="alert">
         <Stack gap="lg" align="center">
-          <h1>The game could not load</h1>
+          <h1>{t.boot.failed}</h1>
           <ul>
             {failures.map((failure) => (
               <li key={failure.id}>
-                {failure.url.split('/').at(-1)}: {REASONS[failure.reason]}
+                {t.boot.failure({
+                  file: failure.url.split('/').at(-1) ?? failure.url,
+                  reason: t.boot.reasons[failure.reason],
+                })}
               </li>
             ))}
           </ul>
           <Inline justify="center">
-            <Button onClick={onRetry}>Try again</Button>
+            <Button onClick={onRetry}>{t.boot.retry}</Button>
           </Inline>
         </Stack>
       </div>
@@ -91,9 +88,9 @@ export function BootScreen({ attempt, failures, onEvent, onRetry }: BootScreenPr
   return (
     <div className="screen">
       <label>
-        Loading
+        {t.boot.loading}
         <progress max={1} value={fraction}>
-          {Math.round(fraction * 100)} %
+          {format.percent(fraction)}
         </progress>
       </label>
     </div>

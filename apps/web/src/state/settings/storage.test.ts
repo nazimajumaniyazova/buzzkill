@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_SETTINGS, type Settings, SETTINGS_VERSION } from './schema';
+import { DEFAULT_SETTINGS, defaultSettings, type Settings, SETTINGS_VERSION } from './schema';
 import {
   LEGACY_THEME_KEY,
   loadSettings,
@@ -36,6 +36,26 @@ describe('loadSettings', () => {
 
     expect(loadSettings(storage)).toBe(DEFAULT_SETTINGS);
     expect(writes).toEqual([]);
+  });
+
+  it("gives the defaults it is given, in the browser's language", () => {
+    const russian = defaultSettings(['ru-RU']);
+    const { storage, writes } = createStorage();
+
+    expect(loadSettings(storage, russian)).toBe(russian);
+    expect(loadSettings(null, russian)).toBe(russian);
+    expect(writes).toEqual([]);
+  });
+
+  it('migrates the old theme into the given defaults and saves their language with it', () => {
+    const { storage, items } = createStorage({ [LEGACY_THEME_KEY]: 'night' });
+
+    expect(loadSettings(storage, defaultSettings(['ru']))).toEqual({
+      ...DEFAULT_SETTINGS,
+      theme: 'night',
+      language: 'ru',
+    });
+    expect(JSON.parse(items.get(SETTINGS_KEY) ?? '')).toMatchObject({ language: 'ru' });
   });
 
   it('reads back what saveSettings wrote, under one key with the version', () => {

@@ -1,15 +1,7 @@
-import {
-  Button,
-  Inline,
-  RadioGroup,
-  type RadioOption,
-  Slider,
-  Stack,
-  Switch,
-  Tabs,
-} from '@buzzkill/ui';
+import { Button, Inline, RadioGroup, Slider, Stack, Switch, Tabs } from '@buzzkill/ui';
 import { type JSX, useId } from 'react';
 
+import { labelled, LANGUAGE_NAMES, useI18n } from './i18n/i18n';
 import { KeyBindingsEditor } from './KeyBindingsEditor';
 import type { Difficulty, Language, Settings } from './state/settings/schema';
 import type { ThemeChoice } from './theme';
@@ -20,54 +12,40 @@ interface SettingsScreenProps {
   readonly onBack: () => void;
 }
 
-const THEMES = [
-  { value: 'system', label: 'Match the system' },
-  { value: 'day', label: 'Always day' },
-  { value: 'night', label: 'Always night' },
-] as const satisfies readonly RadioOption<ThemeChoice>[];
-
-const LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English' },
-  { value: 'ru', label: 'Русский' },
-] as const satisfies readonly RadioOption<Language>[];
-
-const DIFFICULTY_OPTIONS = [
-  { value: 'easy', label: 'Easy' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'hard', label: 'Hard' },
-] as const satisfies readonly RadioOption<Difficulty>[];
-
-const percent = (value: number): string => `${String(Math.round(value * 100))} %`;
+const THEMES = ['system', 'day', 'night'] as const satisfies readonly ThemeChoice[];
+const LANGUAGES = ['en', 'ru'] as const satisfies readonly Language[];
+const DIFFICULTIES = ['easy', 'normal', 'hard'] as const satisfies readonly Difficulty[];
 
 /**
  * The `settings` panel of the menu, one tab per kind: sound, display, gameplay and controls.
- * Every change goes to the settings store at once, which saves it; the mixer and the theme follow
- * while the player is still here, and the keys apply to the next run.
+ * Every change goes to the settings store at once, which saves it; the mixer, the theme and the
+ * language follow while the player is still here, and the keys apply to the next run.
  */
 export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenProps): JSX.Element {
   const titleId = useId();
+  const { t, format } = useI18n();
 
   return (
     <section className="screen" aria-labelledby={titleId}>
       <Stack gap="xl" align="center">
-        <h1 id={titleId}>Settings</h1>
+        <h1 id={titleId}>{t.settings.title}</h1>
         <Tabs
-          label="Settings sections"
+          label={t.settings.sections}
           items={[
             {
               value: 'sound',
-              label: 'Sound',
+              label: t.settings.tabs.sound,
               panel: (
                 <Stack gap="lg">
                   <Switch
-                    label="Sound"
+                    label={t.settings.sound}
                     checked={!settings.muted}
                     onCheckedChange={(on) => {
                       onChange({ muted: !on });
                     }}
                   />
                   <Slider
-                    label="Effects volume"
+                    label={t.settings.effectsVolume}
                     min={0}
                     max={1}
                     step={0.1}
@@ -75,10 +53,10 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
                     onValueChange={(effectsVolume) => {
                       onChange({ effectsVolume });
                     }}
-                    formatValue={percent}
+                    formatValue={format.percent}
                   />
                   <Slider
-                    label="Music volume"
+                    label={t.settings.musicVolume}
                     min={0}
                     max={1}
                     step={0.1}
@@ -86,30 +64,30 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
                     onValueChange={(musicVolume) => {
                       onChange({ musicVolume });
                     }}
-                    formatValue={percent}
+                    formatValue={format.percent}
                   />
                 </Stack>
               ),
             },
             {
               value: 'display',
-              label: 'Display',
+              label: t.settings.tabs.display,
               panel: (
                 <Stack gap="lg">
                   <RadioGroup
-                    label="Theme"
+                    label={t.settings.theme}
                     name="theme"
                     orientation="vertical"
-                    options={THEMES}
+                    options={labelled(THEMES, t.settings.themes)}
                     value={settings.theme}
                     onValueChange={(theme) => {
                       onChange({ theme });
                     }}
                   />
                   <RadioGroup
-                    label="Language"
+                    label={t.settings.language}
                     name="language"
-                    options={LANGUAGE_OPTIONS}
+                    options={labelled(LANGUAGES, LANGUAGE_NAMES)}
                     value={settings.language}
                     onValueChange={(language) => {
                       onChange({ language });
@@ -120,12 +98,12 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
             },
             {
               value: 'gameplay',
-              label: 'Gameplay',
+              label: t.settings.tabs.gameplay,
               panel: (
                 <RadioGroup
-                  label="Difficulty"
+                  label={t.settings.difficulty}
                   name="difficulty"
-                  options={DIFFICULTY_OPTIONS}
+                  options={labelled(DIFFICULTIES, t.settings.difficulties)}
                   value={settings.difficulty}
                   onValueChange={(difficulty) => {
                     onChange({ difficulty });
@@ -135,7 +113,7 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
             },
             {
               value: 'controls',
-              label: 'Controls',
+              label: t.settings.tabs.controls,
               panel: (
                 <KeyBindingsEditor
                   bindings={settings.keyBindings}
@@ -149,7 +127,7 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
         />
         <Inline justify="center">
           <Button variant="secondary" onClick={onBack}>
-            Back
+            {t.common.back}
           </Button>
         </Inline>
       </Stack>

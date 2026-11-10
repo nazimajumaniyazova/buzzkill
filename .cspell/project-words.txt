@@ -6,6 +6,7 @@ bitecs
 bryc
 bundlephobia
 Buzzkill
+CLDR
 codegen
 codspeed
 commitlint
@@ -20,6 +21,7 @@ jsdom
 Jumaniyazova
 letterbox
 letterboxed
+Lingui
 miniplex
 Nazima
 nvmrc
@@ -29,6 +31,7 @@ splitmix
 statechart
 subcomponents
 subfolders
+subtag
 Supabase
 Turborepo
 typecheck
@@ -36,10 +39,10 @@ typechecks
 unhover
 unrs
 unstub
+valuetext
 visibilitychange
 vite
 vitejs
 vitest
 WASD
 WCAG
-Русский

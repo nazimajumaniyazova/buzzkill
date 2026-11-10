@@ -6,6 +6,7 @@ import { createGamepadNavigation } from './gamepad-navigation';
 import { GameView } from './GameView';
 import { HelpScreen } from './HelpScreen';
 import { HeroSelectScreen } from './HeroSelectScreen';
+import { i18nFor, I18nProvider } from './i18n/i18n';
 import { MenuScreen } from './MenuScreen';
 import { PauseDialog } from './PauseDialog';
 import { RunOverDialog } from './RunOverDialog';
@@ -20,6 +21,7 @@ import {
   type MenuPanel,
   type RunChoice,
 } from './state/machine';
+import { defaultSettings } from './state/settings/schema';
 import { browserStorage, loadSettings } from './state/settings/storage';
 import {
   createSettingsStore,
@@ -30,15 +32,13 @@ import {
 import { useStore } from './state/use-store';
 import { applyTheme } from './theme';
 
-const RUN_OVER_TITLES = {
-  levelComplete: 'Level complete',
-  gameOver: 'Game over',
-} as const satisfies Record<Extract<AppState['name'], 'levelComplete' | 'gameOver'>, string>;
-
 interface AppProps {
   /** The store of the flow. The app creates its own when none is given; a test starts anywhere. */
   readonly store?: AppStore;
-  /** The settings store; the app creates its own from `localStorage` when none is given. */
+  /**
+   * The settings store; the app creates its own from `localStorage` when none is given, with the
+   * browser's language as the default language.
+   */
   readonly settings?: SettingsStore;
 }
 
@@ -65,12 +65,16 @@ function backEvent(state: AppState): AppEvent | null {
 /**
  * Application shell: renders the screen of the machine's state (ADR-0006) and nothing else. The
  * screens and the game report through `send`; the effects here are the ones the whole page needs:
- * saving the settings, the theme, the mixer's volumes, the keys that go back, and the gamepad in
- * the menus.
+ * saving the settings, the theme, the language, the mixer's volumes, the keys that go back, and
+ * the gamepad in the menus.
  */
 export function App({ store: givenStore, settings: givenSettings }: AppProps): JSX.Element {
   const [ownStore] = useState(() => createAppStore());
-  const [ownSettings] = useState(() => createSettingsStore(loadSettings(browserStorage())));
+  const [ownSettings] = useState(() =>
+    createSettingsStore(
+      loadSettings(browserStorage(), defaultSettings(window.navigator.languages)),
+    ),
+  );
   const store = givenStore ?? ownStore;
   const settingsStore = givenSettings ?? ownSettings;
   const state = useStore(store, whole);
@@ -79,12 +83,18 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
   const rootRef = useRef<HTMLDivElement>(null);
   const run = isRunState(state) ? state.run : null;
   const assets = state.name === 'boot' ? null : state.assets;
+  const i18n = i18nFor(settings.language);
 
   // The theme of the page (#75): the player's setting on the menus, the run's own time of day
   // while a run is on screen, so the HUD and the dialogs match the sky.
   useEffect(() => {
     applyTheme(run === null ? settings.theme : run.mode);
   }, [run, settings.theme]);
+
+  // The language of the page for assistive technology, hyphenation and fonts (ADR-0013).
+  useEffect(() => {
+    document.documentElement.lang = settings.language;
+  }, [settings.language]);
 
   // Every change of the settings is saved at once, under the versioned schema (#110).
   useEffect(() => persistSettings(settingsStore, browserStorage()), [settingsStore]);
@@ -246,7 +256,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
             )}
             {(state.name === 'levelComplete' || state.name === 'gameOver') && (
               <RunOverDialog
-                title={RUN_OVER_TITLES[state.name]}
+                title={i18n.t.runOver.titles[state.name]}
                 result={state.result}
                 onPlayAgain={() => {
                   play(state.assets, state.run);
@@ -262,8 +272,10 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
   };
 
   return (
-    <div ref={rootRef} className="shell">
-      {screen()}
-    </div>
+    <I18nProvider i18n={i18n}>
+      <div ref={rootRef} className="shell">
+        {screen()}
+      </div>
+    </I18nProvider>
   );
 }

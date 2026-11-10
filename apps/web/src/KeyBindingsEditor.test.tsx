@@ -4,6 +4,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
+import { i18nFor, I18nProvider } from './i18n/i18n';
 import { KeyBindingsEditor } from './KeyBindingsEditor';
 
 function setup(bindings: KeyBindings<GameAction> = DEFAULT_KEY_BINDINGS) {
@@ -115,6 +116,27 @@ describe('KeyBindingsEditor', () => {
     fireEvent.keyDown(document.body, { key: 'f', code: 'KeyF' });
 
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('says what happened in the language of the moment, also after a switch', () => {
+    const onChange = vi.fn();
+    const editor = <KeyBindingsEditor bindings={DEFAULT_KEY_BINDINGS} onChange={onChange} />;
+    const view = render(<I18nProvider i18n={i18nFor('ru')}>{editor}</I18nProvider>);
+
+    expect(screen.getByRole('table', { name: 'Клавиатура' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Пауза, клавиша 2: P' }));
+    expect(
+      screen.getByRole('button', { name: 'Пауза, клавиша 2: ожидание клавиши' }),
+    ).toHaveTextContent('Нажмите клавишу…');
+    fireEvent.keyDown(window, { code: 'Space' });
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Действие «Пауза» теперь на клавише Пробел. Клавиша Пробел была у действия «Стрелять», теперь у него клавиша P.',
+    );
+
+    view.rerender(<I18nProvider i18n={i18nFor('en')}>{editor}</I18nProvider>);
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Pause now uses Space. Space was taken from Shoot, which now uses P.',
+    );
   });
 
   it('shows the bindings it is given and resets them to the defaults', () => {
