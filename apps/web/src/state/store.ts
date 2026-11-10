@@ -15,6 +15,12 @@ export interface Store<TState, TEvent> {
   readonly subscribe: (listener: () => void) => () => void;
 }
 
+/**
+ * The reading half of a store, all that `useStore` needs: a store whose changes come from its own
+ * effects, like the game's loading, exposes this and its commands instead of `send`.
+ */
+export type ReadableStore<TState> = Pick<Store<TState, never>, 'getState' | 'subscribe'>;
+
 export function createStore<TState, TEvent>(
   transition: (state: TState, event: TEvent) => TState,
   initial: TState,

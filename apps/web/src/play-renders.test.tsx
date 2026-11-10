@@ -101,7 +101,7 @@ describe('renders during play', () => {
     vi.unstubAllGlobals();
   });
 
-  it('commits only for a changed HUD value; the shell, the canvas and the HUD frame never render', () => {
+  it('commits only for a changed HUD value; the shell, the canvas and the HUD frame never render', async () => {
     const frame = installFrames();
     const onRender = vi.fn<ProfilerOnRenderCallback>();
     render(
@@ -109,6 +109,10 @@ describe('renders during play', () => {
         <App store={createAppStore({ name: 'playing', assets, run })} />
       </Profiler>,
     );
+    // The game view comes with the game chunk (#112). Waiting for it inside act lets React mount
+    // the view, start the run and subscribe the HUD before the first frame.
+    await act(() => vi.dynamicImportSettled());
+    expect(createGame).toHaveBeenCalledOnce();
     const game = vi.mocked(createGame).mock.results[0]?.value as Game;
 
     // Everything from here on is play: count what the game publishes and what React does.

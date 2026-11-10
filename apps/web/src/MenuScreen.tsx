@@ -5,12 +5,22 @@ import { useI18n } from './i18n/i18n';
 
 interface MenuScreenProps {
   readonly onPlay: () => void;
+  /**
+   * The player is about to choose Play: the pointer is over it or it has focus. The game starts
+   * loading then (#112), so it is often ready by the time the hero is chosen.
+   */
+  readonly onPreload: () => void;
   readonly onSettings: () => void;
   readonly onHelp: () => void;
 }
 
 /** The main menu, the `main` panel of the `menu` state: the title and the three ways out. */
-export function MenuScreen({ onPlay, onSettings, onHelp }: MenuScreenProps): JSX.Element {
+export function MenuScreen({
+  onPlay,
+  onPreload,
+  onSettings,
+  onHelp,
+}: MenuScreenProps): JSX.Element {
   const titleId = useId();
   const { t } = useI18n();
 
@@ -23,7 +33,7 @@ export function MenuScreen({ onPlay, onSettings, onHelp }: MenuScreenProps): JSX
         </Stack>
         <nav aria-label={t.menu.navigation}>
           <Stack gap="md" align="stretch">
-            <Button size="lg" onClick={onPlay}>
+            <Button size="lg" onClick={onPlay} onPointerEnter={onPreload} onFocus={onPreload}>
               {t.menu.play}
             </Button>
             <Button variant="secondary" onClick={onSettings}>

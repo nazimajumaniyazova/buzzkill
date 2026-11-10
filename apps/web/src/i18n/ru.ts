@@ -32,9 +32,11 @@ export const ru: Dictionary = (format): Messages => ({
     AltLeft: 'Левый Alt',
     AltRight: 'Правый Alt',
   },
-  boot: {
-    loading: 'Загрузка',
+  loading: {
+    progress: 'Загрузка',
     failed: 'Игра не загрузилась',
+    codeFailed: 'Код игры не скачался. После перезагрузки страница получит последнюю версию.',
+    reload: 'Перезагрузить страницу',
     failure: ({ file, reason }) => `${file}: ${reason}`,
     reasons: {
       network: 'сетевой запрос не удался',

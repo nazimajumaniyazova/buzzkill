@@ -40,9 +40,11 @@ function english(format: Format) {
       AltLeft: 'Left Alt',
       AltRight: 'Right Alt',
     },
-    boot: {
-      loading: 'Loading',
+    loading: {
+      progress: 'Loading',
       failed: 'The game could not load',
+      codeFailed: 'Its code did not download. Reloading the page gets the latest version.',
+      reload: 'Reload the page',
       failure: ({ file, reason }: { readonly file: string; readonly reason: string }) =>
         `${file}: ${reason}`,
       reasons: {
