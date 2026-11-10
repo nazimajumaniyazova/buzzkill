@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.12.0...v0.13.0) (2026-11-10)
+
+
+### Features
+
+* **web:** announce the run, follow reduced motion and pace the game ([#128](https://github.com/nazimajumaniyazova/buzzkill/issues/128)) ([279eb21](https://github.com/nazimajumaniyazova/buzzkill/commit/279eb21bd3c3d4b63791ef4905bed3bb5641a2f8)), closes [#114](https://github.com/nazimajumaniyazova/buzzkill/issues/114)
+
 ## [0.12.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.11.1...v0.12.0) (2026-11-10)
 
 
