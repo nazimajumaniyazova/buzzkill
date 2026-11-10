@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.10.0...v0.11.0) (2026-11-10)
+
+
+### Features
+
+* **web:** speak English and Russian from a typed dictionary ([#122](https://github.com/nazimajumaniyazova/buzzkill/issues/122)) ([62f79e2](https://github.com/nazimajumaniyazova/buzzkill/commit/62f79e204245fd0231250198c431ff6cf9f7906c)), closes [#111](https://github.com/nazimajumaniyazova/buzzkill/issues/111)
+
 ## [0.10.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.9.0...v0.10.0) (2026-11-09)
 
 
