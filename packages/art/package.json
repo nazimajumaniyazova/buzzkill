@@ -1,0 +1,25 @@
+{
+  "name": "@buzzkill/art",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Buzzkill's art drawn as code (ADR-0015): sprites and city backgrounds as SVG in the game's frame sizes. No DOM, no runtime dependencies.",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "sheet": "tsx scripts/sheet.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json"
+  },
+  "devDependencies": {
+    "@buzzkill/config": "workspace:*",
+    "@buzzkill/game": "workspace:*",
+    "@types/node": "catalog:",
+    "jsdom": "catalog:",
+    "playwright": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

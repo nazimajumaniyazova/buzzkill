@@ -19,7 +19,7 @@ export default {
     'scope-enum': [
       2,
       'always',
-      ['engine', 'game', 'ui', 'web', 'config', 'deps', 'repo', 'release'],
+      ['engine', 'game', 'ui', 'web', 'art', 'config', 'deps', 'repo', 'release'],
     ],
     'no-ai-attribution': [2, 'always'],
   },

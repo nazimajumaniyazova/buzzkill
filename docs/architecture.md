@@ -43,6 +43,7 @@ flowchart TB
     direction TB
     web["apps/web (@buzzkill/web)<br/>React shell: screens, menus, HUD, settings"]
     ui["packages/ui (@buzzkill/ui)<br/>design system: tokens, themes, components"]
+    art["packages/art (@buzzkill/art)<br/>art as code: sprites and the city as SVG"]
     game["packages/game (@buzzkill/game)<br/>simulation: entities, systems, rules, levels as data"]
     engine["packages/engine (@buzzkill/engine)<br/>loop, input, assets, audio, collisions, pools, RNG"]
     canvas[(Canvas 2D and Web Audio)]
@@ -56,6 +57,7 @@ flowchart TB
   end
 
   web --> ui
+  web -. "atlases at build time, #133" .-> art
   web --> game
   web --> engine
   game --> engine
@@ -71,18 +73,20 @@ flowchart TB
 
 ### Dependency rules
 
-| From       | May import             | Never imports                                 |
-| ---------- | ---------------------- | --------------------------------------------- |
-| `apps/web` | `game`, `engine`, `ui` | internals of any package (`src/…`)            |
-| `game`     | `engine` (main entry)  | `engine/browser`, `ui`, `web`, React, the DOM |
-| `engine`   | nothing in the repo    | `game`, `ui`, `web`, React                    |
-| `ui`       | nothing in the repo    | `engine`, `game`, `web`                       |
+| From       | May import             | Never imports                                                   |
+| ---------- | ---------------------- | --------------------------------------------------------------- |
+| `apps/web` | `game`, `engine`, `ui` | internals of any package (`src/…`)                              |
+| `game`     | `engine` (main entry)  | `engine/browser`, `ui`, `web`, React, the DOM                   |
+| `engine`   | nothing in the repo    | `game`, `ui`, `web`, React                                      |
+| `ui`       | nothing in the repo    | `engine`, `game`, `web`                                         |
+| `art`      | nothing in the repo    | `engine`, `game`, `ui`, `web` (its tests read the game's sizes) |
 
 The rules are enforced three times over:
 
 1. **pnpm**: a package can only import what its `package.json` declares.
 2. **dependency-cruiser** (`pnpm lint:repo`): `engine-is-standalone`, `engine-core-is-headless`,
-   `game-depends-only-on-engine`, `ui-knows-nothing-about-game`, `no-deep-imports` (other packages
+   `game-depends-only-on-engine`, `ui-knows-nothing-about-game`, `art-is-standalone`,
+   `no-deep-imports` (other packages
    only through their declared entries), `no-circular`, `no-orphans`, `not-to-test`,
    `not-to-unresolvable`.
 3. **ESLint and TypeScript** for `packages/game` and the main entry of `packages/engine`: no DOM lib in
@@ -342,6 +346,7 @@ and a deterministic simulation. Dashed elements in the diagrams are later stages
 | `packages/engine` | Fixed-step loop (#33); seeded RNG, deterministic trig, AABB + spatial hash, pools, event bus, canvas fit (#37); action input for keyboard, touch and gamepad (#34); asset loader with progress, grid atlases and the Canvas 2D renderer (#35, #63); Web Audio mixer with volume groups (#36)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `packages/game`   | Headless simulation: ECS-lite world, systems, enemies and rules as data (#38, #39); game actions and bindings (#34); `createGame` with injected dependencies and a pushed HUD (#40); replay recording, the Zod-validated replay format, `simulate` and golden replays (#41).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `packages/ui`     | Design tokens in three layers from one TypeScript source (#74), rendered to the `@buzzkill/ui/tokens.css` export; the day and night themes with the user's preferences (#75); Storybook with the token and theme docs (#76); the layout and text primitives `Stack`, `Inline`, `VisuallyHidden` and `KeyHint` (#78), styled with CSS Modules whose class types `cmk` generates; `Button`, `IconButton`, `Dialog`, `Menu`, `Switch`, `Slider`, `RadioGroup`, `Tabs` and `Toast`, each after its WAI-ARIA pattern with a controlled and an uncontrolled mode (#79 to #84); the Accessibility page with every pattern, the focus rules and a keyboard walkthrough, guarded by axe and a focus-style test (#77)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `packages/art`    | The game's art as code (ADR-0015, #132): six insects, Mike and Julie with a jetpack and a blaster, the fire and smoke explosions in the game's 9 frames, the shot, and the city by day and by night in five layers that tile for parallax; each frame a pure function to SVG in the frame size of the game configuration, checked by tests; `pnpm --filter @buzzkill/art sheet` renders every frame to a PNG. The game still draws the 2023 files until #133                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `packages/config` | `tsconfig.base.json`, Vitest presets (`node`, `jsdom`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Supabase          | Not started (stage 8)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 

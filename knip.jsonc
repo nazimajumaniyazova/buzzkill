@@ -7,6 +7,10 @@
     "apps/web": {
       "project": ["src/**/*.{ts,tsx}"],
     },
+    "packages/art": {
+      "entry": ["scripts/*.ts"],
+      "project": ["src/**/*.ts", "scripts/*.ts"],
+    },
     "packages/config": {
       "entry": [],
       "project": [],
