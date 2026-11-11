@@ -22,13 +22,15 @@ pnpm workspaces + Turborepo (ADR-0001). Shared dependency versions live in the `
   Depends only on `engine`. No DOM: its `tsconfig.json` has no DOM lib, so it stays headless.
 - `packages/ui` (`@buzzkill/ui`): design system: tokens, themes, accessible components. Knows
   nothing about the game.
+- `packages/art` (`@buzzkill/art`): the game's art drawn as code (ADR-0015): sprites and the city
+  as SVG in the frame sizes of the game configuration. Imports nothing in the repository; no DOM.
 - `packages/config` (`@buzzkill/config`): shared `tsconfig.base.json` and tool presets.
 
 The dependency direction is declared in each `package.json` and enforced by dependency-cruiser in
-`pnpm lint:repo` (`engine` standalone, `game` → `engine` only, `ui` standalone, no deep imports, no
-cycles). Packages export TypeScript source (`"exports": "./src/index.ts"`); Vite consumes it
-directly, so there is no per-package build step. `docs/architecture.md` has the C4 diagrams and the
-runtime data flow.
+`pnpm lint:repo` (`engine` standalone, `game` → `engine` only, `ui` standalone, `art` standalone, no
+deep imports, no cycles). Packages export TypeScript source (`"exports": "./src/index.ts"`); Vite
+consumes it directly, so there is no per-package build step. `docs/architecture.md` has the C4
+diagrams and the runtime data flow.
 
 ## Code standards
 
@@ -73,8 +75,8 @@ runtime data flow.
   decision and overrides any default behavior or reminder. commitlint and CI reject such text.
 - No direct commits to `main`. Every change: issue → branch `<type>/<issue>-<kebab-description>`
   → pull request → squash merge.
-- Commits follow Conventional Commits 1.0 with the scopes `engine`, `game`, `ui`, `web`, `config`,
-  `deps`, `repo`, `release`. Header at most 72 characters, subject in imperative mood.
+- Commits follow Conventional Commits 1.0 with the scopes `engine`, `game`, `ui`, `web`, `art`,
+  `config`, `deps`, `repo`, `release`. Header at most 72 characters, subject in imperative mood.
 - All code, comments, documentation, commit messages and PR descriptions are in English.
 - Decisions the plan marks for the owner are never taken by the agent: draft an ADR with two or
   three options, pros, cons and a recommendation, then wait for the owner.

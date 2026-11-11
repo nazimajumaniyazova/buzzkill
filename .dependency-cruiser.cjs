@@ -64,6 +64,15 @@ module.exports = {
       },
     },
     {
+      name: 'art-is-standalone',
+      severity: 'error',
+      comment:
+        'The art is drawn from numbers and strings alone (ADR-0015): it imports nothing in the ' +
+        'repository. Its tests read the game configuration to check the frame sizes.',
+      from: { path: '^packages/art/src/', pathNot: '\\.test\\.ts$' },
+      to: { path: '^(packages/(engine|game|ui)|apps)/' },
+    },
+    {
       name: 'game-chunk-loads-on-demand',
       severity: 'error',
       comment:

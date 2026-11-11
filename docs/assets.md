@@ -73,5 +73,28 @@ images, removes all three.
 ## What must be replaced
 
 Everything above: the 11 files of unknown source and the three placeholders. The sounds included,
-since their source is unknown too. #132 proposes the replacements, and the owner approves the list
-before any download.
+since their source is unknown too.
+
+## Replacements
+
+The owner chose on 2026-11-11 to draw the art for the project and to take the sounds from CC0 packs
+(ADR-0015). The art lives in `packages/art` as code, in the frame sizes of the game configuration,
+so every enemy keeps its hitbox. The game draws it once the pipeline of #133 has turned it into
+atlases.
+
+| Now                                       | Replaced by (`@buzzkill/art`)                                       | Frame                  | Frames |
+| ----------------------------------------- | ------------------------------------------------------------------- | ---------------------- | ------ |
+| `day-1`, a placeholder box                | `beetle`: a horned beetle in a teal shell                           | 273×273                | 6      |
+| `day-2`, `enemy-2.png`                    | `wasp`: a striped wasp with glowing eyes                            | 253×207                | 6      |
+| `day-3`, `enemy-3.png`                    | `dragonfly`: a blue dragonfly, two pairs of wings                   | 266×207                | 4      |
+| `night-bat`, `enemy_bat_3.png`            | `moth`: a moth with glowing eye spots                               | 266×188                | 8      |
+| `night-raven`, `enemy_raven.png`          | `firefly`: a firefly with a pulsing lamp                            | 271×194                | 6      |
+| `night-ghost`, `enemy_bat_2.png`          | `mosquito`: a mosquito with red eyes                                | 238×167                | 4      |
+| The heroes, rectangles                    | `mike` and `julie`: a jetpack and a blaster                         | 321×316, 275×297       | 4      |
+| `smokeExplosion.png`, `fireExplosion.png` | `explosion-smoke`, `explosion-fire`                                 | 400×400                | 9      |
+| `projectile.png`                          | `shot`, and `shot-trail` for drawing it in flight                   | 20×6, 60×12            | 1      |
+| The sky color                             | The city by day and by night: sky, clouds, far, mid and near layers | 1280×720, world pixels | —      |
+
+The sounds come from Kenney's Sci-fi Sounds and Impact Sounds (CC0): a laser for `shot`, an explosion
+for `explosion`, an impact for `hit`. kenney.nl refuses automated downloads, so the owner downloads
+the packs; the chosen files and the license go into `apps/web/assets-src/`.

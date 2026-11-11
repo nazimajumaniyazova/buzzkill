@@ -57,7 +57,7 @@ Closes #12
 ```
 
 - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `build`, `ci`, `chore`, `revert`.
-- Scopes: `engine`, `game`, `ui`, `web`, `config`, `deps`, `repo`, `release`.
+- Scopes: `engine`, `game`, `ui`, `web`, `art`, `config`, `deps`, `repo`, `release`.
 - Subject: imperative mood, lower-case first letter, no trailing period; the whole header is at
   most 72 characters.
 - One commit is one logical change, and the project builds on every commit. No `wip`, `fix`,
