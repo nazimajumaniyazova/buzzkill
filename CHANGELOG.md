@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.13.0...v0.14.0) (2026-11-11)
+
+
+### Features
+
+* **art:** draw the game's sprites and city as vector code ([#137](https://github.com/nazimajumaniyazova/buzzkill/issues/137)) ([73c037b](https://github.com/nazimajumaniyazova/buzzkill/commit/73c037be658f5774fcfd32b634a16b085dafe77f))
+
 ## [0.13.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.12.0...v0.13.0) (2026-11-10)
 
 
