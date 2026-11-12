@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.14.0...v0.15.0) (2026-11-12)
+
+
+### Features
+
+* **web:** add the CC0 sounds chosen for the game ([#139](https://github.com/nazimajumaniyazova/buzzkill/issues/139)) ([9821edf](https://github.com/nazimajumaniyazova/buzzkill/commit/9821edf0709fa588d5f7d1082e075be40f361546)), closes [#132](https://github.com/nazimajumaniyazova/buzzkill/issues/132)
+
 ## [0.14.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.13.0...v0.14.0) (2026-11-11)
 
 
