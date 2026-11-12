@@ -1,5 +1,6 @@
 import type { EventBus, Rng } from '@buzzkill/engine';
 
+import type { Difficulty } from '../config/difficulty';
 import type { EnemyConfig, GameMode } from '../config/enemies';
 import type { HeroConfig, HeroId } from '../config/rules';
 import type { EntityId, World } from '../world/world';
@@ -33,6 +34,8 @@ export interface GameState {
   readonly events: EventBus<GameEvents>;
   readonly heroId: HeroId;
   readonly hero: HeroConfig;
+  /** The difficulty the run was started at; `DIFFICULTIES` gives its numbers (#155). */
+  readonly difficulty: Difficulty;
   /** The time of day of the level being played; a level can change it for the next (ADR-0017). */
   mode: GameMode;
   /** The enemy set of `mode`. */

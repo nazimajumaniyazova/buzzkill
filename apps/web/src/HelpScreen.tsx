@@ -1,5 +1,5 @@
 import type { KeyBindings } from '@buzzkill/engine';
-import { DEFAULT_GAMEPAD_BINDINGS, GAME_ACTIONS, type GameAction, RULES } from '@buzzkill/game';
+import { DEFAULT_GAMEPAD_BINDINGS, GAME_ACTIONS, type GameAction } from '@buzzkill/game';
 import { Button, Inline, KeyHint, Stack } from '@buzzkill/ui';
 import { Fragment, type JSX, useId } from 'react';
 
@@ -10,6 +10,8 @@ import { useI18n } from './i18n/i18n';
 interface HelpScreenProps {
   /** The player's keys, from the settings. */
   readonly keyBindings: KeyBindings<GameAction>;
+  /** The hero's lives at the difficulty of the settings (#155). */
+  readonly lives: number;
   readonly onBack: () => void;
 }
 
@@ -50,7 +52,7 @@ function alternatives(caps: readonly JSX.Element[], or: string): JSX.Element[] {
  * gamepad controls from the game's, so the page cannot drift from either, and the controls of
  * the menus.
  */
-export function HelpScreen({ keyBindings, onBack }: HelpScreenProps): JSX.Element {
+export function HelpScreen({ keyBindings, lives, onBack }: HelpScreenProps): JSX.Element {
   const titleId = useId();
   const { t } = useI18n();
 
@@ -59,7 +61,7 @@ export function HelpScreen({ keyBindings, onBack }: HelpScreenProps): JSX.Elemen
       <Stack gap="xl" align="center">
         <Stack gap="sm" align="center">
           <h1 id={titleId}>{t.help.title}</h1>
-          <p>{t.help.intro(RULES.lives)}</p>
+          <p>{t.help.intro(lives)}</p>
         </Stack>
         <Stack gap="lg">
           <section aria-labelledby={`${titleId}-keyboard`}>

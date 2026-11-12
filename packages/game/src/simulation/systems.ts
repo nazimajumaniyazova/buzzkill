@@ -5,15 +5,18 @@
  */
 import { boxesOverlap } from '@buzzkill/engine';
 
+import { DIFFICULTIES } from '../config/difficulty';
 import { ENEMY_SETS } from '../config/enemies';
 import { type LevelConfig, LEVELS, type WaveConfig } from '../config/levels';
 import { RULES, WORLD } from '../config/rules';
 import { type EntityId, Kind } from '../world/world';
 import {
   ammoAfterTick,
+  enemyLivesWith,
   healthAfterHit,
   intInRange,
   livesAfterHit,
+  paced,
   pickWeighted,
   scoreAfterKill,
   statusFor,
@@ -233,10 +236,10 @@ function outcomeSystem(state: GameState): void {
   }
 }
 
-/** Gives back a round of ammo at a fixed rate. */
+/** Gives back a round of ammo at a fixed rate, up to the difficulty's maximum. */
 function ammoSystem(state: GameState): void {
   if (state.status === 'playing') {
-    state.ammo = ammoAfterTick(state.ammo, state.tick);
+    state.ammo = ammoAfterTick(state.ammo, state.tick, DIFFICULTIES[state.difficulty].ammo.max);
   }
 }
 
@@ -257,19 +260,28 @@ function spawnSystem(state: GameState): void {
   if (state.spawnTimer > 0) {
     return;
   }
-  spawnEnemy(state, wave, level.speedScale);
+  const preset = DIFFICULTIES[state.difficulty];
+  spawnEnemy(state, wave, level.speedScale * preset.enemySpeed, preset.enemyLives);
   state.waveSent += 1;
   if (state.waveSent < wave.count) {
-    state.spawnTimer = wave.intervalTicks;
+    state.spawnTimer = paced(wave.intervalTicks, preset.pace);
     return;
   }
   state.wave += 1;
   state.waveSent = 0;
-  state.spawnTimer = level.breakTicks;
+  state.spawnTimer = paced(level.breakTicks, preset.pace);
 }
 
-/** Spawns one enemy of the time's set at the right edge, with the rolls of the 2023 game. */
-function spawnEnemy(state: GameState, wave: WaveConfig, speedScale: number): void {
+/**
+ * Spawns one enemy of the time's set at the right edge, with the rolls of the 2023 game, its speed
+ * scaled and its lives offset by the level and the difficulty.
+ */
+function spawnEnemy(
+  state: GameState,
+  wave: WaveConfig,
+  speedScale: number,
+  livesOffset: number,
+): void {
   const { rng, enemies, enemyWeights, world } = state;
   // Every roll is taken in a fixed order before the spawn can fail, so the sequence of random
   // numbers never depends on whether the world had room (ADR-0009).
@@ -288,7 +300,7 @@ function spawnEnemy(state: GameState, wave: WaveConfig, speedScale: number): voi
     return;
   }
   const { width, height } = config.hitbox;
-  const lives = intInRange(config.lives, livesRoll);
+  const lives = enemyLivesWith(intInRange(config.lives, livesRoll), livesOffset);
   world.place(
     id,
     WORLD.width,
@@ -324,7 +336,7 @@ export function startNextLevel(state: GameState): void {
   state.level += 1;
   state.wave = 0;
   state.waveSent = 0;
-  state.spawnTimer = next.breakTicks;
+  state.spawnTimer = paced(next.breakTicks, DIFFICULTIES[state.difficulty].pace);
   state.status = 'playing';
   state.events.emit('levelStarted', { level: state.level, mode: state.mode });
 }

@@ -24,7 +24,7 @@ function rows(name: string): string[] {
 describe('HelpScreen', () => {
   it('lists the keyboard and gamepad controls from the default bindings', async () => {
     const { container } = render(
-      <HelpScreen keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />,
+      <HelpScreen lives={5} keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />,
     );
 
     expect(screen.getByRole('heading', { level: 1, name: 'Help' })).toBeInTheDocument();
@@ -52,7 +52,7 @@ describe('HelpScreen', () => {
   it('speaks Russian, with the plural of the hits and the keys named in Russian', () => {
     render(
       <I18nProvider i18n={i18nFor('ru')}>
-        <HelpScreen keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />
+        <HelpScreen lives={5} keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />
       </I18nProvider>,
     );
 
@@ -69,7 +69,7 @@ describe('HelpScreen', () => {
   });
 
   it('prints the symbol of a key once and keeps its name for assistive technology', () => {
-    render(<HelpScreen keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />);
+    render(<HelpScreen lives={5} keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />);
 
     const keyboard = screen.getByRole('region', { name: 'Keyboard' });
     expect(within(keyboard).getAllByText('↑')).toHaveLength(1);
@@ -78,14 +78,20 @@ describe('HelpScreen', () => {
 
   it("shows the player's own keys", () => {
     const keyBindings = { ...DEFAULT_KEY_BINDINGS, fire: ['KeyF', 'Digit1'] };
-    render(<HelpScreen keyBindings={keyBindings} onBack={vi.fn()} />);
+    render(<HelpScreen lives={5} keyBindings={keyBindings} onBack={vi.fn()} />);
 
     expect(rows('Keyboard')[2]).toBe('Shoot: F or 1');
   });
 
+  it('counts the hits of the difficulty it is given', () => {
+    render(<HelpScreen lives={7} keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />);
+
+    expect(screen.getByText(/7 hits and the run is over.$/)).toBeInTheDocument();
+  });
+
   it('goes back', () => {
     const onBack = vi.fn();
-    render(<HelpScreen keyBindings={DEFAULT_KEY_BINDINGS} onBack={onBack} />);
+    render(<HelpScreen lives={5} keyBindings={DEFAULT_KEY_BINDINGS} onBack={onBack} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 

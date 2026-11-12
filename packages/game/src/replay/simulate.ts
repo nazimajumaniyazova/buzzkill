@@ -25,6 +25,7 @@ export function simulate(replay: Replay, options: SimulateOptions): RunResult {
     seed: replay.seed,
     heroId: replay.heroId,
     mode: replay.mode,
+    difficulty: replay.difficulty,
   });
   const { state } = simulation;
   const { inputs } = replay;

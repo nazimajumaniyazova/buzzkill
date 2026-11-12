@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { createReplayRecorder } from './recorder';
 
-const OPTIONS = { gameVersion: '0.1.0', seed: 7, heroId: 'male', mode: 'day' } as const;
+const OPTIONS = {
+  gameVersion: '0.1.0',
+  seed: 7,
+  heroId: 'male',
+  mode: 'day',
+  difficulty: 'normal',
+} as const;
 
 describe('createReplayRecorder', () => {
   it('stores only the changes of the mask, as ticks since the previous change', () => {
@@ -14,7 +20,7 @@ describe('createReplayRecorder', () => {
     });
 
     expect(recorder.replay()).toEqual({
-      formatVersion: 1,
+      formatVersion: 2,
       ...OPTIONS,
       inputs: [3, 4, 3, 6, 2, 0],
     });

@@ -16,11 +16,12 @@ import {
 import { createReplayRecorder } from './recorder';
 
 const VALID: Replay = {
-  formatVersion: 1,
+  formatVersion: 2,
   gameVersion: '0.1.0',
   seed: 0xde_ad_be_ef,
   heroId: 'female',
   mode: 'night',
+  difficulty: 'hard',
   inputs: [1, 4, 30, 6, 200, 0],
 };
 
@@ -49,8 +50,8 @@ describe('replay format', () => {
     const json = serializeReplay({ ...VALID, extra: 1 } as Replay);
 
     expect(json).toBe(
-      '{"formatVersion":1,"gameVersion":"0.1.0","seed":3735928559,"heroId":"female",' +
-        '"mode":"night","inputs":[1,4,30,6,200,0]}',
+      '{"formatVersion":2,"gameVersion":"0.1.0","seed":3735928559,"heroId":"female",' +
+        '"mode":"night","difficulty":"hard","inputs":[1,4,30,6,200,0]}',
     );
     expect(deserializeReplay(json)).toEqual({ ok: true, replay: VALID });
   });
@@ -62,13 +63,15 @@ describe('replay format', () => {
   });
 
   it.each([
-    ['another format version', { formatVersion: 2 }, 'formatVersion'],
+    ['format 1, from before difficulties', { formatVersion: 1 }, 'formatVersion'],
+    ['another format version', { formatVersion: 3 }, 'formatVersion'],
     ['an empty game version', { gameVersion: '' }, 'gameVersion'],
     ['a negative seed', { seed: -1 }, 'seed'],
     ['a seed beyond 32 bits', { seed: 2 ** 32 }, 'seed'],
     ['a fractional seed', { seed: 1.5 }, 'seed'],
     ['an unknown hero', { heroId: 'robot' }, 'heroId'],
     ['an unknown mode', { mode: 'dusk' }, 'mode'],
+    ['an unknown difficulty', { difficulty: 'nightmare' }, 'difficulty'],
     ['inputs that are not numbers', { inputs: ['1', 4] }, 'inputs'],
     ['negative inputs', { inputs: [-1, 4] }, 'inputs'],
   ])('rejects %s', (_name, patch, field) => {
@@ -113,6 +116,7 @@ describe('replay format', () => {
   ])('accepts everything a recorder produces, after a JSON round trip', (seed, steps) => {
     const recorder = createReplayRecorder({
       gameVersion: '0.1.0',
+      difficulty: 'easy',
       seed,
       heroId: 'male',
       mode: 'day',

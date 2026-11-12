@@ -1,15 +1,11 @@
+import { DIFFICULTY_IDS } from '@buzzkill/game';
 import { Button, Inline, RadioGroup, Slider, Stack, Switch, Tabs } from '@buzzkill/ui';
 import { type JSX, useId } from 'react';
 
 import { labelled, LANGUAGE_NAMES, useI18n } from './i18n/i18n';
 import { KeyBindingsEditor } from './KeyBindingsEditor';
 import type { MotionChoice } from './motion';
-import {
-  type Difficulty,
-  GAME_SPEEDS,
-  type Language,
-  type Settings,
-} from './state/settings/schema';
+import { GAME_SPEEDS, type Language, type Settings } from './state/settings/schema';
 import type { ThemeChoice } from './theme';
 
 interface SettingsScreenProps {
@@ -20,7 +16,6 @@ interface SettingsScreenProps {
 
 const THEMES = ['system', 'day', 'night'] as const satisfies readonly ThemeChoice[];
 const LANGUAGES = ['en', 'ru'] as const satisfies readonly Language[];
-const DIFFICULTIES = ['easy', 'normal', 'hard'] as const satisfies readonly Difficulty[];
 const MOTIONS = ['system', 'reduced', 'full'] as const satisfies readonly MotionChoice[];
 
 /**
@@ -121,7 +116,7 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
                   <RadioGroup
                     label={t.settings.difficulty}
                     name="difficulty"
-                    options={labelled(DIFFICULTIES, t.settings.difficulties)}
+                    options={labelled(DIFFICULTY_IDS, t.settings.difficulties)}
                     value={settings.difficulty}
                     onValueChange={(difficulty) => {
                       onChange({ difficulty });

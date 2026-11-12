@@ -57,7 +57,7 @@ const images = Object.fromEntries(
 ) as GameImages<ImageBitmap>;
 const sprites = createGameSprites(images);
 
-const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1 };
+const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1, difficulty: 'normal' };
 
 /**
  * Animation frames that run only when the test says so, 50 ms apart: the first frame sets the
@@ -239,6 +239,17 @@ describe('GameView', () => {
 
     view.rerender({ betweenLevels: false });
     expect(nextLevel).toHaveBeenCalledOnce();
+  });
+
+  it('starts the game at the difficulty of the run', () => {
+    installFrames();
+    renderView({ run: { ...run, difficulty: 'hard' } });
+
+    expect(vi.mocked(createGame).mock.lastCall?.[0].settings).toEqual({
+      heroId: 'male',
+      mode: 'day',
+      difficulty: 'hard',
+    });
   });
 
   it('shoots on Space: a sound and one round less', () => {
