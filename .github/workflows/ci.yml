@@ -114,8 +114,11 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
+      # No --with-deps: the runner image already has every library Chromium needs, and apt only
+      # added fonts the stories do not use. apt also hung this job when the Ubuntu mirrors were
+      # down (#140).
       - name: Install Playwright Chromium
-        run: pnpm --filter @buzzkill/ui exec playwright install chromium --with-deps
+        run: pnpm --filter @buzzkill/ui exec playwright install chromium
 
       # Every story renders in Chromium with its play function and the a11y check (#76).
       - name: Run the Storybook tests
