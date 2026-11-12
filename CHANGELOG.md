@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.17.0...v0.18.0) (2026-11-12)
+
+
+### Features
+
+* **game:** play a run as a campaign of six levels ([#166](https://github.com/nazimajumaniyazova/buzzkill/issues/166)) ([0939294](https://github.com/nazimajumaniyazova/buzzkill/commit/0939294f3b49798c582d95a8366b718f0ba3988f))
+
 ## [0.17.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.16.0...v0.17.0) (2026-11-12)
 
 
