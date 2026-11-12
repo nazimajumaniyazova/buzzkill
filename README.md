@@ -41,6 +41,8 @@ The game engine was written by me; since then the project has been rebuilt and e
   data flow, what exists today.
 - [Architecture Decision Records](docs/adr/README.md): the decisions and the alternatives rejected.
 - [ASSETS.md](ASSETS.md): the source, author and license of every file the game ships.
+- [Performance](docs/performance.md): the budgets and how they are checked; so far the size limits
+  of the files and of the game's assets.
 - [Assets](docs/assets.md): every image and sound the game uses, how the files are made and the
   2023 files they replaced.
 - [Contributing](CONTRIBUTING.md): how to run the project locally and how changes get in.

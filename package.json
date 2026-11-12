@@ -15,7 +15,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0 && stylelint \"**/*.css\" && pnpm lint:repo",
     "lint:fix": "eslint . --fix && stylelint \"**/*.css\" --fix",
-    "lint:repo": "sherif && knip && depcruise apps packages && cspell --no-progress --dot --gitignore \"**/*.{ts,tsx,js,cjs,mjs,md,yml,yaml}\"",
+    "lint:repo": "sherif && knip && depcruise apps packages && node scripts/check-file-sizes.mjs && cspell --no-progress --dot --gitignore \"**/*.{ts,tsx,js,cjs,mjs,md,yml,yaml}\"",
     "prepare": "husky",
     "storybook": "pnpm --filter @buzzkill/ui storybook",
     "test": "vitest run",

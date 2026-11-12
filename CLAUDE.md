@@ -91,7 +91,8 @@ diagrams and the runtime data flow.
   `pnpm typecheck` runs `tsc --noEmit` in every package.
 - `pnpm format` / `pnpm format:check` run Prettier.
 - `pnpm lint` runs ESLint, Stylelint and the repository checks (Sherif, Knip, dependency-cruiser,
-  CSpell); `pnpm lint:fix` applies the autofixes.
+  the 1 MB limit per tracked file, CSpell); `pnpm lint:fix` applies the autofixes. The build of
+  `apps/web` fails when the game's images and sounds pass their 1 MB budget (#135).
 - `pnpm test` runs every Vitest project once; `pnpm test:watch` watches; `pnpm test:coverage` adds
   v8 coverage with 80% thresholds for `engine` and `game`.
 - `pnpm bench` runs the Vitest benchmarks (`*.bench.ts`) once; each prints a comparison table.
@@ -104,6 +105,7 @@ diagrams and the runtime data flow.
 - `docs/adr/` — Architecture Decision Records and their template
 - `ASSETS.md` — source, author and license of every file the game ships; a test fails when a file
   of the generated asset manifest has no row
+- `docs/performance.md` — the budgets, why they are what they are and what checks them
 - `docs/learning-log.md` — the owner's learning log and STAR stories (filled in by the owner)
 - `.github/` — issue forms, pull request template, CODEOWNERS, workflows
 - `.husky/` — git hooks (`pre-commit` runs lint-staged, `commit-msg` runs commitlint)
