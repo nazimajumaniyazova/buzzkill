@@ -9,9 +9,9 @@ import {
   healthAfterHit,
   intInRange,
   livesAfterHit,
+  otherTime,
   pickWeighted,
   scoreAfterKill,
-  spawnIntervalAt,
   statusFor,
   valueInRange,
   waveStep,
@@ -41,11 +41,17 @@ describe('game rules', () => {
     expect(healthAfterHit(health)).toBe(Math.max(0, health - 1));
   });
 
-  it('decides the run: lost at no lives (even with a winning score), won above 100', () => {
-    expect(statusFor(0, 5)).toBe('playing');
-    expect(statusFor(100, 5)).toBe('playing');
-    expect(statusFor(101, 5)).toBe('won');
-    expect(statusFor(500, 0)).toBe('lost');
+  it('decides the run: lost at no lives, even when the level is done; otherwise the level decides', () => {
+    expect(statusFor(5, false, false)).toBe('playing');
+    expect(statusFor(5, true, false)).toBe('levelCleared');
+    expect(statusFor(1, true, true)).toBe('won');
+    expect(statusFor(0, true, true)).toBe('lost');
+    expect(statusFor(0, false, false)).toBe('lost');
+  });
+
+  it('turns day into night and night into day', () => {
+    expect(otherTime('day')).toBe('night');
+    expect(otherTime('night')).toBe('day');
   });
 
   test.prop([fc.integer({ min: 0, max: RULES.ammo.max }), fc.nat({ max: 100_000 })])(
@@ -54,22 +60,6 @@ describe('game rules', () => {
       const next = ammoAfterTick(ammo, tick);
       expect(next).toBeLessThanOrEqual(RULES.ammo.max);
       expect(next - ammo).toBe(tick > 0 && tick % 12 === 0 && ammo < RULES.ammo.max ? 1 : 0);
-    },
-  );
-
-  it('keeps the spawn interval for 20 s, then ramps it down to the minimum', () => {
-    expect(spawnIntervalAt(102, 1199)).toBe(102);
-    expect(spawnIntervalAt(102, 1200)).toBe(96);
-    expect(spawnIntervalAt(26, 5000)).toBe(24);
-    expect(spawnIntervalAt(24, 5000)).toBe(24);
-  });
-
-  test.prop([fc.integer({ min: 24, max: 200 }), fc.nat({ max: 100_000 })])(
-    'the spawn interval never grows and never drops below the minimum',
-    (interval, tick) => {
-      const next = spawnIntervalAt(interval, tick);
-      expect(next).toBeLessThanOrEqual(interval);
-      expect(next).toBeGreaterThanOrEqual(RULES.spawn.minIntervalTicks);
     },
   );
 

@@ -6,7 +6,15 @@ import { connectGame } from './bridge';
 
 /** A game whose HUD the test publishes by hand, as `createGame` does once per frame. */
 function createFakeGame() {
-  let hud: GameHud = { score: 0, lives: 5, ammo: 20, status: 'playing', paused: false };
+  let hud: GameHud = {
+    score: 0,
+    lives: 5,
+    ammo: 20,
+    level: 1,
+    mode: 'day',
+    status: 'playing',
+    paused: false,
+  };
   const listeners = new Set<(hud: GameHud) => void>();
   const result = (): RunResult => ({
     score: hud.score,
@@ -50,6 +58,17 @@ describe('connectGame', () => {
     publish({ paused: false });
 
     expect(send.mock.calls).toEqual([[{ type: 'gamePaused' }], [{ type: 'gameResumed' }]]);
+  });
+
+  it('does not take a cleared level for the end of the run', () => {
+    const { game, publish } = createFakeGame();
+    const send = vi.fn();
+    connectGame(game, send);
+
+    publish({ status: 'levelCleared', score: 12 });
+    publish({ status: 'playing', level: 2 });
+
+    expect(send).not.toHaveBeenCalled();
   });
 
   it('reports the end of the run once, with the result of the game', () => {

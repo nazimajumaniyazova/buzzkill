@@ -6,7 +6,15 @@ import { useGameHud } from './use-game-hud';
 
 /** A game whose HUD the test publishes by hand, as `createGame` does once per frame. */
 function createFakeGame() {
-  let hud: GameHud = { score: 0, lives: 5, ammo: 20, status: 'playing', paused: false };
+  let hud: GameHud = {
+    score: 0,
+    lives: 5,
+    ammo: 20,
+    level: 1,
+    mode: 'day',
+    status: 'playing',
+    paused: false,
+  };
   const listeners = new Set<(hud: GameHud) => void>();
   const game: Game = {
     start: vi.fn(),

@@ -1,12 +1,13 @@
 import { createFnv1a } from '@buzzkill/engine';
 
+import type { GameMode } from '../config/enemies';
 import type { GameStatus } from '../simulation/rules';
 import type { GameState } from '../simulation/state';
 
 /** The outcome of a run, as the leaderboard stores and verifies it (ADR-0009). */
 export interface RunResult {
   readonly score: number;
-  /** Always 1 until levels arrive in stage 7; part of the format so the server schema is stable. */
+  /** The level reached, from 1; the last one when the run is won (ADR-0017). */
   readonly level: number;
   /** Simulation ticks run. */
   readonly ticks: number;
@@ -16,7 +17,11 @@ export interface RunResult {
   readonly hash: string;
 }
 
-const STATUS_CODE = { playing: 0, won: 1, lost: 2 } as const satisfies Record<GameStatus, number>;
+const STATUS_CODE = { playing: 0, won: 1, lost: 2, levelCleared: 3 } as const satisfies Record<
+  GameStatus,
+  number
+>;
+const MODE_CODE = { day: 0, night: 1 } as const satisfies Record<GameMode, number>;
 
 /**
  * Hashes a canonical serialization of the state: the run's counters, the RNG state and every live
@@ -31,8 +36,11 @@ export function hashGameState(state: GameState): string {
     .uint32(state.score)
     .uint32(state.lives)
     .uint32(state.ammo)
-    .uint32(state.spawnTimer)
-    .uint32(state.spawnInterval);
+    .uint32(MODE_CODE[state.mode])
+    .uint32(state.level)
+    .uint32(state.wave)
+    .uint32(state.waveSent)
+    .uint32(state.spawnTimer);
   for (const word of state.rng.getState()) {
     hasher.uint32(word);
   }
@@ -68,7 +76,7 @@ export function hashGameState(state: GameState): string {
 export function runResultOf(state: GameState): RunResult {
   return {
     score: state.score,
-    level: 1,
+    level: state.level,
     ticks: state.tick,
     livesLeft: state.lives,
     status: state.status,

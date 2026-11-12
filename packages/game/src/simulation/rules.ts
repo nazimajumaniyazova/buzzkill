@@ -4,10 +4,19 @@
  */
 import { sin } from '@buzzkill/engine';
 
-import type { IntRange, Range } from '../config/enemies';
+import type { GameMode, IntRange, Range } from '../config/enemies';
 import { RULES } from '../config/rules';
 
-export type GameStatus = 'playing' | 'won' | 'lost';
+/**
+ * Where a run stands. `levelCleared` lasts one tick in the simulation, the next one starts the
+ * next level; the shell holds the game there for the screen between levels (ADR-0017).
+ */
+export type GameStatus = 'playing' | 'levelCleared' | 'won' | 'lost';
+
+/** Whether the run is over, won or lost: nothing changes it any more. */
+export function isRunOver(status: GameStatus): boolean {
+  return status === 'won' || status === 'lost';
+}
 
 /** Health after one hit. Never negative. */
 export function healthAfterHit(health: number): number {
@@ -25,33 +34,28 @@ export function scoreAfterKill(score: number, value: number): number {
 }
 
 /**
- * The state of the run. A loss wins over a win in the same tick, the order the 2023 code checked
- * the hero before the projectiles.
+ * The state of the run after a tick. A loss wins over a cleared level in the same tick, the order
+ * the 2023 code checked the hero before the projectiles. Clearing the last level wins the run.
  */
-export function statusFor(score: number, lives: number): GameStatus {
+export function statusFor(lives: number, levelDone: boolean, lastLevel: boolean): GameStatus {
   if (lives <= 0) {
     return 'lost';
   }
-  return score > RULES.winningScore ? 'won' : 'playing';
+  if (!levelDone) {
+    return 'playing';
+  }
+  return lastLevel ? 'won' : 'levelCleared';
+}
+
+/** The other time of day: the sun sets or rises between levels. */
+export function otherTime(mode: GameMode): GameMode {
+  return mode === 'day' ? 'night' : 'day';
 }
 
 /** Ammo after `tick`: one round back every `refillTicks` ticks, up to the maximum. */
 export function ammoAfterTick(ammo: number, tick: number): number {
   const { refillTicks, max } = RULES.ammo;
   return tick > 0 && tick % refillTicks === 0 && ammo < max ? ammo + 1 : ammo;
-}
-
-/**
- * The spawn interval for `tick`: unchanged for the first 20 s, then shorter by one step per tick
- * until the minimum, as the 2023 code did (it reached the minimum within a fraction of a second).
- */
-export function spawnIntervalAt(interval: number, tick: number): number {
-  const { rampStartTick, rampStepTicks, minIntervalTicks } = RULES.spawn;
-  if (tick < rampStartTick) {
-    return interval;
-  }
-  const next = interval - rampStepTicks;
-  return next > minIntervalTicks ? next : minIntervalTicks;
 }
 
 /** Vertical offset of a wave for one tick. Uses the engine's deterministic `sin`. */

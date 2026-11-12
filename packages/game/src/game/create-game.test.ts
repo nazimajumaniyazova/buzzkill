@@ -121,6 +121,8 @@ describe('createGame', () => {
       score: 0,
       lives: RULES.lives,
       ammo: RULES.ammo.start,
+      level: 1,
+      mode: 'day',
       status: 'playing',
       paused: false,
     });

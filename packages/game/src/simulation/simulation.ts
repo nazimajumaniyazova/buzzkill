@@ -1,15 +1,17 @@
 import { createEventBus, createRng } from '@buzzkill/engine';
 
 import { ENEMY_SETS, type GameMode } from '../config/enemies';
+import { LEVELS } from '../config/levels';
 import { HEROES, type HeroId, RULES } from '../config/rules';
 import { createWorld, Kind } from '../world/world';
 import type { GameEvents, GameState, TickInput } from './state';
-import { SYSTEMS } from './systems';
+import { startNextLevel, SYSTEMS } from './systems';
 
 export interface SimulationOptions {
   /** 32-bit seed; the same seed and inputs always give the same run (ADR-0009). */
   readonly seed: number;
   readonly heroId: HeroId;
+  /** The time of day of the first level; a later level may change it (ADR-0017). */
   readonly mode: GameMode;
   /** Most entities alive at once. Spawns beyond it are skipped. Default 256. */
   readonly capacity?: number;
@@ -53,14 +55,19 @@ export function createSimulation(options: SimulationOptions): Simulation {
     score: 0,
     lives: RULES.lives,
     ammo: RULES.ammo.start,
-    spawnTimer: 0,
-    spawnInterval: RULES.spawn.intervalTicks,
+    level: 1,
+    wave: 0,
+    waveSent: 0,
+    spawnTimer: LEVELS[0].breakTicks,
   };
 
   return {
     state,
     step(input) {
       state.tick += 1;
+      if (state.status === 'levelCleared') {
+        startNextLevel(state);
+      }
       for (const system of SYSTEMS) {
         system(state, input);
       }

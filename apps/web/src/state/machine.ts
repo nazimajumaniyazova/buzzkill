@@ -149,7 +149,9 @@ export function transition(state: AppState, event: AppEvent): AppState {
       }
       const { assets, run } = state;
       switch (event.result.status) {
+        // A cleared level is not the end of a run: the next one follows (ADR-0017).
         case 'playing':
+        case 'levelCleared':
           return state;
         case 'won':
           return { name: 'levelComplete', assets, run, result: event.result };

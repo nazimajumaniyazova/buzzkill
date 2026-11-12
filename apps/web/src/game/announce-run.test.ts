@@ -11,7 +11,15 @@ const messages = en(createFormat('en')).announce;
 
 /** A game whose HUD the test pushes, as the real one does after a tick. */
 function createPushedGame() {
-  let hud: GameHud = { score: 0, lives: 5, ammo: 20, status: 'playing', paused: false };
+  let hud: GameHud = {
+    score: 0,
+    lives: 5,
+    ammo: 20,
+    level: 1,
+    mode: 'day',
+    status: 'playing',
+    paused: false,
+  };
   const listeners = new Set<(next: GameHud) => void>();
   const game = {
     getHud: () => hud,
@@ -40,6 +48,18 @@ describe('announceRun', () => {
     announceRun(game, announce, messages);
 
     expect(announce.mock.calls).toEqual([['Level 1. Go!']]);
+  });
+
+  it('says each new level when it starts, politely', () => {
+    const { game, push } = createPushedGame();
+    const announce = vi.fn();
+    announceRun(game, announce, messages);
+    announce.mockClear();
+
+    push({ status: 'levelCleared', score: 12 });
+    push({ status: 'playing', level: 2 });
+
+    expect(announce).toHaveBeenCalledExactlyOnceWith(messages.levelStart(2));
   });
 
   it('says each life lost and how many are left, politely', () => {

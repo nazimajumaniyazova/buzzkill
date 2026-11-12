@@ -96,7 +96,15 @@ function renderMarked(ui: ReactNode) {
 
 /** A game whose HUD never changes: enough for the HUD to render. */
 function createStillGame(): Game {
-  const hud: Hud = { score: 1234, lives: 3, ammo: 20, status: 'playing', paused: false };
+  const hud: Hud = {
+    score: 1234,
+    lives: 3,
+    ammo: 20,
+    level: 1,
+    mode: 'day',
+    status: 'playing',
+    paused: false,
+  };
   return {
     start: vi.fn(),
     pause: vi.fn(),

@@ -11,7 +11,7 @@ import { type HeroId, WORLD } from '../config/rules';
 import type { Replay } from '../replay/format';
 import { createReplayRecorder } from '../replay/recorder';
 import { type RunResult, runResultOf } from '../replay/result';
-import type { GameStatus } from '../simulation/rules';
+import { type GameStatus, isRunOver } from '../simulation/rules';
 import { createSimulation } from '../simulation/simulation';
 import type { GameState } from '../simulation/state';
 
@@ -52,6 +52,10 @@ export interface GameHud {
   readonly score: number;
   readonly lives: number;
   readonly ammo: number;
+  /** The level being played, from 1. */
+  readonly level: number;
+  /** The time of day of that level, which the level data may change between levels. */
+  readonly mode: GameMode;
   readonly status: GameStatus;
   /** True while the run is paused by the `pause` action or by `pause()`. */
   readonly paused: boolean;
@@ -153,6 +157,8 @@ export function createGame(options: CreateGameOptions): Game {
       hud.score === state.score &&
       hud.lives === state.lives &&
       hud.ammo === state.ammo &&
+      hud.level === state.level &&
+      hud.mode === state.mode &&
       hud.status === state.status &&
       hud.paused === paused
     ) {
@@ -175,7 +181,7 @@ export function createGame(options: CreateGameOptions): Game {
           pause();
           return;
         }
-        if (state.status !== 'playing') {
+        if (isRunOver(state.status)) {
           // The run ended in the previous tick, so the state is still the one `simulate` stops
           // at. The world then moves on for the picture, but nothing more is recorded.
           finalResult ??= runResultOf(state);
@@ -256,6 +262,8 @@ function snapshotHud(state: GameState, paused: boolean): GameHud {
     score: state.score,
     lives: state.lives,
     ammo: state.ammo,
+    level: state.level,
+    mode: state.mode,
     status: state.status,
     paused,
   };
