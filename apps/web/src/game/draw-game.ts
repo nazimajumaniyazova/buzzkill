@@ -1,21 +1,37 @@
 import type { Renderer } from '@buzzkill/engine';
-import { animationFrame, type GameRenderer, Kind, RULES } from '@buzzkill/game';
+import { animationFrame, type GameRenderer, Kind, parallaxOffset, RULES } from '@buzzkill/game';
 import { tokens } from '@buzzkill/ui';
 
-import type { GameSprites } from './sprites';
+import type { CityLayerName, GameSprites } from './sprites';
 
 const { palette } = tokens.primitives;
-const { color } = tokens.semantic;
 
-/**
- * Colors from the design tokens: the sky is each theme's canvas, the health bar uses palette
- * entries. Resolved once here, never read from the DOM in a frame.
- */
+/** The health bar's colors from the design tokens, resolved once here, never read in a frame. */
 const COLORS = {
-  sky: { day: color.day.canvas.value, night: color.night.canvas.value },
   healthTrack: palette.shade[60].value,
   health: palette.green[500].value,
 } as const;
+
+/**
+ * How fast each layer of the city scrolls, as a share of `RULES.scrollSpeed`: the nearer, the
+ * faster, and the sky stays still. The near layer keeps pace with the explosions, which drift at
+ * the full speed.
+ */
+const PARALLAX: Readonly<Record<CityLayerName, number>> = {
+  sky: 0,
+  clouds: 0.1,
+  far: 0.25,
+  mid: 0.5,
+  near: 1,
+};
+
+/** Under reduced motion, from the setting or the system (#114), the city scrolls this much slower. */
+const REDUCED_PARALLAX = 0.25;
+
+export interface GameDrawerOptions {
+  /** Read every frame, so a change applies to the run on screen. Defaults to full motion. */
+  readonly reducedMotion?: () => boolean;
+}
 
 /** The health bar of the 2023 game: 50 px wide, 10 px below the enemy's top edge. */
 const HEALTH_BAR = { width: 50, height: 10, offsetY: 10 } as const;
@@ -28,21 +44,39 @@ const SHOT_TRAIL = { size: { width: 30, height: 6 }, headX: 20, headY: 1.5 } as 
 
 /**
  * Draws a run with the engine's renderer: the game's side of the `GameRenderer` port. It reads the
- * world and never writes to it. Positions are interpolated between the previous and the current
- * tick, so motion is smooth at any refresh rate; animation frames follow from the tick.
+ * world and never writes to it. The city of the run's time of day comes first, its layers
+ * scrolling at their own pace (parallax). Positions are interpolated between the previous and the
+ * current tick, so motion is smooth at any refresh rate; animation frames follow from the tick.
  */
 export function createGameDrawer<TImage>(
   renderer: Renderer<TImage>,
   sprites: GameSprites<TImage>,
+  options: GameDrawerOptions = {},
 ): GameRenderer {
   const explosionFrames = RULES.explosion.frames;
   const explosionFrameTicks = RULES.explosion.frameTicks;
+  const reducedMotion = options.reducedMotion ?? (() => false);
+  // The layers are drawn at the world's size; one object for every frame.
+  const worldSize = { width: renderer.width, height: renderer.height };
 
   return {
     render(view, alpha) {
       const { world, tick } = view;
       renderer.beginFrame();
-      renderer.fillRect(0, 0, renderer.width, renderer.height, COLORS.sky[view.mode]);
+
+      const time = tick + alpha;
+      const pace = reducedMotion() ? REDUCED_PARALLAX : 1;
+      for (const { layer, atlas } of sprites.backgrounds[view.mode]) {
+        const speed = PARALLAX[layer] * pace;
+        if (speed === 0) {
+          renderer.drawSprite(atlas, 0, 0, 0, worldSize);
+          continue;
+        }
+        // Drawn twice, one width apart, so the layer tiles across the screen.
+        const x = parallaxOffset(time, worldSize.width, speed);
+        renderer.drawSprite(atlas, 0, x, 0, worldSize);
+        renderer.drawSprite(atlas, 0, x + worldSize.width, 0, worldSize);
+      }
 
       for (let index = 0; index < world.count; index += 1) {
         const id = world.at(index);

@@ -1,11 +1,23 @@
 import { DAY_ENEMIES, HEROES, NIGHT_ENEMIES, RULES } from '@buzzkill/game';
 import { describe, expect, it } from 'vitest';
 
-import { ATLASES, SPRITES } from '../assets/manifest.gen';
+import { ATLASES, BACKGROUNDS, SPRITES } from '../assets/manifest.gen';
 import { GAME_ASSETS } from './assets';
 import { createGameSprites } from './sprites';
 
-const IMAGES = { creatures: 'creatures', effects: 'effects' };
+const IMAGES = {
+  creatures: 'creatures',
+  effects: 'effects',
+  'city-day-sky': 'city-day-sky',
+  'city-day-clouds': 'city-day-clouds',
+  'city-day-far': 'city-day-far',
+  'city-day-mid': 'city-day-mid',
+  'city-day-near': 'city-day-near',
+  'city-night-sky': 'city-night-sky',
+  'city-night-far': 'city-night-far',
+  'city-night-mid': 'city-night-mid',
+  'city-night-near': 'city-night-near',
+};
 
 describe('game assets and sprites', () => {
   it('loads both atlases of the generated manifest', () => {
@@ -59,5 +71,29 @@ describe('game assets and sprites', () => {
     expect(SPRITES['explosion-smoke'].frameTicks).toBe(RULES.explosion.frameTicks);
     expect(SPRITES['explosion-fire'].frameTicks).toBe(RULES.explosion.frameTicks);
     expect(sprites.projectile).toEqual({ image: 'effects', frames: SPRITES['shot-trail'].frames });
+  });
+
+  it('loads every layer of the city and lays each time of day out back to front', () => {
+    const sprites = createGameSprites(IMAGES);
+
+    for (const time of ['day', 'night'] as const) {
+      const layers = BACKGROUNDS[time];
+      for (const { id, url } of layers) {
+        expect(GAME_ASSETS[id]).toEqual({ kind: 'image', url });
+      }
+      expect(sprites.backgrounds[time]).toEqual(
+        layers.map(({ id, layer }) => ({
+          layer,
+          atlas: { image: id, frames: [{ x: 0, y: 0, width: 1280, height: 720 }] },
+        })),
+      );
+    }
+    expect(sprites.backgrounds.day.map(({ layer }) => layer)).toEqual([
+      'sky',
+      'clouds',
+      'far',
+      'mid',
+      'near',
+    ]);
   });
 });

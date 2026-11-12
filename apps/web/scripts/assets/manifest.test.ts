@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 
-import { atlasFile, renderManifest, wavFile } from './manifest';
+import { atlasFile, backgroundFile, renderManifest, wavFile } from './manifest';
 import { MANIFEST_FILE, PATHS, readSound } from './paths';
 import { planAssets } from './plan';
 
@@ -29,6 +29,19 @@ describe('the generated assets', () => {
         format: 'webp',
         width: atlas.width,
         height: atlas.height,
+      });
+    },
+  );
+
+  it.each(plan.backgrounds.map((background) => [backgroundFile(background), background] as const))(
+    'include %s as a WebP image of the world size',
+    async (file, background) => {
+      const { format, width, height } = await sharp(join(PATHS.output, file)).metadata();
+
+      expect({ format, width, height }).toEqual({
+        format: 'webp',
+        width: background.width,
+        height: background.height,
       });
     },
   );

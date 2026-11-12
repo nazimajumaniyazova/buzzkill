@@ -40,6 +40,11 @@ interface GameViewProps {
   readonly paused: boolean;
   /** The player's keys, from the settings; a change applies to the run on screen. */
   readonly keyBindings: KeyBindings<GameAction>;
+  /**
+   * Whether motion is reduced, by the setting or the system (#114): the city then scrolls slower.
+   * A change applies to the run on screen.
+   */
+  readonly reducedMotion: boolean;
   /** Where the game's own reports go: the pause, the resume and the end of the run. */
   readonly onEvent: (event: GameEvent) => void;
 }
@@ -61,6 +66,7 @@ export function GameView({
   assets,
   paused,
   keyBindings,
+  reducedMotion,
   onEvent,
 }: GameViewProps): JSX.Element {
   const { t } = useI18n();
@@ -72,6 +78,8 @@ export function GameView({
   // they are not a dependency of the run, so new keys never restart it.
   const bindingsRef = useRef(keyBindings);
   const keyboardRef = useRef<KeyboardSource<GameAction> | null>(null);
+  // Read by the drawer every frame, so it is not a dependency of the run either.
+  const reducedMotionRef = useRef(reducedMotion);
   const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
@@ -147,7 +155,9 @@ export function GameView({
         gameVersion: GAME_VERSION,
         input: polledInput,
         host,
-        renderer: createGameDrawer(renderer, assets.sprites),
+        renderer: createGameDrawer(renderer, assets.sprites, {
+          reducedMotion: () => reducedMotionRef.current,
+        }),
         audio: assets.audio,
       });
       cleanups.push(() => {
@@ -162,6 +172,10 @@ export function GameView({
 
     return release;
   }, [run, assets]);
+
+  useEffect(() => {
+    reducedMotionRef.current = reducedMotion;
+  }, [reducedMotion]);
 
   useEffect(() => {
     if (bindingsRef.current === keyBindings) {

@@ -1,6 +1,14 @@
 import { createHash } from 'node:crypto';
 
-import { frameSvg, type SpriteName, SPRITES } from '@buzzkill/art';
+import {
+  type CityLayer,
+  cityLayerSvg,
+  frameSvg,
+  type SpriteName,
+  SPRITES,
+  type TimeOfDay,
+  WORLD_SIZE,
+} from '@buzzkill/art';
 import type { GameSound } from '@buzzkill/game';
 
 import { type PackedAtlas, packShelves } from './pack';
@@ -31,6 +39,16 @@ const ATLAS_SPRITES = {
 
 type AtlasName = keyof typeof ATLAS_SPRITES;
 
+/**
+ * The layers of the city for each time of day, back to front; the night has no clouds. Each is an
+ * image of its own in world pixels: two layers side by side would pass `SETTINGS.atlas.maxSize`,
+ * and twice the pixels would take four times the memory for a background that scrolls.
+ */
+const BACKGROUND_LAYERS = {
+  day: ['sky', 'clouds', 'far', 'mid', 'near'],
+  night: ['sky', 'far', 'mid', 'near'],
+} as const satisfies Record<TimeOfDay, readonly CityLayer[]>;
+
 /** Each game sound's file under `assets-src/sounds`, as `assets-src/README.md` lists them. */
 const SOUND_SOURCES = {
   shot: 'kenney-sci-fi-sounds/laserSmall_001.ogg',
@@ -44,6 +62,15 @@ export interface AtlasPlan extends PackedAtlas<SpriteName> {
   readonly input: string;
 }
 
+export interface BackgroundPlan {
+  readonly time: TimeOfDay;
+  readonly layer: CityLayer;
+  readonly width: number;
+  readonly height: number;
+  /** SHA-256 of the settings and the layer's SVG. */
+  readonly input: string;
+}
+
 export interface SoundPlan {
   readonly id: GameSound;
   /** The Ogg file, relative to `assets-src/sounds`. */
@@ -54,6 +81,7 @@ export interface SoundPlan {
 
 export interface AssetPlan {
   readonly atlases: readonly AtlasPlan[];
+  readonly backgrounds: readonly BackgroundPlan[];
   readonly sounds: readonly SoundPlan[];
 }
 
@@ -76,13 +104,25 @@ export function planAssets(readSound: (source: string) => Uint8Array): AssetPlan
     return { name, ...packed, input: hash.digest('hex') };
   });
 
+  const backgrounds = entries(BACKGROUND_LAYERS).flatMap(([time, layers]) =>
+    layers.map((layer): BackgroundPlan => ({
+      time,
+      layer,
+      ...WORLD_SIZE,
+      input: createHash('sha256')
+        .update(JSON.stringify(SETTINGS))
+        .update(cityLayerSvg(time, layer))
+        .digest('hex'),
+    })),
+  );
+
   const sounds = entries(SOUND_SOURCES).map(([id, source]): SoundPlan => ({
     id,
     source,
     input: createHash('sha256').update(readSound(source)).digest('hex'),
   }));
 
-  return { atlases, sounds };
+  return { atlases, backgrounds, sounds };
 }
 
 /** `Object.entries` that keeps the key type of a record whose keys are all known. */

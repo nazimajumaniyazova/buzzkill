@@ -11,7 +11,7 @@ import { HeroSelectScreen } from './HeroSelectScreen';
 import { i18nFor, I18nProvider } from './i18n/i18n';
 import { LoadingScreen } from './LoadingScreen';
 import { MenuScreen } from './MenuScreen';
-import { applyMotion } from './motion';
+import { applyMotion, reducesMotion, usePrefersReducedMotion } from './motion';
 import { PauseDialog } from './PauseDialog';
 import { RunOverDialog } from './RunOverDialog';
 import { SettingsScreen } from './SettingsScreen';
@@ -107,10 +107,12 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     applyTheme(run === null ? settings.theme : run.mode);
   }, [run, settings.theme]);
 
-  // Reduced or full motion for the interface, or the system's preference (#114).
+  // Reduced or full motion for the interface, or the system's preference (#114); the canvas
+  // gets the same answer in code, for the parallax of the city.
   useEffect(() => {
     applyMotion(settings.motion);
   }, [settings.motion]);
+  const reducedMotion = reducesMotion(settings.motion, usePrefersReducedMotion());
 
   // The language of the page for assistive technology, hyphenation and fonts (ADR-0013).
   useEffect(() => {
@@ -292,6 +294,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 assets={state.assets}
                 paused={state.name === 'paused'}
                 keyBindings={settings.keyBindings}
+                reducedMotion={reducedMotion}
                 onEvent={send}
               />
             </Suspense>

@@ -1,7 +1,7 @@
 import type { SpriteAtlas } from '@buzzkill/engine';
-import { DAY_ENEMIES, HEROES, type HeroId, NIGHT_ENEMIES } from '@buzzkill/game';
+import { DAY_ENEMIES, type GameMode, HEROES, type HeroId, NIGHT_ENEMIES } from '@buzzkill/game';
 
-import { SPRITES } from '../assets/manifest.gen';
+import { BACKGROUNDS, SPRITES } from '../assets/manifest.gen';
 import type { GameAssetManifest } from './assets';
 
 /** The image entries of the manifest. */
@@ -9,10 +9,22 @@ type ImageId = {
   [K in keyof GameAssetManifest]: GameAssetManifest[K]['kind'] extends 'image' ? K : never;
 }[keyof GameAssetManifest];
 
+/** Every loaded image of the manifest, by its id. */
+export type GameImages<TImage> = Readonly<Record<ImageId, TImage>>;
+
 /** A looping animation: its frames in an atlas and the ticks each frame stays on screen. */
 interface Animation<TImage> {
   readonly atlas: SpriteAtlas<TImage>;
   readonly frameTicks: number;
+}
+
+/** The name of a layer of the city: `sky`, `clouds`, `far`, `mid` or `near`. */
+export type CityLayerName = (typeof BACKGROUNDS)[GameMode][number]['layer'];
+
+/** One layer of the city: a single frame the size of the world. */
+interface BackgroundLayer<TImage> {
+  readonly layer: CityLayerName;
+  readonly atlas: SpriteAtlas<TImage>;
 }
 
 export interface GameSprites<TImage> {
@@ -23,15 +35,16 @@ export interface GameSprites<TImage> {
   readonly projectile: SpriteAtlas<TImage>;
   /** By explosion variant: 0 is smoke, 1 is fire, as the simulation rolls them. */
   readonly explosions: readonly [SpriteAtlas<TImage>, SpriteAtlas<TImage>];
+  /** The city of each time of day, back to front. */
+  readonly backgrounds: Readonly<Record<GameMode, readonly BackgroundLayer<TImage>[]>>;
 }
 
 /**
- * Cuts the loaded atlases into sprites with the frames of the generated manifest. The game
- * configuration names each sprite; a name the manifest lacks does not compile.
+ * Cuts the loaded atlases into sprites with the frames of the generated manifest, and lays out the
+ * layers of the city. The game configuration names each sprite; a name the manifest lacks does
+ * not compile.
  */
-export function createGameSprites<TImage>(
-  images: Readonly<Record<ImageId, TImage>>,
-): GameSprites<TImage> {
+export function createGameSprites<TImage>(images: GameImages<TImage>): GameSprites<TImage> {
   const atlas = (name: keyof typeof SPRITES): SpriteAtlas<TImage> => ({
     image: images[SPRITES[name].atlas],
     frames: SPRITES[name].frames,
@@ -40,6 +53,12 @@ export function createGameSprites<TImage>(
     atlas: atlas(name),
     frameTicks: SPRITES[name].frameTicks,
   });
+
+  const city = (time: GameMode): readonly BackgroundLayer<TImage>[] =>
+    BACKGROUNDS[time].map(({ id, layer, width, height }) => ({
+      layer,
+      atlas: { image: images[id], frames: [{ x: 0, y: 0, width, height }] },
+    }));
 
   const enemies: Partial<Record<string, Animation<TImage>>> = {};
   for (const { sprite } of [...DAY_ENEMIES, ...NIGHT_ENEMIES]) {
@@ -53,5 +72,6 @@ export function createGameSprites<TImage>(
     enemies,
     projectile: atlas('shot-trail'),
     explosions: [atlas('explosion-smoke'), atlas('explosion-fire')],
+    backgrounds: { day: city('day'), night: city('night') },
   };
 }
