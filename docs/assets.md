@@ -2,7 +2,8 @@
 
 Every image and sound the game uses: what it loads, where each file comes from, and the 2023 files
 it replaced (#131). Stage 6 replaced what could not stay (#132), builds the files through a
-pipeline (#133) and lists what ships with its source and license in `ASSETS.md` (#134).
+pipeline (#133) and lists what ships with its source and license in [ASSETS.md](../ASSETS.md)
+(#134).
 
 ## What the game loads
 

@@ -23,4 +23,4 @@ pack's `License.txt` is the one that came with it.
 
 Only the files the game uses are in the repository. To change a sound, download the pack from its
 page and copy the new file here unchanged. Then point `SOUND_SOURCES` in `scripts/assets/plan.ts`
-at it, run `pnpm assets`, and update the table and `docs/assets.md`.
+at it, run `pnpm assets`, and update the table, `docs/assets.md` and the row in `ASSETS.md`.

@@ -102,6 +102,8 @@ diagrams and the runtime data flow.
 
 - `docs/architecture.md` — C4 context and container diagrams, dependency rules, runtime data flow
 - `docs/adr/` — Architecture Decision Records and their template
+- `ASSETS.md` — source, author and license of every file the game ships; a test fails when a file
+  of the generated asset manifest has no row
 - `docs/learning-log.md` — the owner's learning log and STAR stories (filled in by the owner)
 - `.github/` — issue forms, pull request template, CODEOWNERS, workflows
 - `.husky/` — git hooks (`pre-commit` runs lint-staged, `commit-msg` runs commitlint)

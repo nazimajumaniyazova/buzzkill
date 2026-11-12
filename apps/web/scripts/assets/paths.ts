@@ -10,6 +10,8 @@ export const PATHS = {
   sounds: join(WEB, 'assets-src/sounds'),
   /** The generated files the game loads, and their manifest. */
   output: join(WEB, 'src/assets'),
+  /** The source, author and license of every file the game ships (#134). */
+  assetsMd: join(WEB, '../../ASSETS.md'),
 };
 
 /** The generated manifest, in `PATHS.output`; ESLint, Prettier and CSpell skip `*.gen.ts`. */
