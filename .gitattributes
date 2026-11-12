@@ -16,4 +16,5 @@
 
 # Generated files
 pnpm-lock.yaml linguist-generated
+*.gen.ts linguist-generated
 CHANGELOG.md linguist-generated

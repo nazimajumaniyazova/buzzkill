@@ -8,20 +8,23 @@ const { palette } = tokens.primitives;
 const { color } = tokens.semantic;
 
 /**
- * Stand-in colors for art that does not exist yet, the same values as the 2023 placeholders,
- * taken from the design tokens: the sky is each theme's canvas, the rest are palette entries.
- * Resolved once here, never read from the DOM in a frame.
+ * Colors from the design tokens: the sky is each theme's canvas, the health bar uses palette
+ * entries. Resolved once here, never read from the DOM in a frame.
  */
 const COLORS = {
   sky: { day: color.day.canvas.value, night: color.night.canvas.value },
-  hero: { male: palette.blue[500].value, female: palette.pink[400].value },
-  enemy: palette.red[600].value,
   healthTrack: palette.shade[60].value,
   health: palette.green[500].value,
 } as const;
 
 /** The health bar of the 2023 game: 50 px wide, 10 px below the enemy's top edge. */
 const HEALTH_BAR = { width: 50, height: 10, offsetY: 10 } as const;
+
+/**
+ * The shot in flight, `shot-trail` of the art: 30 x 6 in the world, with the head, which is the
+ * 10 x 3 hitbox, at (20, 1.5). The tail fades out behind it.
+ */
+const SHOT_TRAIL = { size: { width: 30, height: 6 }, headX: 20, headY: 1.5 } as const;
 
 /**
  * Draws a run with the engine's renderer: the game's side of the `GameRenderer` port. It reads the
@@ -54,18 +57,21 @@ export function createGameDrawer<TImage>(
 
         switch (world.kind[id] as number) {
           case Kind.player: {
-            renderer.fillRect(x, y, width, height, COLORS.hero[view.heroId]);
+            const { atlas, frameTicks } = sprites.heroes[view.heroId];
+            const frame = animationFrame(tick, 0, atlas.frames.length, frameTicks);
+            renderer.drawSprite(atlas, frame, x, y, size);
             break;
           }
           case Kind.enemy: {
             const config = view.enemies[world.variant[id] as number];
-            const atlas = config === undefined ? undefined : sprites.enemies[config.sprite.sheet];
-            if (config !== undefined && atlas !== undefined) {
-              const { frames, frameTicks } = config.sprite;
-              const frame = animationFrame(tick, world.bornTick[id] as number, frames, frameTicks);
+            // Every configured enemy has its art (see sprites.ts), so nothing is skipped in play.
+            const animation =
+              config === undefined ? undefined : sprites.enemies[config.sprite.sheet];
+            if (animation !== undefined) {
+              const { atlas, frameTicks } = animation;
+              const born = world.bornTick[id] as number;
+              const frame = animationFrame(tick, born, atlas.frames.length, frameTicks);
               renderer.drawSprite(atlas, frame, x, y, size);
-            } else {
-              renderer.fillRect(x, y, width, height, COLORS.enemy);
             }
             const health = (world.health[id] as number) / Math.max(1, world.value[id] as number);
             const barY = y + HEALTH_BAR.offsetY;
@@ -74,7 +80,8 @@ export function createGameDrawer<TImage>(
             break;
           }
           case Kind.projectile: {
-            renderer.drawSprite(sprites.projectile, 0, x, y, size);
+            const { headX, headY } = SHOT_TRAIL;
+            renderer.drawSprite(sprites.projectile, 0, x - headX, y - headY, SHOT_TRAIL.size);
             break;
           }
           case Kind.explosion: {

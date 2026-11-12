@@ -36,15 +36,16 @@ export interface EnemyConfig {
   readonly lives: IntRange;
   /** Vertical wave: `y += amplitude * sin(angle)` with `angle += angleSpeed` every tick. */
   readonly wave: { readonly amplitude: Range; readonly angleSpeed: Range };
-  /** Drawing data for the renderer; the simulation never reads it. */
+  /**
+   * Drawing data for the renderer; the simulation never reads it. The frames and their pace come
+   * with the art, from the generated asset manifest (ADR-0016).
+   */
   readonly sprite: {
-    /** Asset name of the sprite sheet (stage 6 pipeline). */
+    /** The enemy's sprite in `@buzzkill/art`. */
     readonly sheet: string;
+    /** The art's frame size, twice the world's pixels; the hitbox is half of it. */
     readonly frameWidth: number;
     readonly frameHeight: number;
-    readonly frames: number;
-    /** Ticks each frame stays on screen. */
-    readonly frameTicks: number;
   };
 }
 
@@ -69,21 +70,21 @@ export const DAY_ENEMIES = [
     weight: 3,
     hitbox: halfFrame(273, 273),
     ...SHARED,
-    sprite: { sheet: 'enemy-day-1', frameWidth: 273, frameHeight: 273, frames: 13, frameTicks: 1 },
+    sprite: { sheet: 'beetle', frameWidth: 273, frameHeight: 273 },
   },
   {
     id: 'day-2',
     weight: 3,
     hitbox: halfFrame(253, 207),
     ...SHARED,
-    sprite: { sheet: 'enemy-2', frameWidth: 253, frameHeight: 207, frames: 13, frameTicks: 1 },
+    sprite: { sheet: 'wasp', frameWidth: 253, frameHeight: 207 },
   },
   {
     id: 'day-3',
     weight: 4,
     hitbox: halfFrame(266, 207),
     ...SHARED,
-    sprite: { sheet: 'enemy-3', frameWidth: 266, frameHeight: 207, frames: 13, frameTicks: 1 },
+    sprite: { sheet: 'dragonfly', frameWidth: 266, frameHeight: 207 },
   },
 ] as const satisfies readonly EnemyConfig[];
 
@@ -93,22 +94,21 @@ export const NIGHT_ENEMIES = [
     weight: 3,
     hitbox: halfFrame(266, 188),
     ...SHARED,
-    // The 2023 bat and raven flapped on a 25 to 50 ms timer, about two ticks per frame.
-    sprite: { sheet: 'enemy_bat_3', frameWidth: 266, frameHeight: 188, frames: 6, frameTicks: 2 },
+    sprite: { sheet: 'moth', frameWidth: 266, frameHeight: 188 },
   },
   {
     id: 'night-raven',
     weight: 3,
     hitbox: halfFrame(271, 194),
     ...SHARED,
-    sprite: { sheet: 'enemy_raven', frameWidth: 271, frameHeight: 194, frames: 6, frameTicks: 2 },
+    sprite: { sheet: 'firefly', frameWidth: 271, frameHeight: 194 },
   },
   {
     id: 'night-ghost',
     weight: 4,
     hitbox: halfFrame(238, 167),
     ...SHARED,
-    sprite: { sheet: 'enemy_bat_2', frameWidth: 238, frameHeight: 167, frames: 7, frameTicks: 1 },
+    sprite: { sheet: 'mosquito', frameWidth: 238, frameHeight: 167 },
   },
 ] as const satisfies readonly EnemyConfig[];
 

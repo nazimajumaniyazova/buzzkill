@@ -28,8 +28,6 @@ describe('enemy configs', () => {
     expect(enemy.hitbox.width).toBeGreaterThan(0);
     expect(enemy.hitbox.height).toBeGreaterThan(0);
     expect(enemy.hitbox.width).toBe(enemy.sprite.frameWidth * 0.5);
-    expect(enemy.sprite.frames).toBeGreaterThanOrEqual(1);
-    expect(enemy.sprite.frameTicks).toBeGreaterThanOrEqual(1);
     expect(enemy.sprite.sheet).not.toBe('');
   });
 });

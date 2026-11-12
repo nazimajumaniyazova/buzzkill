@@ -54,6 +54,11 @@ catalog:
   # Token generation (#74): runs the TypeScript token source in Node to write tokens.css
   tsx: ^4.23.15
   '@types/node': ^24.19.2
+  # Asset pipeline (ADR-0016): rasterizes the art, encodes the WebP atlases and decodes the Ogg
+  # sounds for their WAV fallbacks
+  '@resvg/resvg-js': ^2.6.2
+  sharp: ^0.35.5
+  '@wasm-audio-decoders/ogg-vorbis': ^0.1.20
 
 peerDependencyRules:
   allowedVersions:

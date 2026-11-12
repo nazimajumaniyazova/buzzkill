@@ -29,9 +29,15 @@ function createFakeRenderer() {
 const atlas = (image: string, frames: number) =>
   createGridAtlas(image, { frameWidth: 10, frameHeight: 10, frames });
 
+const animation = (image: string, frames: number, frameTicks: number) => ({
+  atlas: atlas(image, frames),
+  frameTicks,
+});
+
 const SPRITES: GameSprites<string> = {
-  enemies: { 'enemy-2': atlas('enemy-2', 13) },
-  projectile: atlas('projectile', 1),
+  heroes: { male: animation('mike', 4, 4), female: animation('julie', 4, 4) },
+  enemies: { wasp: animation('wasp', 6, 2) },
+  projectile: atlas('shot-trail', 1),
   explosions: [atlas('smoke', 9), atlas('fire', 9)],
 };
 
@@ -64,16 +70,25 @@ describe('createGameDrawer', () => {
 
     expect(calls[0]).toEqual(['beginFrame']);
     expect(calls[1]).toEqual(['rect', 0, 0, 1280, 720, '#121a2b']);
-    // The heroes' art is not in the repository yet: a box in the hero's color.
     expect(calls[2]).toEqual([
-      'rect',
+      'sprite',
+      'julie',
+      0,
       20,
       100,
-      sim.state.hero.width,
-      sim.state.hero.height,
-      '#e07aa5',
+      { width: sim.state.hero.width, height: sim.state.hero.height },
     ]);
     expect(calls.at(-1)).toEqual(['endFrame']);
+  });
+
+  it('animates the hero by tick', () => {
+    const { renderer, calls } = createFakeRenderer();
+    sim.state.tick += 9;
+
+    createGameDrawer(renderer, SPRITES).render(sim.state, 0);
+
+    // Four ticks per frame: tick 9 shows frame 2.
+    expect(calls[2]?.slice(0, 3)).toEqual(['sprite', 'julie', 2]);
   });
 
   it('interpolates positions between the previous and the current tick', () => {
@@ -85,7 +100,8 @@ describe('createGameDrawer', () => {
 
     createGameDrawer(renderer, SPRITES).render(sim.state, 0.25);
 
-    expect(calls[2]).toEqual(['sprite', 'projectile', 0, 102.5, 197.5, { width: 50, height: 50 }]);
+    // The shot in flight: a 30 x 6 tail that ends in the head, which is the 10 x 3 hitbox.
+    expect(calls[2]).toEqual(['sprite', 'shot-trail', 0, 82.5, 196, { width: 30, height: 6 }]);
   });
 
   it('animates enemies by tick from their spawn and draws their health bar', () => {
@@ -93,7 +109,7 @@ describe('createGameDrawer', () => {
     sim = createSimulation({ seed: 1, heroId: 'male', mode: 'day' });
     emptyWorld(sim);
     const id = add(sim, Kind.enemy, 300, 400);
-    // Variant 1 is the second day enemy, sheet `enemy-2`: 13 frames of one tick each.
+    // Variant 1 is the second day enemy, the wasp: 6 frames of two ticks each.
     sim.state.world.variant[id] = 1;
     sim.state.world.health[id] = 1;
     sim.state.world.value[id] = 4;
@@ -102,22 +118,10 @@ describe('createGameDrawer', () => {
     createGameDrawer(renderer, SPRITES).render(sim.state, 0);
 
     expect(calls.slice(2, 5)).toEqual([
-      ['sprite', 'enemy-2', 2, 300, 400, { width: 50, height: 50 }],
+      ['sprite', 'wasp', 1, 300, 400, { width: 50, height: 50 }],
       ['rect', 300, 410, 50, 10, '#0009'],
       ['rect', 300, 410, 12.5, 10, '#48bf53'],
     ]);
-  });
-
-  it('draws enemies without art as boxes', () => {
-    const { renderer, calls } = createFakeRenderer();
-    sim = createSimulation({ seed: 1, heroId: 'male', mode: 'day' });
-    emptyWorld(sim);
-    // Variant 0 is `enemy-day-1`, whose art is missing.
-    add(sim, Kind.enemy, 300, 400);
-
-    createGameDrawer(renderer, SPRITES).render(sim.state, 0);
-
-    expect(calls[2]).toEqual(['rect', 300, 400, 50, 50, '#c0392b']);
   });
 
   it('draws explosions as smoke or fire by variant, frame by frame', () => {

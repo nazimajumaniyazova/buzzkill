@@ -43,16 +43,6 @@ function parse(svg: string): ParsedRoot {
   return new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
 }
 
-/** The art that replaces each enemy of the game configuration, by enemy id. */
-const ENEMY_ART: Readonly<Record<string, SpriteName>> = {
-  'day-1': 'beetle',
-  'day-2': 'wasp',
-  'day-3': 'dragonfly',
-  'night-bat': 'moth',
-  'night-raven': 'firefly',
-  'night-ghost': 'mosquito',
-};
-
 describe('the art', () => {
   it.each(DOCUMENTS.map((d) => [d.label, d.svg]))(
     '%s is a well-formed SVG document',
@@ -80,7 +70,8 @@ describe('the art', () => {
 
   it("draws each enemy in its frame size, so the game's hitboxes do not change", () => {
     const sizes = [...DAY_ENEMIES, ...NIGHT_ENEMIES].map((enemy) => {
-      const art = SPRITES[ENEMY_ART[enemy.id] ?? 'shot'];
+      // The configuration names each enemy's sprite: a name the art lacks would not compile.
+      const art = SPRITES[enemy.sprite.sheet];
       return [
         enemy.id,
         [art.width, art.height],
@@ -94,10 +85,12 @@ describe('the art', () => {
   });
 
   it("draws the heroes at twice their boxes, the explosions in the game's 9 frames and the shot at twice its size", () => {
+    expect(HEROES.male.sprite.sheet).toBe('mike');
     expect([SPRITES.mike.width, SPRITES.mike.height]).toEqual([
       Math.round(HEROES.male.width * 2),
       Math.round(HEROES.male.height * 2),
     ]);
+    expect(HEROES.female.sprite.sheet).toBe('julie');
     expect([SPRITES.julie.width, SPRITES.julie.height]).toEqual([
       Math.round(HEROES.female.width * 2),
       Math.round(HEROES.female.height * 2),
