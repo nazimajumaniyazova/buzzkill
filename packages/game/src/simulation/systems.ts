@@ -5,6 +5,8 @@
  */
 import { boxesOverlap } from '@buzzkill/engine';
 
+import { ENEMY_SETS } from '../config/enemies';
+import { type LevelConfig, LEVELS, type WaveConfig } from '../config/levels';
 import { RULES, WORLD } from '../config/rules';
 import { type EntityId, Kind } from '../world/world';
 import {
@@ -12,9 +14,9 @@ import {
   healthAfterHit,
   intInRange,
   livesAfterHit,
+  otherTime,
   pickWeighted,
   scoreAfterKill,
-  spawnIntervalAt,
   statusFor,
   valueInRange,
   waveStep,
@@ -25,6 +27,9 @@ import type { GameState, TickInput } from './state';
 const MOVE_UP = 1;
 const MOVE_DOWN = 2;
 const FIRE = 4;
+
+/** The campaign, typed as levels so that a wave's optional weights can be read. */
+const CAMPAIGN: readonly LevelConfig[] = LEVELS;
 
 /** Hero speed from the held move actions; up wins when both are held, as in 2023. */
 function controlSystem(state: GameState, input: TickInput): void {
@@ -194,14 +199,36 @@ function collisionSystem(state: GameState): void {
   }
 }
 
-/** Ends the run when the hero is out of lives or the score passes the winning score. */
+function anyEnemyAlive(state: GameState): boolean {
+  const { world } = state;
+  for (let index = 0; index < world.count; index += 1) {
+    const id = world.at(index);
+    if (world.kind[id] === Kind.enemy && world.isAlive(id)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Ends the run when the hero is out of lives, and the level once all its waves are sent and no
+ * enemy is left: the last level wins the run, any other is cleared for the next (ADR-0017).
+ */
 function outcomeSystem(state: GameState): void {
   if (state.status !== 'playing') {
     return;
   }
-  const status = statusFor(state.score, state.lives);
-  if (status !== 'playing') {
-    state.status = status;
+  const level = CAMPAIGN[state.level - 1];
+  const levelDone =
+    level !== undefined && state.wave >= level.waves.length && !anyEnemyAlive(state);
+  const status = statusFor(state.lives, levelDone, state.level >= CAMPAIGN.length);
+  if (status === 'playing') {
+    return;
+  }
+  state.status = status;
+  if (status === 'levelCleared') {
+    state.events.emit('levelCleared', { level: state.level, score: state.score });
+  } else {
     state.events.emit('gameOver', { result: status, score: state.score });
   }
 }
@@ -213,22 +240,40 @@ function ammoSystem(state: GameState): void {
   }
 }
 
-/** Spawns an enemy of the mode's set at the right edge when the interval has passed. */
+/**
+ * Sends the enemies of the level's current wave at the wave's pace, after the level's calm before
+ * each wave. Once the last wave is sent, nothing more comes until the next level.
+ */
 function spawnSystem(state: GameState): void {
-  state.spawnInterval = spawnIntervalAt(state.spawnInterval, state.tick);
   if (state.status !== 'playing') {
     return;
   }
-  state.spawnTimer += 1;
-  if (state.spawnTimer < state.spawnInterval) {
+  const level = CAMPAIGN[state.level - 1];
+  const wave = level?.waves[state.wave];
+  if (level === undefined || wave === undefined) {
     return;
   }
-  state.spawnTimer = 0;
+  state.spawnTimer -= 1;
+  if (state.spawnTimer > 0) {
+    return;
+  }
+  spawnEnemy(state, wave, level.speedScale);
+  state.waveSent += 1;
+  if (state.waveSent < wave.count) {
+    state.spawnTimer = wave.intervalTicks;
+    return;
+  }
+  state.wave += 1;
+  state.waveSent = 0;
+  state.spawnTimer = level.breakTicks;
+}
 
+/** Spawns one enemy of the time's set at the right edge, with the rolls of the 2023 game. */
+function spawnEnemy(state: GameState, wave: WaveConfig, speedScale: number): void {
   const { rng, enemies, enemyWeights, world } = state;
   // Every roll is taken in a fixed order before the spawn can fail, so the sequence of random
   // numbers never depends on whether the world had room (ADR-0009).
-  const variant = pickWeighted(enemyWeights, rng.nextFloat());
+  const variant = pickWeighted(wave.weights ?? enemyWeights, rng.nextFloat());
   const config = enemies[variant];
   const yRoll = rng.nextFloat();
   const speedRoll = rng.nextFloat();
@@ -251,12 +296,37 @@ function spawnSystem(state: GameState): void {
     width,
     height,
   );
-  world.vx[id] = -valueInRange(config.speed, speedRoll);
+  world.vx[id] = -valueInRange(config.speed, speedRoll) * speedScale;
   world.health[id] = lives;
   world.value[id] = lives;
   world.amplitude[id] = valueInRange(config.wave.amplitude, amplitudeRoll);
   world.angleSpeed[id] = valueInRange(config.wave.angleSpeed, angleSpeedRoll);
   world.variant[id] = variant;
+}
+
+/**
+ * Moves a cleared run on to the next level: its waves from the start, after its calm, at the
+ * other time of day when the cleared level says so (ADR-0017). Not a system: the simulation calls
+ * it at the start of the tick after a level is cleared.
+ */
+export function startNextLevel(state: GameState): void {
+  const cleared = CAMPAIGN[state.level - 1];
+  const next = CAMPAIGN[state.level];
+  if (cleared === undefined || next === undefined) {
+    // Unreachable: clearing the last level wins the run instead.
+    return;
+  }
+  if (cleared.timeChangesAfter) {
+    state.mode = otherTime(state.mode);
+    state.enemies = ENEMY_SETS[state.mode];
+    state.enemyWeights = state.enemies.map((enemy) => enemy.weight);
+  }
+  state.level += 1;
+  state.wave = 0;
+  state.waveSent = 0;
+  state.spawnTimer = next.breakTicks;
+  state.status = 'playing';
+  state.events.emit('levelStarted', { level: state.level, mode: state.mode });
 }
 
 /** The update order of one tick. */

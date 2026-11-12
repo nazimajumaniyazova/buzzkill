@@ -56,13 +56,8 @@ export const RULES = {
     /** Projectiles vanish at this share of the world width, before the right edge. */
     rangeRatio: 0.8,
   },
+  /** The pace of the enemies comes from the levels (`LEVELS`, ADR-0017); where they appear, here. */
   spawn: {
-    /** 1700 ms between enemies at the start. */
-    intervalTicks: 102,
-    /** After 20 s the interval shrinks by 100 ms per tick down to 400 ms, as in 2023. */
-    rampStartTick: 1200,
-    rampStepTicks: 6,
-    minIntervalTicks: 24,
     /** Enemies spawn with their top in [0, height - hitbox height * this]. */
     bottomMarginRatio: 0.8,
   },
@@ -74,6 +69,4 @@ export const RULES = {
   },
   /** The background and explosions drift left by this many pixels per tick. */
   scrollSpeed: 1,
-  /** Reaching more than this score wins the game. */
-  winningScore: 100,
 } as const;

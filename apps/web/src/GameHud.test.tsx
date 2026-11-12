@@ -9,7 +9,15 @@ import { i18nFor, I18nProvider } from './i18n/i18n';
 
 /** A game whose HUD the test sets by hand. */
 function createFakeGame() {
-  let hud: Hud = { score: 0, lives: 5, ammo: 20, status: 'playing', paused: false };
+  let hud: Hud = {
+    score: 0,
+    lives: 5,
+    ammo: 20,
+    level: 1,
+    mode: 'day',
+    status: 'playing',
+    paused: false,
+  };
   const listeners = new Set<(hud: Hud) => void>();
   const game = {
     start: vi.fn(),

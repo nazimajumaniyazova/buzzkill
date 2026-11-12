@@ -27,14 +27,15 @@ const BENCH_TIMEOUT = 600_000;
 const MOVE_UP = 1;
 const MOVE_DOWN = 2;
 
-/** Sweeps down and up over 4 s without firing, so the score never ends the run. */
+/** Sweeps down and up over 4 s without firing: enemies fly past, and levels end as they leave. */
 function sweep(tick: number): number {
   return tick % 240 < 120 ? MOVE_DOWN : MOVE_UP;
 }
 
 /**
- * A run that does not end: the hero never runs out of lives. Real runs end within a minute or
- * two, which is too short to measure the late game, where enemies spawn every 0.4 s.
+ * A run that does not end early: the hero never runs out of lives. Real runs often end in the
+ * first levels, too soon to measure the later ones, where enemies come every half second. This one
+ * is in the fourth level after two minutes and in the sixth after three.
  */
 function endlessRun(): Simulation {
   const simulation = createSimulation({ seed: 2026, heroId: 'male', mode: 'day' });
@@ -61,7 +62,7 @@ function golden(value: unknown): Replay {
 
 describe('simulation', () => {
   test('one tick at typical load', { timeout: BENCH_TIMEOUT }, async ({ bench }) => {
-    // Past the spawn ramp (tick 1668), the number of enemies alive stays roughly constant.
+    // Two minutes in, in the fourth level, a few enemies are alive at any time.
     const simulation = endlessRun();
     const input = { down: 0, pressed: 0 };
     play(simulation, 2 * TICKS_PER_MINUTE, input);
@@ -86,10 +87,10 @@ describe('simulation', () => {
     const maxTicks = 10 * TICKS_PER_MINUTE;
 
     await bench.compare(
-      bench('simulate day-male-2026 (1891 ticks)', () => {
+      bench('simulate day-male-2026', () => {
         simulate(day, { maxTicks });
       }),
-      bench('simulate night-female-2026 (2144 ticks)', () => {
+      bench('simulate night-female-2026', () => {
         simulate(night, { maxTicks });
       }),
     );

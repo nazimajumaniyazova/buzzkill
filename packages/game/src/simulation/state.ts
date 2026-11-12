@@ -17,6 +17,10 @@ export interface GameEvents {
   playerHit: { readonly livesLeft: number };
   /** An explosion started, centered on this point. */
   explosion: { readonly x: number; readonly y: number; readonly variant: number };
+  /** Every wave of `level` was sent and no enemy is left; the next level starts on the next tick. */
+  levelCleared: { readonly level: number; readonly score: number };
+  /** A level after the first one started, at this time of day (ADR-0017). */
+  levelStarted: { readonly level: number; readonly mode: GameMode };
   /** The run ended. */
   gameOver: { readonly result: 'won' | 'lost'; readonly score: number };
 }
@@ -29,10 +33,12 @@ export interface GameState {
   readonly events: EventBus<GameEvents>;
   readonly heroId: HeroId;
   readonly hero: HeroConfig;
-  readonly mode: GameMode;
-  readonly enemies: readonly EnemyConfig[];
-  /** `enemies[i].weight`, precomputed for the spawn roll. */
-  readonly enemyWeights: readonly number[];
+  /** The time of day of the level being played; a level can change it for the next (ADR-0017). */
+  mode: GameMode;
+  /** The enemy set of `mode`. */
+  enemies: readonly EnemyConfig[];
+  /** `enemies[i].weight`, precomputed for the spawn roll of a wave without weights of its own. */
+  enemyWeights: readonly number[];
   readonly player: EntityId;
   /** Ticks simulated so far. */
   tick: number;
@@ -40,9 +46,14 @@ export interface GameState {
   score: number;
   lives: number;
   ammo: number;
-  /** Ticks since the last enemy spawned. */
+  /** The level being played, from 1 (`LEVELS[level - 1]`). */
+  level: number;
+  /** The wave of the level being sent, from 0; the number of waves once all are sent. */
+  wave: number;
+  /** Enemies the current wave has sent. */
+  waveSent: number;
+  /** Ticks until the next enemy of the wave, or until the wave starts after its calm. */
   spawnTimer: number;
-  spawnInterval: number;
 }
 
 /** The actions of one tick as bit masks over `GAME_ACTIONS` (the engine's `InputSnapshot`). */

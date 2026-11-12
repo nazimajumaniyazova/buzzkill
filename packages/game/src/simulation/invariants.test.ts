@@ -3,6 +3,7 @@
 import { fc, test } from '@fast-check/vitest';
 import { describe, expect } from 'vitest';
 
+import { LEVELS } from '../config/levels';
 import { RULES } from '../config/rules';
 import { createSimulation } from './simulation';
 
@@ -26,7 +27,7 @@ describe('simulation invariants', () => {
   });
 
   test.prop([run], { numRuns: 60 })(
-    'score never decreases, lives and ammo stay in bounds, and the end is final',
+    'score never decreases, lives and ammo stay in bounds, levels go one by one, and the end is final',
     ({ seed, heroId, mode, holds, capacity }) => {
       const simulation = createSimulation({ seed, heroId, mode, capacity });
       const { state } = simulation;
@@ -35,6 +36,7 @@ describe('simulation invariants', () => {
         score: 0,
         lives: RULES.lives as number,
         status: state.status,
+        level: 1,
         down: 0,
       };
 
@@ -49,7 +51,12 @@ describe('simulation invariants', () => {
           expect(state.ammo).toBeGreaterThanOrEqual(0);
           expect(state.ammo).toBeLessThanOrEqual(RULES.ammo.max);
           expect(state.world.count).toBeLessThanOrEqual(capacity);
-          if (previous.status !== 'playing') {
+          expect(state.level).toBeLessThanOrEqual(LEVELS.length);
+          // Levels go one by one: the next starts on the tick after a level is cleared.
+          expect(state.level).toBe(
+            previous.status === 'levelCleared' ? previous.level + 1 : previous.level,
+          );
+          if (previous.status === 'won' || previous.status === 'lost') {
             expect(state.status).toBe(previous.status);
             expect(state.score).toBe(previous.score);
             expect(state.lives).toBe(previous.lives);
@@ -62,6 +69,7 @@ describe('simulation invariants', () => {
             score: state.score,
             lives: state.lives,
             status: state.status,
+            level: state.level,
             down,
           };
         }

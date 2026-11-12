@@ -3,6 +3,8 @@
 import { fc, test } from '@fast-check/vitest';
 import { describe, expect, it, vi } from 'vitest';
 
+import { NIGHT_ENEMIES } from '../config/enemies';
+import { LEVELS } from '../config/levels';
 import { HEROES, RULES, WORLD } from '../config/rules';
 import { type EntityId, Kind } from '../world/world';
 import { createSimulation, type Simulation } from './simulation';
@@ -44,12 +46,27 @@ function addEnemy(sim: Simulation, x: number, y: number, health: number, value =
 
 const player = (sim: Simulation) => sim.state.player;
 
+/** The level being played. */
+const levelOf = (state: GameState) => LEVELS[state.level - 1] ?? LEVELS[0];
+
+/** Enemies the current level has sent so far. */
+const sentSoFar = (state: GameState) =>
+  levelOf(state)
+    .waves.slice(0, state.wave)
+    .reduce((sum, wave) => sum + wave.count, 0) + state.waveSent;
+
+/** Marks every wave of the current level as sent: the level ends once its enemies are gone. */
+function sendEveryWave(sim: Simulation): void {
+  sim.state.wave = levelOf(sim.state).waves.length;
+}
+
 describe('createSimulation', () => {
-  it('starts a run with the 2023 numbers', () => {
+  it('starts a run with the 2023 numbers, on the first level, at the chosen time of day', () => {
     const { state } = setup();
 
     expect(state.status).toBe('playing');
     expect([state.score, state.lives, state.ammo, state.tick]).toEqual([0, 5, 20, 0]);
+    expect([state.level, state.wave, state.mode]).toEqual([1, 0, 'day']);
     expect(state.world.x[state.player]).toBe(20);
     expect(state.world.y[state.player]).toBe(100);
     expect(state.world.width[state.player]).toBe(HEROES.male.width);
@@ -116,10 +133,10 @@ describe('createSimulation', () => {
     expect(ofKind(sim.state, Kind.projectile)).toHaveLength(0);
   });
 
-  it('spawns the first enemy at the right edge after 1.7 s', () => {
+  it("spawns the first enemy at the right edge after the first level's calm", () => {
     const sim = setup();
 
-    run(sim, RULES.spawn.intervalTicks - 1);
+    run(sim, LEVELS[0].breakTicks - 1);
     expect(ofKind(sim.state, Kind.enemy)).toHaveLength(0);
 
     run(sim, 1);
@@ -193,18 +210,104 @@ describe('createSimulation', () => {
     expect(over).toHaveBeenCalledExactlyOnceWith({ result: 'lost', score: 0 });
   });
 
-  it('wins once the score passes 100 and then stops spawning and scoring', () => {
+  it('sends each wave at its pace, with the calm before each wave', () => {
     const sim = setup();
-    sim.state.score = 100;
-    addEnemy(sim, 200, 150, 1, 1);
-    sim.step(FIRE);
-    run(sim, 30);
+    // Idle, the hero is in the way of some enemies; enough lives to see two waves through.
+    sim.state.lives = 99;
+    const [first, second] = LEVELS[0].waves;
+    const sentAt: number[] = [];
+    while (sentAt.length < first.count + 2) {
+      const before = sentSoFar(sim.state);
+      sim.step(IDLE);
+      if (sentSoFar(sim.state) > before) {
+        sentAt.push(sim.state.tick);
+      }
+    }
+
+    const { breakTicks } = LEVELS[0];
+    const firstWave = Array.from(
+      { length: first.count },
+      (_, index) => breakTicks + index * first.intervalTicks,
+    );
+    const secondWaveStart = (firstWave.at(-1) ?? 0) + breakTicks;
+    expect(sentAt).toEqual([...firstWave, secondWaveStart, secondWaveStart + second.intervalTicks]);
+  });
+
+  it('waits for the last enemies of a level to be destroyed or to leave', () => {
+    const sim = setup();
+    sendEveryWave(sim);
+    addEnemy(sim, 900, 400, 1);
+
+    run(sim, 10);
+
+    expect(sim.state.status).toBe('playing');
+  });
+
+  it('clears a level once its waves are sent and no enemy is left, and starts the next one on the next tick', () => {
+    const sim = setup();
+    const cleared = vi.fn<(payload: GameEvents['levelCleared']) => void>();
+    const started = vi.fn<(payload: GameEvents['levelStarted']) => void>();
+    sim.state.events.on('levelCleared', cleared);
+    sim.state.events.on('levelStarted', started);
+    sim.state.score = 12;
+    sendEveryWave(sim);
+
+    sim.step(IDLE);
+    expect(sim.state.status).toBe('levelCleared');
+    expect(cleared).toHaveBeenCalledExactlyOnceWith({ level: 1, score: 12 });
+    expect(started).not.toHaveBeenCalled();
+
+    sim.step(IDLE);
+    expect(sim.state.status).toBe('playing');
+    expect([sim.state.level, sim.state.wave, sim.state.waveSent]).toEqual([2, 0, 0]);
+    expect(started).toHaveBeenCalledExactlyOnceWith({ level: 2, mode: 'day' });
+    expect(sim.state.score).toBe(12);
+  });
+
+  it('changes the time of day after a level that says so, with the enemies of that time', () => {
+    const sim = setup();
+    const started = vi.fn<(payload: GameEvents['levelStarted']) => void>();
+    sim.state.events.on('levelStarted', started);
+    sim.state.level = LEVELS.findIndex((level) => level.timeChangesAfter) + 1;
+    sendEveryWave(sim);
+
+    run(sim, 2);
+
+    expect(sim.state.mode).toBe('night');
+    expect(sim.state.enemies).toBe(NIGHT_ENEMIES);
+    expect(started).toHaveBeenCalledExactlyOnceWith({ level: 4, mode: 'night' });
+  });
+
+  it('wins the run when the last level is cleared, then stops spawning and scoring', () => {
+    const sim = setup();
+    const over = vi.fn<(payload: GameEvents['gameOver']) => void>();
+    sim.state.events.on('gameOver', over);
+    sim.state.level = LEVELS.length;
+    sim.state.score = 150;
+    sendEveryWave(sim);
+
+    sim.step(IDLE);
     expect(sim.state.status).toBe('won');
+    expect(over).toHaveBeenCalledExactlyOnceWith({ result: 'won', score: 150 });
 
     addEnemy(sim, 200, 150, 1, 50);
     run(sim, 400, FIRE);
-    expect(sim.state.score).toBe(101);
-    expect(ofKind(sim.state, Kind.enemy)).toHaveLength(1);
+    expect(sim.state.score).toBe(150);
+    expect(sim.state.level).toBe(LEVELS.length);
+  });
+
+  it("sends a later level's enemies faster", () => {
+    const firstVx = (level: number) => {
+      const sim = setup(5);
+      sim.state.level = level;
+      sim.state.spawnTimer = 1;
+      sim.step(IDLE);
+      const [enemy] = ofKind(sim.state, Kind.enemy);
+      return sim.state.world.vx[enemy as EntityId] as number;
+    };
+
+    const last = LEVELS.length;
+    expect(firstVx(last)).toBeCloseTo(firstVx(1) * (LEVELS[last - 1]?.speedScale ?? 0), 10);
   });
 
   it('skips spawns when the world is full instead of failing', () => {

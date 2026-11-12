@@ -1,4 +1,4 @@
-import type { Game } from '@buzzkill/game';
+import { type Game, isRunOver } from '@buzzkill/game';
 
 import type { AppEvent } from './machine';
 
@@ -16,8 +16,9 @@ export function connectGame(game: Game, send: (event: GameEvent) => void): () =>
     if (hud.paused !== last.paused) {
       send({ type: hud.paused ? 'gamePaused' : 'gameResumed' });
     }
-    // The world moves on for the picture after the end, so the status changes exactly once.
-    if (hud.status !== last.status && hud.status !== 'playing') {
+    // The world moves on for the picture after the end, so the status changes exactly once. A
+    // cleared level is not an end: the next one follows (ADR-0017).
+    if (hud.status !== last.status && isRunOver(hud.status)) {
       send({ type: 'runEnded', result: game.result() });
     }
     last = hud;

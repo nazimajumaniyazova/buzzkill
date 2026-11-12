@@ -1,3 +1,4 @@
+import { isRunOver } from '../simulation/rules';
 import { createSimulation } from '../simulation/simulation';
 import type { Replay } from './format';
 import { type RunResult, runResultOf } from './result';
@@ -9,7 +10,8 @@ export interface SimulateOptions {
 
 /**
  * Plays a replay with no display, no DOM and no clock, in Node, Deno or a browser. It runs until
- * the run is won or lost or until `maxTicks`, and returns the result at that tick. A replay that
+ * the run is won or lost or until `maxTicks`, and returns the result at that tick. A cleared level
+ * goes straight on to the next: the screen between levels is never simulated (ADR-0017). A replay that
  * `createGame` recorded gives the same result as `game.result()` did at the same tick.
  *
  * The replay must come from `parseReplay` or a recorder; its type is the only check here.
@@ -32,7 +34,7 @@ export function simulate(replay: Replay, options: SimulateOptions): RunResult {
   let nextIndex = 0;
   let nextChangeTick = inputs.length > 0 ? (inputs[0] as number) : Infinity;
 
-  for (let tick = 1; tick <= maxTicks && state.status === 'playing'; tick += 1) {
+  for (let tick = 1; tick <= maxTicks && !isRunOver(state.status); tick += 1) {
     let down = input.down;
     if (tick === nextChangeTick) {
       down = inputs[nextIndex + 1] as number;
