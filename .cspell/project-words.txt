@@ -26,12 +26,16 @@ Jumaniyazova
 Kenney
 letterbox
 letterboxed
+libvips
 Lingui
 miniplex
 Nazima
 nvmrc
 parsererror
 PractRand
+rasterizer
+rasterizing
+resvg
 RGBA
 scroller
 Sinestesia

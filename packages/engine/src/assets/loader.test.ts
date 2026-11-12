@@ -19,8 +19,10 @@ interface FakeSound {
 /** Decoders that settle only when the test releases them. */
 function createDecoders(failing: Record<string, unknown> = {}) {
   const pending: (() => void)[] = [];
+  const requested: string[] = [];
   const decode = <T>(url: string, make: () => T) =>
     new Promise<T>((resolve, reject) => {
+      requested.push(url);
       pending.push(() => {
         if (url in failing) {
           // The test decides what is thrown, Error or not.
@@ -37,13 +39,22 @@ function createDecoders(failing: Record<string, unknown> = {}) {
   };
   return {
     decoders,
-    /** Settles the pending decodes, the last requested first. */
+    /**
+     * Settles the pending decodes, the last requested first, until none is left. Waiting a task
+     * between them lets the loader request the decodes that follow a failure, such as a fallback.
+     */
     async releaseAll() {
-      while (pending.length > 0) {
-        pending.pop()?.();
-        await Promise.resolve();
+      for (;;) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        const release = pending.pop();
+        if (release === undefined) {
+          return;
+        }
+        release();
       }
     },
+    /** Every URL a decoder was asked for, in order. */
+    requested,
   };
 }
 
@@ -123,6 +134,80 @@ describe('loadAssets', () => {
     expect(skipped.map((failure) => [failure.id, failure.reason])).toEqual([
       ['music', 'unavailable'],
     ]);
+  });
+
+  describe('with a fallback file', () => {
+    const manifest = {
+      shot: { kind: 'audio', url: 'shot.ogg', fallbackUrl: 'shot.wav' },
+    } as const;
+
+    it('loads the fallback when the first file does not decode', async () => {
+      const fake = createDecoders({ 'shot.ogg': new AssetLoadError('decode', 'shot.ogg: no Ogg') });
+
+      const loading = loadAssets(manifest, fake.decoders);
+      await fake.releaseAll();
+      const { assets, skipped } = loaded(await loading);
+
+      expect(assets.shot).toEqual({ sound: 'shot.wav' });
+      expect(skipped).toEqual([]);
+      expect(fake.requested).toEqual(['shot.ogg', 'shot.wav']);
+    });
+
+    it('never requests the fallback when the first file decodes', async () => {
+      const fake = createDecoders();
+
+      const loading = loadAssets(manifest, fake.decoders);
+      await fake.releaseAll();
+
+      expect(loaded(await loading).assets.shot).toEqual({ sound: 'shot.ogg' });
+      expect(fake.requested).toEqual(['shot.ogg']);
+    });
+
+    it('reports a failed download without trying the fallback from the same server', async () => {
+      const fake = createDecoders({
+        'shot.ogg': new AssetLoadError('network', 'shot.ogg: offline'),
+      });
+
+      const loading = loadAssets(manifest, fake.decoders);
+      await fake.releaseAll();
+
+      expect(await loading).toEqual({
+        ok: false,
+        failures: [
+          {
+            id: 'shot',
+            kind: 'audio',
+            url: 'shot.ogg',
+            reason: 'network',
+            message: 'shot.ogg: offline',
+          },
+        ],
+      });
+      expect(fake.requested).toEqual(['shot.ogg']);
+    });
+
+    it('reports the fallback and both messages when neither file decodes', async () => {
+      const fake = createDecoders({
+        'shot.ogg': new AssetLoadError('decode', 'shot.ogg: no Ogg'),
+        'shot.wav': new AssetLoadError('decode', 'shot.wav: no WAV'),
+      });
+
+      const loading = loadAssets(manifest, fake.decoders);
+      await fake.releaseAll();
+
+      expect(await loading).toEqual({
+        ok: false,
+        failures: [
+          {
+            id: 'shot',
+            kind: 'audio',
+            url: 'shot.wav',
+            reason: 'decode',
+            message: 'shot.ogg: no Ogg; then shot.wav: no WAV',
+          },
+        ],
+      });
+    });
   });
 
   it('describes a non-Error rejection by its string form', async () => {

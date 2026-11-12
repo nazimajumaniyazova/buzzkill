@@ -15,6 +15,12 @@ export interface AssetEntry {
   readonly kind: AssetKind;
   readonly url: string;
   /**
+   * The same asset in a format more browsers decode, tried only when `url` downloads but does not
+   * decode. Safari decodes Ogg sounds unreliably, so each sound comes with a WAV (ADR-0016). A
+   * failed download is reported at once: the fallback comes from the same server.
+   */
+  readonly fallbackUrl?: string;
+  /**
    * The game can run without it, as with sound when Web Audio is unavailable. Its failure is
    * reported in `skipped` and its value is `undefined`; the load still succeeds.
    */
@@ -103,21 +109,32 @@ export async function loadAssets<const M extends AssetManifest, TImage, TAudio>(
   const failures: AssetFailure[] = [];
   const skipped: AssetFailure[] = [];
 
+  const decode = (entry: AssetEntry, url: string): Promise<unknown> =>
+    entry.kind === 'image' ? decoders.image(url) : decoders.audio(url);
+
   await Promise.all(
     ids.map(async (id) => {
       const entry = manifest[id] as AssetEntry;
+      let url = entry.url;
+      let message = '';
       try {
-        values[id] =
-          entry.kind === 'image'
-            ? await decoders.image(entry.url)
-            : await decoders.audio(entry.url);
+        try {
+          values[id] = await decode(entry, url);
+        } catch (error) {
+          if (entry.fallbackUrl === undefined || reasonOf(error) !== 'decode') {
+            throw error;
+          }
+          message = `${messageOf(error)}; then `;
+          url = entry.fallbackUrl;
+          values[id] = await decode(entry, url);
+        }
       } catch (error) {
         const failure: AssetFailure = {
           id,
           kind: entry.kind,
-          url: entry.url,
-          reason: error instanceof AssetLoadError ? error.reason : 'unknown',
-          message: error instanceof Error ? error.message : String(error),
+          url,
+          reason: reasonOf(error),
+          message: message + messageOf(error),
         };
         if (entry.optional === true) {
           values[id] = undefined;
@@ -140,4 +157,12 @@ export async function loadAssets<const M extends AssetManifest, TImage, TAudio>(
   // Every key of the manifest now has its value, so the record has the mapped type.
   const assets = values as LoadedAssets<M, TImage, TAudio>;
   return { ok: true, assets, skipped: skipped.sort(byManifestOrder) };
+}
+
+function reasonOf(error: unknown): AssetFailureReason {
+  return error instanceof AssetLoadError ? error.reason : 'unknown';
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
