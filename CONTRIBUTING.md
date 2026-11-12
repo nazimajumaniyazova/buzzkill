@@ -36,6 +36,11 @@ stories, a row on that page and an axe assertion in its test. `pnpm bench` runs 
 runs them on every pull request and fails the check when one gets slower than its threshold
 (ADR-0012).
 
+A new image or sound starts as a source: art in `packages/art`, or a downloaded file with its
+license in `apps/web/assets-src`. `pnpm assets` then generates what the game loads (ADR-0016), and
+the file gets a row in `ASSETS.md` with its source, author and license. The asset tests fail until
+both are done.
+
 ## Workflow: GitHub Flow
 
 1. Every task starts with an issue (typos and tiny chores are the exception). Use the issue forms
