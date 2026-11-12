@@ -41,6 +41,11 @@ license in `apps/web/assets-src`. `pnpm assets` then generates what the game loa
 the file gets a row in `ASSETS.md` with its source, author and license. The asset tests fail until
 both are done.
 
+Two size limits hold (#135, `docs/performance.md`): no file tracked by git over 1 MB, checked by
+`pnpm lint`, and at most 1 MB of images and sounds in the game's build, checked by every
+`pnpm build`, which prints the total. Make a file smaller before raising a limit; a raise needs a
+pull request that says why.
+
 ## Workflow: GitHub Flow
 
 1. Every task starts with an issue (typos and tiny chores are the exception). Use the issue forms
