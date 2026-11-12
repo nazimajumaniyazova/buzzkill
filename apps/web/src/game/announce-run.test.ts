@@ -50,7 +50,7 @@ describe('announceRun', () => {
     expect(announce.mock.calls).toEqual([['Level 1. Go!']]);
   });
 
-  it('says each new level when it starts, politely', () => {
+  it('says a cleared level, then the next one when it starts, politely', () => {
     const { game, push } = createPushedGame();
     const announce = vi.fn();
     announceRun(game, announce, messages);
@@ -59,7 +59,7 @@ describe('announceRun', () => {
     push({ status: 'levelCleared', score: 12 });
     push({ status: 'playing', level: 2 });
 
-    expect(announce).toHaveBeenCalledExactlyOnceWith(messages.levelStart(2));
+    expect(announce.mock.calls).toEqual([[messages.levelCleared(1, 12)], [messages.levelStart(2)]]);
   });
 
   it('says each life lost and how many are left, politely', () => {
@@ -88,7 +88,18 @@ describe('announceRun', () => {
     expect(announce.mock.calls).toEqual([['Game over. Score: 1,234.', 'assertive']]);
   });
 
-  it('says a level complete politely', () => {
+  it('says a cleared level and its score politely', () => {
+    const { game, push } = createPushedGame();
+    const announce = vi.fn();
+    announceRun(game, announce, messages);
+    announce.mockClear();
+
+    push({ status: 'levelCleared', score: 120 });
+
+    expect(announce.mock.calls).toEqual([['Level 1 cleared. Score: 120.']]);
+  });
+
+  it('says a victory politely', () => {
     const { game, push } = createPushedGame();
     const announce = vi.fn();
     announceRun(game, announce, messages);
@@ -96,7 +107,7 @@ describe('announceRun', () => {
 
     push({ status: 'won', score: 900 });
 
-    expect(announce.mock.calls).toEqual([['Level complete. Score: 900.']]);
+    expect(announce.mock.calls).toEqual([['Victory! Every level cleared. Score: 900.']]);
   });
 
   it('stops listening when asked', () => {

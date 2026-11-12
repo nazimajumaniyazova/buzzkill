@@ -1,4 +1,4 @@
-import { type Game, type GameHud as Hud, RULES } from '@buzzkill/game';
+import { type Game, type GameHud as Hud, LEVELS, RULES } from '@buzzkill/game';
 import type { JSX } from 'react';
 
 import { useI18n } from './i18n/i18n';
@@ -19,6 +19,7 @@ interface HudValueProps {
 const selectScore = (hud: Hud): number => hud.score;
 const selectLives = (hud: Hud): number => hud.lives;
 const selectAmmo = (hud: Hud): number => hud.ammo;
+const selectLevel = (hud: Hud): number => hud.level;
 
 /** One value of the HUD, subscribed on its own: it renders only when that value changes. */
 function HudValue({ game, term, select, show }: HudValueProps): JSX.Element {
@@ -32,7 +33,7 @@ function HudValue({ game, term, select, show }: HudValueProps): JSX.Element {
 }
 
 /**
- * Score, lives and ammo over the canvas. The frame subscribes to nothing but the language, so it
+ * Score, lives, ammo and the level over the canvas. The frame subscribes to nothing but the language, so it
  * renders once per run; each value subscribes through its own selector (#109), so a shot renders
  * the ammo and nothing else. The selectors pick numbers and the language writes them (ADR-0013).
  * The pause and the end of the run are the machine's business, through the bridge.
@@ -50,6 +51,12 @@ export function GameHud({ game }: GameHudProps): JSX.Element {
           show={(lives) => t.hud.livesValue(lives, RULES.lives)}
         />
         <HudValue game={game} term={t.hud.ammo} select={selectAmmo} show={format.number} />
+        <HudValue
+          game={game}
+          term={t.hud.level}
+          select={selectLevel}
+          show={(level) => t.hud.levelValue(level, LEVELS.length)}
+        />
       </dl>
     </section>
   );

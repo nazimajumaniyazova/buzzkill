@@ -27,6 +27,7 @@ function createFakeGame() {
         listeners.delete(listener);
       };
     },
+    nextLevel: vi.fn(),
     getHud: () => hud,
     replay: vi.fn(),
     result: vi.fn(),

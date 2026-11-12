@@ -28,6 +28,7 @@ function createFakeGame() {
       listeners.add(listener);
       return () => listeners.delete(listener);
     }),
+    nextLevel: vi.fn(),
     getHud: () => hud,
     replay: vi.fn(),
     result: vi.fn(),
@@ -62,15 +63,16 @@ function setup() {
 }
 
 describe('GameHud', () => {
-  it('shows score, lives and ammo and passes the accessibility check', async () => {
+  it('shows score, lives, ammo and the level, and passes the accessibility check', async () => {
     const { values, container } = setup();
 
     expect(screen.getAllByRole('term').map((term) => term.textContent)).toEqual([
       'Score',
       'Lives',
       'Ammo',
+      'Level',
     ]);
-    expect(values()).toEqual(['0', '5 of 5', '20']);
+    expect(values()).toEqual(['0', '5 of 5', '20', '1 of 6']);
     expect(await axe(container)).toHaveNoViolations();
   });
 
@@ -88,26 +90,26 @@ describe('GameHud', () => {
       within(hud)
         .getAllByRole('term')
         .map((term) => term.textContent),
-    ).toEqual(['Счёт', 'Жизни', 'Патроны']);
+    ).toEqual(['Счёт', 'Жизни', 'Патроны', 'Уровень']);
     expect(
       within(hud)
         .getAllByRole('definition')
         .map((value) => value.textContent),
-    ).toEqual(['12 345', '3 из 5', '20']);
+    ).toEqual(['12 345', '3 из 5', '20', '1 из 6']);
   });
 
   it('renders the values the game publishes', () => {
     const { update, values } = setup();
 
-    update({ score: 7, ammo: 12, lives: 3 });
+    update({ score: 7, ammo: 12, lives: 3, level: 4 });
 
-    expect(values()).toEqual(['7', '3 of 5', '12']);
+    expect(values()).toEqual(['7', '3 of 5', '12', '4 of 6']);
   });
 
   it('subscribes once per value it shows', () => {
     const { listeners } = setup();
 
-    expect(listeners.size).toBe(3);
+    expect(listeners.size).toBe(4);
   });
 
   it('commits only when a value it shows changes, once per publication', () => {

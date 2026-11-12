@@ -14,10 +14,10 @@ import {
   healthAfterHit,
   intInRange,
   livesAfterHit,
-  otherTime,
   pickWeighted,
   scoreAfterKill,
   statusFor,
+  timeAfterLevel,
   valueInRange,
   waveStep,
 } from './rules';
@@ -310,15 +310,15 @@ function spawnEnemy(state: GameState, wave: WaveConfig, speedScale: number): voi
  * it at the start of the tick after a level is cleared.
  */
 export function startNextLevel(state: GameState): void {
-  const cleared = CAMPAIGN[state.level - 1];
   const next = CAMPAIGN[state.level];
-  if (cleared === undefined || next === undefined) {
+  if (next === undefined) {
     // Unreachable: clearing the last level wins the run instead.
     return;
   }
-  if (cleared.timeChangesAfter) {
-    state.mode = otherTime(state.mode);
-    state.enemies = ENEMY_SETS[state.mode];
+  const mode = timeAfterLevel(state.level, state.mode);
+  if (mode !== state.mode) {
+    state.mode = mode;
+    state.enemies = ENEMY_SETS[mode];
     state.enemyWeights = state.enemies.map((enemy) => enemy.weight);
   }
   state.level += 1;

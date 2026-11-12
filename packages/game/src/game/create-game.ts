@@ -82,6 +82,12 @@ export interface Game {
   pause(): void;
   /** Continues a paused run from the same tick. Publishes `paused: false`. */
   resume(): void;
+  /**
+   * Starts the next level after a cleared one. A cleared level holds the run, with no ticks and no
+   * frames, while the shell shows the screen between levels; those moments are never simulated,
+   * so the replay does not depend on them (ADR-0017). Does nothing while no level is cleared.
+   */
+  nextLevel(): void;
   /** Stops the loop and drops every listener. The game cannot be used afterwards. */
   dispose(): void;
   /**
@@ -148,6 +154,8 @@ export function createGame(options: CreateGameOptions): Game {
 
   const hudBus = createEventBus<{ change: GameHud }>();
   let paused = false;
+  /** Held on a cleared level until `nextLevel()`. */
+  let held = false;
   let disposed = false;
   let hud: GameHud = snapshotHud(state, paused);
 
@@ -171,8 +179,8 @@ export function createGame(options: CreateGameOptions): Game {
   const loop = createGameLoop(
     {
       update() {
-        // A pause from the input stops the loop, but the frame still runs its remaining ticks.
-        if (paused) {
+        // A pause or a cleared level stops the loop, but the frame still runs its remaining ticks.
+        if (paused || held) {
           return;
         }
         const snapshot = input.sample();
@@ -196,6 +204,11 @@ export function createGame(options: CreateGameOptions): Game {
         tickInput.down = down;
         recorder.recordInput(state.tick + 1, down);
         simulation.step(tickInput);
+        if (state.status === 'levelCleared') {
+          held = true;
+          loop.pause();
+          publishHud();
+        }
       },
       render(alpha) {
         // Once per frame rather than once per tick: a frame can run several ticks.
@@ -229,6 +242,13 @@ export function createGame(options: CreateGameOptions): Game {
       paused = false;
       loop.resume();
       publishHud();
+    },
+    nextLevel() {
+      if (disposed || !held) {
+        return;
+      }
+      held = false;
+      loop.resume();
     },
     dispose() {
       if (disposed) {

@@ -5,6 +5,7 @@
 import { sin } from '@buzzkill/engine';
 
 import type { GameMode, IntRange, Range } from '../config/enemies';
+import { type LevelConfig, LEVELS } from '../config/levels';
 import { RULES } from '../config/rules';
 
 /**
@@ -50,6 +51,12 @@ export function statusFor(lives: number, levelDone: boolean, lastLevel: boolean)
 /** The other time of day: the sun sets or rises between levels. */
 export function otherTime(mode: GameMode): GameMode {
   return mode === 'day' ? 'night' : 'day';
+}
+
+/** The time of day of the level after `level`, which was played at `mode` (ADR-0017). */
+export function timeAfterLevel(level: number, mode: GameMode): GameMode {
+  const levels: readonly LevelConfig[] = LEVELS;
+  return levels[level - 1]?.timeChangesAfter === true ? otherTime(mode) : mode;
 }
 
 /** Ammo after `tick`: one round back every `refillTicks` ticks, up to the maximum. */

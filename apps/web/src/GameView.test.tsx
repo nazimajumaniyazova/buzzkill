@@ -116,6 +116,7 @@ describe('GameView', () => {
     readonly paused: boolean;
     readonly keyBindings: KeyBindings<GameAction>;
     readonly reducedMotion: boolean;
+    readonly betweenLevels: boolean;
   }
 
   function renderView(props: Partial<ViewProps> = {}) {
@@ -126,6 +127,7 @@ describe('GameView', () => {
         paused={props.paused ?? false}
         keyBindings={props.keyBindings ?? DEFAULT_KEY_BINDINGS}
         reducedMotion={props.reducedMotion ?? false}
+        betweenLevels={props.betweenLevels ?? false}
         onEvent={onEvent}
       />,
     );
@@ -139,6 +141,7 @@ describe('GameView', () => {
             paused={next.paused ?? false}
             keyBindings={next.keyBindings ?? props.keyBindings ?? DEFAULT_KEY_BINDINGS}
             reducedMotion={next.reducedMotion ?? props.reducedMotion ?? false}
+            betweenLevels={next.betweenLevels ?? props.betweenLevels ?? false}
             onEvent={onEvent}
           />,
         );
@@ -222,6 +225,20 @@ describe('GameView', () => {
     // The drawer reads the setting every frame, so the city slows down in the same run.
     expect(options?.reducedMotion?.()).toBe(true);
     expect(vi.mocked(createGameDrawer).mock.calls).toHaveLength(drawers);
+  });
+
+  it('starts the next level when the machine leaves the screen between levels', () => {
+    const frames = installFrames();
+    const view = renderView({ betweenLevels: true });
+    frames.run(1);
+    const game = vi.mocked(createGame).mock.results.at(-1)?.value as Game;
+    const nextLevel = vi.spyOn(game, 'nextLevel');
+
+    view.rerender({ betweenLevels: true });
+    expect(nextLevel).not.toHaveBeenCalled();
+
+    view.rerender({ betweenLevels: false });
+    expect(nextLevel).toHaveBeenCalledOnce();
   });
 
   it('shoots on Space: a sound and one round less', () => {
@@ -313,6 +330,7 @@ describe('GameView', () => {
           paused={false}
           keyBindings={DEFAULT_KEY_BINDINGS}
           reducedMotion={false}
+          betweenLevels={false}
           onEvent={onEvent}
         />
       </ErrorBoundary>,
@@ -399,6 +417,7 @@ describe('GameView', () => {
           paused={false}
           keyBindings={DEFAULT_KEY_BINDINGS}
           reducedMotion={false}
+          betweenLevels={false}
           onEvent={onEvent}
         />
       </AnnouncerProvider>,

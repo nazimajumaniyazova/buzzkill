@@ -27,32 +27,42 @@ export interface Run extends RunChoice {
 /** The screens of the menu: the main menu and the two it opens. */
 export type MenuPanel = 'main' | 'settings' | 'help';
 
+/** What every state of a run on screen holds. */
+interface OnScreen {
+  readonly assets: GameAssets;
+  readonly run: Run;
+  /**
+   * The time of day of the level on screen: the run's choice at first, then whatever the levels
+   * make it (ADR-0017). The page's theme follows it.
+   */
+  readonly time: GameMode;
+}
+
 /**
  * The flow of the shell (ADR-0006). It starts on the menu, before the game's code and files have
  * downloaded (#112); `menu` says which of its panels is open. `loading` holds the run the player
- * chose while the game finishes loading. The four run states carry the loaded assets and the run,
- * and the two final ones its result. `failed` is the error screen of a run that stopped on an
- * unexpected error (#113); the run is gone by then. A pause dialog on the menu, a game over
- * without a run or a run without its assets cannot be written.
+ * chose while the game finishes loading. The five run states carry the loaded assets, the run and
+ * the time of day on screen; `levelCleared` is the screen between levels, and the two final ones
+ * carry the result. `failed` is the error screen of a run that stopped on an unexpected error
+ * (#113); the run is gone by then. A pause dialog on the menu, a game over without a run or a run
+ * without its assets cannot be written.
  */
 export type AppState =
   | { readonly name: 'menu'; readonly panel: MenuPanel }
   | { readonly name: 'heroSelect' }
   | { readonly name: 'loading'; readonly run: Run }
-  | { readonly name: 'playing'; readonly assets: GameAssets; readonly run: Run }
-  | { readonly name: 'paused'; readonly assets: GameAssets; readonly run: Run }
-  | {
-      readonly name: 'levelComplete';
-      readonly assets: GameAssets;
-      readonly run: Run;
-      readonly result: RunResult;
-    }
-  | {
-      readonly name: 'gameOver';
-      readonly assets: GameAssets;
-      readonly run: Run;
-      readonly result: RunResult;
-    }
+  | ({ readonly name: 'playing' } & OnScreen)
+  | ({ readonly name: 'paused' } & OnScreen)
+  | ({
+      readonly name: 'levelCleared';
+      /** The level just cleared, from 1. */
+      readonly level: number;
+      readonly score: number;
+      /** The time of day of the next level. */
+      readonly nextTime: GameMode;
+    } & OnScreen)
+  | ({ readonly name: 'victory'; readonly result: RunResult } & OnScreen)
+  | ({ readonly name: 'gameOver'; readonly result: RunResult } & OnScreen)
   | { readonly name: 'failed' };
 
 /** The states of a run on screen: the canvas is there and a `Game` exists. */
@@ -60,9 +70,9 @@ export type RunState = Extract<AppState, { readonly assets: GameAssets }>;
 
 /**
  * What moves the flow: the player's choices (`openSettings`, `openHelp`, `selectHero`, `back`,
- * `play`, `pause`, `resume`, `quit`, `restart`), the end of the game's loading (`gameLoaded`),
- * what the game reports through the bridge (`gamePaused`, `gameResumed`, `runEnded`) and the
- * error boundary around the run (`runFailed`). A command and the game's own report of the same
+ * `play`, `pause`, `resume`, `nextLevel`, `quit`, `restart`), the end of the game's loading
+ * (`gameLoaded`), what the game reports through the bridge (`gamePaused`, `gameResumed`,
+ * `levelCleared`, `runEnded`) and the error boundary around the run (`runFailed`). A command and the game's own report of the same
  * fact are separate events, so the table shows who may cause what.
  */
 export type AppEvent =
@@ -77,6 +87,13 @@ export type AppEvent =
   | { readonly type: 'gamePaused' }
   | { readonly type: 'gameResumed' }
   | { readonly type: 'runEnded'; readonly result: RunResult }
+  | {
+      readonly type: 'levelCleared';
+      readonly level: number;
+      readonly score: number;
+      readonly nextTime: GameMode;
+    }
+  | { readonly type: 'nextLevel' }
   | { readonly type: 'quit' }
   | { readonly type: 'runFailed' }
   | { readonly type: 'restart' };
@@ -87,7 +104,8 @@ export function isRunState(state: AppState): state is RunState {
   return (
     state.name === 'playing' ||
     state.name === 'paused' ||
-    state.name === 'levelComplete' ||
+    state.name === 'levelCleared' ||
+    state.name === 'victory' ||
     state.name === 'gameOver'
   );
 }
@@ -119,22 +137,34 @@ export function transition(state: AppState, event: AppEvent): AppState {
         return { name: 'loading', run: event.run };
       }
       // A run is over: the assets are there, so the next one starts at once.
-      return state.name === 'levelComplete' || state.name === 'gameOver'
-        ? { name: 'playing', assets: state.assets, run: event.run }
+      return state.name === 'victory' || state.name === 'gameOver'
+        ? { name: 'playing', assets: state.assets, run: event.run, time: event.run.mode }
         : state;
     case 'gameLoaded':
       return state.name === 'loading'
-        ? { name: 'playing', assets: event.assets, run: state.run }
+        ? { name: 'playing', assets: event.assets, run: state.run, time: state.run.mode }
         : state;
     case 'pause':
     case 'gamePaused':
       return state.name === 'playing'
-        ? { name: 'paused', assets: state.assets, run: state.run }
+        ? { name: 'paused', assets: state.assets, run: state.run, time: state.time }
         : state;
     case 'resume':
     case 'gameResumed':
       return state.name === 'paused'
-        ? { name: 'playing', assets: state.assets, run: state.run }
+        ? { name: 'playing', assets: state.assets, run: state.run, time: state.time }
+        : state;
+    case 'levelCleared': {
+      if (state.name !== 'playing') {
+        return state;
+      }
+      const { assets, run, time } = state;
+      const { level, score, nextTime } = event;
+      return { name: 'levelCleared', assets, run, time, level, score, nextTime };
+    }
+    case 'nextLevel':
+      return state.name === 'levelCleared'
+        ? { name: 'playing', assets: state.assets, run: state.run, time: state.nextTime }
         : state;
     case 'quit':
       return isRunState(state) ? { name: 'menu', panel: 'main' } : state;
@@ -147,16 +177,16 @@ export function transition(state: AppState, event: AppEvent): AppState {
       if (state.name !== 'playing') {
         return state;
       }
-      const { assets, run } = state;
+      const { assets, run, time } = state;
       switch (event.result.status) {
-        // A cleared level is not the end of a run: the next one follows (ADR-0017).
+        // A cleared level is not the end of a run: it comes as `levelCleared` (ADR-0017).
         case 'playing':
         case 'levelCleared':
           return state;
         case 'won':
-          return { name: 'levelComplete', assets, run, result: event.result };
+          return { name: 'victory', assets, run, time, result: event.result };
         case 'lost':
-          return { name: 'gameOver', assets, run, result: event.result };
+          return { name: 'gameOver', assets, run, time, result: event.result };
       }
     }
   }

@@ -3,11 +3,13 @@ import { fc, test } from '@fast-check/vitest';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GAME_ACTIONS, type GameAction } from '../actions';
+import { LEVELS } from '../config/levels';
 import { RULES } from '../config/rules';
 import { deserializeReplay, type Replay, serializeReplay } from '../replay/format';
 import type { RunResult } from '../replay/result';
 import { simulate } from '../replay/simulate';
 import { createSimulation } from '../simulation/simulation';
+import type { GameState } from '../simulation/state';
 import {
   createGame,
   type Game,
@@ -85,6 +87,16 @@ function setup(seed = 1): Setup {
       return call[0];
     },
   };
+}
+
+/**
+ * Ends the waves of the first level now. The view a renderer gets is the live state, so the test
+ * can reach the end of a level without playing it through.
+ */
+function sendEveryWave(s: Setup): void {
+  // The rendered view is the simulation's state object; writing to it is what a test needs here.
+  const state = s.view() as unknown as GameState;
+  state.wave = LEVELS[0].waves.length;
 }
 
 /** Runs frames until the simulation reaches `tick`. */
@@ -262,6 +274,41 @@ describe('createGame', () => {
     s.game.subscribe(listener)();
     unsubscribe();
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('holds a cleared level without simulating, until nextLevel() starts the next one', () => {
+    const s = setup();
+    s.game.start();
+    s.fake.frame();
+    sendEveryWave(s);
+
+    s.fake.frame(5);
+    const held = s.game.getHud();
+    const tick = s.view().tick;
+    expect([held.status, held.level, held.paused]).toEqual(['levelCleared', 1, false]);
+    // The loop stopped asking for frames: the screen between levels is never simulated.
+    expect(s.fake.hasPendingFrame).toBe(false);
+
+    s.game.pause();
+    s.game.resume();
+    expect(s.game.getHud()).toBe(held);
+
+    s.game.nextLevel();
+    s.fake.frame();
+    s.fake.frame();
+    expect(s.game.getHud()).toMatchObject({ status: 'playing', level: 2, paused: false });
+    expect(s.view().tick).toBeGreaterThan(tick);
+  });
+
+  it('ignores nextLevel() while no level is cleared', () => {
+    const s = setup();
+    s.game.start();
+    s.fake.frame();
+
+    s.game.nextLevel();
+    runUntilTick(s, 30);
+
+    expect(s.game.getHud()).toMatchObject({ status: 'playing', level: 1 });
   });
 
   it('removes a listener with the function subscribe returned', () => {

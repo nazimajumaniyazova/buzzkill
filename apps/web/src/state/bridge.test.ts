@@ -35,6 +35,7 @@ function createFakeGame() {
         listeners.delete(listener);
       };
     },
+    nextLevel: vi.fn(),
     getHud: () => hud,
     replay: vi.fn(),
     result,
@@ -60,15 +61,18 @@ describe('connectGame', () => {
     expect(send.mock.calls).toEqual([[{ type: 'gamePaused' }], [{ type: 'gameResumed' }]]);
   });
 
-  it('does not take a cleared level for the end of the run', () => {
+  it('reports a cleared level once, with the time of day of the next one, not as the end', () => {
     const { game, publish } = createFakeGame();
     const send = vi.fn();
     connectGame(game, send);
 
-    publish({ status: 'levelCleared', score: 12 });
-    publish({ status: 'playing', level: 2 });
+    // The third level ends with the sunset (ADR-0017).
+    publish({ status: 'levelCleared', level: 3, score: 120 });
+    publish({ status: 'playing', level: 4, mode: 'night' });
 
-    expect(send).not.toHaveBeenCalled();
+    expect(send.mock.calls).toEqual([
+      [{ type: 'levelCleared', level: 3, score: 120, nextTime: 'night' }],
+    ]);
   });
 
   it('reports the end of the run once, with the result of the game', () => {

@@ -9,6 +9,7 @@ import { createGamepadNavigation } from './gamepad-navigation';
 import { HelpScreen } from './HelpScreen';
 import { HeroSelectScreen } from './HeroSelectScreen';
 import { i18nFor, I18nProvider } from './i18n/i18n';
+import { LevelClearedDialog } from './LevelClearedDialog';
 import { LoadingScreen } from './LoadingScreen';
 import { MenuScreen } from './MenuScreen';
 import { applyMotion, reducesMotion, usePrefersReducedMotion } from './motion';
@@ -67,7 +68,9 @@ function backEvent(state: AppState): AppEvent | null {
       return { type: 'back' };
     case 'paused':
       return { type: 'resume' };
-    case 'levelComplete':
+    case 'levelCleared':
+      return { type: 'nextLevel' };
+    case 'victory':
     case 'gameOver':
       return { type: 'quit' };
     case 'failed':
@@ -97,15 +100,15 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
   const gameLoad = useStore(gameLoader, whole);
   const { send } = store;
   const rootRef = useRef<HTMLDivElement>(null);
-  const run = isRunState(state) ? state.run : null;
   const assets = isRunState(state) ? state.assets : null;
+  const time = isRunState(state) ? state.time : null;
   const i18n = i18nFor(settings.language);
 
-  // The theme of the page (#75): the player's setting on the menus, the run's own time of day
-  // while a run is on screen, so the HUD and the dialogs match the sky.
+  // The theme of the page (#75): the player's setting on the menus, the time of day on screen
+  // while a run is there, so the HUD and the dialogs match the sky as the levels change it.
   useEffect(() => {
-    applyTheme(run === null ? settings.theme : run.mode);
-  }, [run, settings.theme]);
+    applyTheme(time ?? settings.theme);
+  }, [time, settings.theme]);
 
   // Reduced or full motion for the interface, or the system's preference (#114); the canvas
   // gets the same answer in code, for the parallax of the city.
@@ -275,7 +278,8 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
         );
       case 'playing':
       case 'paused':
-      case 'levelComplete':
+      case 'levelCleared':
+      case 'victory':
       case 'gameOver':
         return (
           // An error in the run makes the boundary send `runFailed`, and the screen of `failed`
@@ -293,6 +297,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 run={state.run}
                 assets={state.assets}
                 paused={state.name === 'paused'}
+                betweenLevels={state.name === 'levelCleared'}
                 keyBindings={settings.keyBindings}
                 reducedMotion={reducedMotion}
                 onEvent={send}
@@ -308,7 +313,21 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 }}
               />
             )}
-            {(state.name === 'levelComplete' || state.name === 'gameOver') && (
+            {state.name === 'levelCleared' && (
+              <LevelClearedDialog
+                level={state.level}
+                score={state.score}
+                time={state.time}
+                nextTime={state.nextTime}
+                onNext={() => {
+                  send({ type: 'nextLevel' });
+                }}
+                onQuit={() => {
+                  send({ type: 'quit' });
+                }}
+              />
+            )}
+            {(state.name === 'victory' || state.name === 'gameOver') && (
               <RunOverDialog
                 title={i18n.t.runOver.titles[state.name]}
                 result={state.result}
