@@ -5,7 +5,7 @@
       "project": ["*.{js,cjs,mjs}"],
     },
     "apps/web": {
-      "project": ["src/**/*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts"],
     },
     "packages/art": {
       "entry": ["scripts/*.ts"],

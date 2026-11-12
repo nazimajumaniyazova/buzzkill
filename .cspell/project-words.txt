@@ -34,6 +34,7 @@ nvmrc
 parsererror
 PractRand
 rasterizer
+rasterizes
 rasterizing
 resvg
 RGBA

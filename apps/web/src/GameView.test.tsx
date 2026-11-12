@@ -41,16 +41,7 @@ const context = {
 };
 
 const image = {} as ImageBitmap;
-const sprites = createGameSprites<ImageBitmap>({
-  'enemy-2': image,
-  'enemy-3': image,
-  enemy_bat_2: image,
-  enemy_bat_3: image,
-  enemy_raven: image,
-  projectile: image,
-  smokeExplosion: image,
-  fireExplosion: image,
-});
+const sprites = createGameSprites<ImageBitmap>({ creatures: image, effects: image });
 
 const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1 };
 

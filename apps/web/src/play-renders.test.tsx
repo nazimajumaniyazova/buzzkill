@@ -43,16 +43,7 @@ const context = {
 
 const image = {} as ImageBitmap;
 const assets: GameAssets = {
-  sprites: createGameSprites<ImageBitmap>({
-    'enemy-2': image,
-    'enemy-3': image,
-    enemy_bat_2: image,
-    enemy_bat_3: image,
-    enemy_raven: image,
-    projectile: image,
-    smokeExplosion: image,
-    fireExplosion: image,
-  }),
+  sprites: createGameSprites<ImageBitmap>({ creatures: image, effects: image }),
   audio: createAudioMixer<GameSound, AudioBuffer>({ context: null, buffers: {} }),
 };
 

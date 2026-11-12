@@ -18,6 +18,7 @@ export interface HeroConfig {
   readonly height: number;
   /** Where projectiles leave the hero, from its top-left corner. */
   readonly muzzle: { readonly x: number; readonly y: number };
+  /** The hero's sprite in `@buzzkill/art`. */
   readonly sprite: { readonly sheet: string };
 }
 
@@ -27,13 +28,13 @@ export const HEROES = {
     width: 229 * 0.7,
     height: 226 * 0.7,
     muzzle: { x: 105, y: 90 },
-    sprite: { sheet: 'male' },
+    sprite: { sheet: 'mike' },
   },
   female: {
     width: 172 * 0.8,
     height: 212 * 0.7,
     muzzle: { x: 105, y: 90 },
-    sprite: { sheet: 'female' },
+    sprite: { sheet: 'julie' },
   },
 } as const satisfies Record<HeroId, HeroConfig>;
 

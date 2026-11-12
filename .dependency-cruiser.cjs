@@ -73,6 +73,16 @@ module.exports = {
       to: { path: '^(packages/(engine|game|ui)|apps)/' },
     },
     {
+      name: 'web-loads-art-as-files',
+      severity: 'error',
+      comment:
+        'The game loads the art as the atlases the asset pipeline generates (ADR-0016), never as ' +
+        'code: importing @buzzkill/art would put its SVG generators in the bundle. Only the ' +
+        'pipeline in apps/web/scripts imports it.',
+      from: { path: '^apps/web/src/' },
+      to: { path: '^packages/art/' },
+    },
+    {
       name: 'game-chunk-loads-on-demand',
       severity: 'error',
       comment:
@@ -84,6 +94,7 @@ module.exports = {
         pathNot: [
           '^apps/web/src/(GameView|GameHud)\\.tsx$',
           '^apps/web/src/game/(game-chunk|load-assets|assets|sprites|draw-game)\\.ts$',
+          '^apps/web/src/assets/manifest\\.gen\\.ts$',
           '\\.test\\.tsx?$',
         ],
       },
@@ -91,6 +102,7 @@ module.exports = {
         path: [
           '^apps/web/src/(GameView|GameHud)\\.tsx$',
           '^apps/web/src/game/(game-chunk|load-assets|assets|sprites|draw-game)\\.ts$',
+          '^apps/web/src/assets/manifest\\.gen\\.ts$',
         ],
         dependencyTypesNot: ['type-only', 'dynamic-import'],
       },

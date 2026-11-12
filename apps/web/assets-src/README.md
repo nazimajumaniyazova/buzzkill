@@ -2,7 +2,8 @@
 
 The sources of the game's assets that are not drawn as code (ADR-0015). The art lives in
 `packages/art`; this folder holds what comes from outside, exactly as downloaded, next to its
-license. The pipeline of #133 turns these files into what the game loads.
+license. `pnpm assets` (ADR-0016) turns them into what the game loads: the game loads each Ogg file
+as it is, and a WAV that the pipeline writes to `src/assets` for browsers that cannot decode Ogg.
 
 ## Sounds
 
@@ -21,4 +22,5 @@ pack's `License.txt` is the one that came with it.
 | Impact Sounds | 1.0, 2019-12-19 | <https://kenney.nl/assets/impact-sounds> | CC0 1.0 |
 
 Only the files the game uses are in the repository. To change a sound, download the pack from its
-page, copy the new file here unchanged and update the table and `docs/assets.md`.
+page and copy the new file here unchanged. Then point `SOUND_SOURCES` in `scripts/assets/plan.ts`
+at it, run `pnpm assets`, and update the table and `docs/assets.md`.

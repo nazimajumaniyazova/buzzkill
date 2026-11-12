@@ -7,6 +7,7 @@
   "author": "Nazima Jumaniyazova",
   "type": "module",
   "scripts": {
+    "assets": "pnpm --filter @buzzkill/web assets",
     "bench": "vitest bench --run --reporter=verbose",
     "build": "turbo run build",
     "dev": "turbo run dev --filter=@buzzkill/web",

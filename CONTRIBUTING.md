@@ -21,6 +21,7 @@ pnpm test           # Vitest, all projects; pnpm test:coverage adds coverage
 pnpm test:storybook # every story in Chromium; once: pnpm --filter @buzzkill/ui exec playwright install chromium
 pnpm storybook      # Storybook of the design system on http://localhost:6006
 pnpm bench          # benchmarks of the engine and the game
+pnpm assets         # regenerate the atlases, WAVs and asset manifest after changing art or a sound
 pnpm format:check   # Prettier
 ```
 

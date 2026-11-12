@@ -10,6 +10,8 @@ const decoding = vi.hoisted(() => ({
   fail: (_url: string): Error | undefined => undefined,
   /** The audio context the decoders were given. */
   audioContext: undefined as AudioContext | null | undefined,
+  /** Every URL a decoder was asked for. */
+  requested: [] as string[],
 }));
 
 vi.mock('@buzzkill/engine/browser', async (importOriginal) => ({
@@ -17,6 +19,7 @@ vi.mock('@buzzkill/engine/browser', async (importOriginal) => ({
   createBrowserAssetDecoders: ({ audioContext }: { audioContext: AudioContext | null }) => {
     decoding.audioContext = audioContext;
     const decode = (url: string) => {
+      decoding.requested.push(url);
       const error = decoding.fail(url);
       return error === undefined ? Promise.resolve({ url }) : Promise.reject(error);
     };
@@ -43,6 +46,7 @@ describe('loadGameAssets', () => {
   beforeEach(() => {
     decoding.fail = () => undefined;
     decoding.audioContext = undefined;
+    decoding.requested = [];
   });
 
   it('loads every file with progress, then builds the sprites and the mixer', async () => {
@@ -59,14 +63,14 @@ describe('loadGameAssets', () => {
     if (!result.ok) {
       return;
     }
-    expect(result.assets.sprites.projectile).toBeDefined();
+    expect(result.assets.sprites.heroes.male.atlas.frames.length).toBeGreaterThan(0);
     // Without an audio context the mixer is silent.
     expect(result.assets.audio.available).toBe(false);
   });
 
   it('reports what failed to load', async () => {
     decoding.fail = (url) =>
-      url.includes('projectile') ? new AssetLoadError('http', `${url}: HTTP 404`) : undefined;
+      url.includes('creatures') ? new AssetLoadError('http', `${url}: HTTP 404`) : undefined;
 
     const result = await loadGameAssets(null, () => undefined);
 
@@ -75,17 +79,29 @@ describe('loadGameAssets', () => {
       return;
     }
     expect(result.failures.map((failure) => [failure.id, failure.reason])).toEqual([
-      ['projectile', 'http'],
+      ['creatures', 'http'],
     ]);
   });
 
   it('runs without sound when the sounds cannot load', async () => {
     decoding.fail = (url) =>
-      url.endsWith('.wav') ? new AssetLoadError('unavailable', 'no Web Audio') : undefined;
+      /\.(ogg|wav)$/.test(url) ? new AssetLoadError('unavailable', 'no Web Audio') : undefined;
 
     const result = await loadGameAssets(null, () => undefined);
 
     expect(result.ok).toBe(true);
+  });
+
+  it('decodes the WAV of a sound whose Ogg file the browser cannot decode', async () => {
+    decoding.fail = (url) =>
+      url.endsWith('.ogg') ? new AssetLoadError('decode', `${url}: no Ogg`) : undefined;
+
+    const result = await loadGameAssets(null, () => undefined);
+
+    expect(result.ok).toBe(true);
+    const sounds = decoding.requested.filter((url) => /\.(ogg|wav)$/.test(url));
+    expect(sounds.filter((url) => url.endsWith('.wav'))).toHaveLength(3);
+    expect(sounds).toHaveLength(6);
   });
 
   it("decodes the sounds on the page's context, which the mixer then plays through", async () => {
