@@ -95,6 +95,16 @@ atlases.
 | `projectile.png`                          | `shot`, and `shot-trail` for drawing it in flight                   | 20×6, 60×12            | 1      |
 | The sky color                             | The city by day and by night: sky, clouds, far, mid and near layers | 1280×720, world pixels | —      |
 
-The sounds come from Kenney's Sci-fi Sounds and Impact Sounds (CC0): a laser for `shot`, an explosion
-for `explosion`, an impact for `hit`. kenney.nl refuses automated downloads, so the owner downloads
-the packs; the chosen files and the license go into `apps/web/assets-src/`.
+The sounds come from Kenney's Sci-fi Sounds and Impact Sounds (CC0). The owner downloaded the packs,
+since kenney.nl refuses automated downloads, and approved one file for each sound on 2026-11-11,
+from candidates listened to on the review page. The files and both licenses are in `apps/web/assets-src/sounds/`, listed in
+`apps/web/assets-src/README.md`.
+
+| Now                            | Replaced by                                | Length (2023 file) |
+| ------------------------------ | ------------------------------------------ | ------------------ |
+| `bullet-sound.wav` (`shot`)    | `laserSmall_001.ogg`, Sci-Fi Sounds        | 0.25 s (1.90 s)    |
+| `smoke-bomb.wav` (`explosion`) | `explosionCrunch_000.ogg`, Sci-Fi Sounds   | 0.78 s (1.44 s)    |
+| `pain-sound.wav` (`hit`)       | `impactPunch_heavy_002.ogg`, Impact Sounds | 0.46 s (0.49 s)    |
+
+The new sounds are Ogg Vorbis, 44.1 kHz, 7 to 28 kB each, against 86 to 182 kB of WAV. The game
+plays them once the pipeline of #133 adds a fallback for browsers without Ogg.
