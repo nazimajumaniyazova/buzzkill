@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.16.0...v0.17.0) (2026-11-12)
+
+
+### Features
+
+* **web:** draw the city behind the run in parallax layers ([#146](https://github.com/nazimajumaniyazova/buzzkill/issues/146)) ([dbff7b8](https://github.com/nazimajumaniyazova/buzzkill/commit/dbff7b8467ab8e84f0c6623b9c9ef476d18ebdce)), closes [#133](https://github.com/nazimajumaniyazova/buzzkill/issues/133)
+
 ## [0.16.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.15.0...v0.16.0) (2026-11-12)
 
 
