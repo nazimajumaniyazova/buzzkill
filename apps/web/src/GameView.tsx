@@ -45,6 +45,11 @@ interface GameViewProps {
    * A change applies to the run on screen.
    */
   readonly reducedMotion: boolean;
+  /**
+   * The machine shows the screen between levels. The game holds itself on a cleared level; when
+   * this turns false again, the next level starts (ADR-0017).
+   */
+  readonly betweenLevels: boolean;
   /** Where the game's own reports go: the pause, the resume and the end of the run. */
   readonly onEvent: (event: GameEvent) => void;
 }
@@ -67,6 +72,7 @@ export function GameView({
   paused,
   keyBindings,
   reducedMotion,
+  betweenLevels,
   onEvent,
 }: GameViewProps): JSX.Element {
   const { t } = useI18n();
@@ -205,6 +211,13 @@ export function GameView({
       game.resume();
     }
   }, [game, paused]);
+
+  // The player went on from the screen between levels. While no level is cleared, a no-op.
+  useEffect(() => {
+    if (game !== null && !betweenLevels) {
+      game.nextLevel();
+    }
+  }, [game, betweenLevels]);
 
   if (crash !== null) {
     throw crash.error;

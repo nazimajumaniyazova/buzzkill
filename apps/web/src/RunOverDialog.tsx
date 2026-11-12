@@ -5,7 +5,7 @@ import type { JSX } from 'react';
 import { useI18n } from './i18n/i18n';
 
 interface RunOverDialogProps {
-  /** "Level complete" or "Game over": the state the run ended in. */
+  /** "Victory" or "Game over": the state the run ended in. */
   readonly title: string;
   readonly result: RunResult;
   readonly onPlayAgain: () => void;
@@ -13,7 +13,7 @@ interface RunOverDialogProps {
 }
 
 /**
- * The `levelComplete` and `gameOver` states over the canvas, where the world still moves for the
+ * The `victory` and `gameOver` states over the canvas, where the world still moves for the
  * picture. Escape and the close button go back to the menu.
  */
 export function RunOverDialog({

@@ -147,7 +147,9 @@ export const ru: Dictionary = (format): Messages => ({
     score: 'Счёт',
     lives: 'Жизни',
     ammo: 'Патроны',
+    level: 'Уровень',
     livesValue: (lives, max) => `${format.number(lives)} из ${format.number(max)}`,
+    levelValue: (level, last) => `${format.number(level)} из ${format.number(last)}`,
   },
   pause: {
     title: 'Пауза',
@@ -155,8 +157,21 @@ export const ru: Dictionary = (format): Messages => ({
     resume: 'Продолжить',
     quit: 'Выйти в меню',
   },
+  levelCleared: {
+    title: (level) => `Уровень ${format.number(level)} пройден`,
+    description: (score, change) =>
+      `Счёт: ${format.number(score)}.${
+        {
+          none: '',
+          nightFalls: ' Над городом опускается ночь.',
+          dayBreaks: ' Над городом встаёт солнце.',
+        }[change]
+      }`,
+    next: 'Следующий уровень',
+    quit: 'Выйти в меню',
+  },
   runOver: {
-    titles: { levelComplete: 'Уровень пройден', gameOver: 'Игра окончена' },
+    titles: { victory: 'Победа', gameOver: 'Игра окончена' },
     score: (score) => `Счёт: ${format.number(score)}`,
     playAgain: 'Играть снова',
     quit: 'В меню',
@@ -172,7 +187,9 @@ export const ru: Dictionary = (format): Messages => ({
         other: `Осталось ${left} жизни`,
       })}.`;
     },
-    levelComplete: (score) => `Уровень пройден. Счёт: ${format.number(score)}.`,
+    levelCleared: (level, score) =>
+      `Уровень ${format.number(level)} пройден. Счёт: ${format.number(score)}.`,
+    victory: (score) => `Победа! Все уровни пройдены. Счёт: ${format.number(score)}.`,
     gameOver: (score) => `Игра окончена. Счёт: ${format.number(score)}.`,
   },
   error: {

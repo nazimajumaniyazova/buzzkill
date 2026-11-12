@@ -111,6 +111,7 @@ function createStillGame(): Game {
     resume: vi.fn(),
     dispose: vi.fn(),
     subscribe: () => () => undefined,
+    nextLevel: vi.fn(),
     getHud: () => hud,
     replay: vi.fn(),
     result: vi.fn(),
@@ -260,6 +261,7 @@ describe('every text on screen comes from the dictionary', () => {
         paused={false}
         keyBindings={DEFAULT_KEY_BINDINGS}
         reducedMotion={false}
+        betweenLevels={false}
         onEvent={vi.fn()}
       />,
     );

@@ -56,10 +56,12 @@ vi.mock('./GameView', async () => {
     GameView: function FakeGameView({
       run,
       paused,
+      betweenLevels,
       onEvent,
     }: {
       run: Run;
       paused: boolean;
+      betweenLevels: boolean;
       onEvent: (event: GameEvent) => void;
     }) {
       const [broken, setBroken] = useState(false);
@@ -71,6 +73,7 @@ vi.mock('./GameView', async () => {
           <p>
             Game view: {run.heroId} {run.mode} seed {run.seed}
             {paused ? ', held' : ''}
+            {betweenLevels ? ', between levels' : ''}
           </p>
           <p>Speed {run.speed}</p>
           <button
@@ -96,6 +99,14 @@ vi.mock('./GameView', async () => {
             }}
           >
             Win
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onEvent({ type: 'levelCleared', level: 3, score: 120, nextTime: 'night' });
+            }}
+          >
+            Clear level 3
           </button>
           <button
             type="button"
@@ -423,7 +434,7 @@ describe('App', () => {
     expect(heading('Buzzkill')).toBeInTheDocument();
   });
 
-  it('ends a lost run as game over and a won run as level complete, over the running view', async () => {
+  it('ends a lost run as game over and a won run as a victory, over the running view', async () => {
     vi.stubGlobal('AudioContext', FakeAudioContext);
     window.history.replaceState(null, '', '/?seed=7');
     const { container } = render(<App />);
@@ -441,7 +452,7 @@ describe('App', () => {
     expect(loadGameAssets).toHaveBeenCalledOnce();
 
     click('Win');
-    expect(screen.getByRole('dialog', { name: 'Level complete' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Victory' })).toBeInTheDocument();
 
     click('Back to menu');
     expect(heading('Buzzkill')).toBeInTheDocument();
@@ -531,7 +542,7 @@ describe('App', () => {
     );
     click('Играть снова');
     click('Win');
-    expect(screen.getByRole('dialog', { name: 'Уровень пройден' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Победа' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Закрыть' })).toBeInTheDocument();
   });
 
@@ -553,7 +564,7 @@ describe('App', () => {
     const run: Run = { heroId: 'male', mode: 'day', seed: 3, speed: 1 };
     render(
       <App
-        store={createAppStore({ name: 'paused', assets, run })}
+        store={createAppStore({ name: 'paused', assets, run, time: run.mode })}
         settings={createSettingsStore({
           ...DEFAULT_SETTINGS,
           keyBindings: { ...DEFAULT_SETTINGS.keyBindings, pause: ['KeyQ', 'KeyE'] },
@@ -588,11 +599,28 @@ describe('App', () => {
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
   });
 
+  it('holds the run between levels, says that night falls, and goes on at night', async () => {
+    render(<App />);
+    await startRun();
+    expect(document.documentElement).toHaveAttribute('data-theme', 'day');
+
+    click('Clear level 3');
+    const dialog = screen.getByRole('dialog', { name: 'Level 3 cleared' });
+    expect(dialog).toHaveAccessibleDescription('Score: 120. Night falls over the city.');
+    expect(screen.getByText(/between levels/)).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('data-theme', 'day');
+
+    click('Next level');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByText(/between levels/)).not.toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night');
+  });
+
   it('renders the state of the stores it is given, the game view once its code is in place', async () => {
     const run: Run = { heroId: 'female', mode: 'night', seed: 3, speed: 1 };
     render(
       <App
-        store={createAppStore({ name: 'paused', assets, run })}
+        store={createAppStore({ name: 'paused', assets, run, time: run.mode })}
         settings={createSettingsStore({ ...DEFAULT_SETTINGS, muted: true })}
       />,
     );

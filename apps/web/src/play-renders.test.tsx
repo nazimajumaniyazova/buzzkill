@@ -103,7 +103,7 @@ describe('renders during play', () => {
     const onRender = vi.fn<ProfilerOnRenderCallback>();
     render(
       <Profiler id="shell" onRender={onRender}>
-        <App store={createAppStore({ name: 'playing', assets, run })} />
+        <App store={createAppStore({ name: 'playing', assets, run, time: run.mode })} />
       </Profiler>,
     );
     // The game view comes with the game chunk (#112). Waiting for it inside act lets React mount

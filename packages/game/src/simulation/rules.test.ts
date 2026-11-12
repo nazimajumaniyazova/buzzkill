@@ -13,6 +13,7 @@ import {
   pickWeighted,
   scoreAfterKill,
   statusFor,
+  timeAfterLevel,
   valueInRange,
   waveStep,
 } from './rules';
@@ -52,6 +53,14 @@ describe('game rules', () => {
   it('turns day into night and night into day', () => {
     expect(otherTime('day')).toBe('night');
     expect(otherTime('night')).toBe('day');
+  });
+
+  it('gives the time of the next level: the other one after a level that changes it', () => {
+    // The third level changes the time (ADR-0017); the others keep it.
+    expect(timeAfterLevel(1, 'day')).toBe('day');
+    expect(timeAfterLevel(3, 'day')).toBe('night');
+    expect(timeAfterLevel(3, 'night')).toBe('day');
+    expect(timeAfterLevel(4, 'night')).toBe('night');
   });
 
   test.prop([fc.integer({ min: 0, max: RULES.ammo.max }), fc.nat({ max: 100_000 })])(

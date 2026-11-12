@@ -39,10 +39,20 @@ const states = {
   menu: { name: 'menu', panel: 'main' },
   heroSelect: { name: 'heroSelect' },
   loading: { name: 'loading', run },
-  playing: { name: 'playing', assets, run },
-  paused: { name: 'paused', assets, run },
-  levelComplete: { name: 'levelComplete', assets, run, result: resultWith('won') },
-  gameOver: { name: 'gameOver', assets, run, result: resultWith('lost') },
+  playing: { name: 'playing', assets, run, time: 'day' },
+  paused: { name: 'paused', assets, run, time: 'day' },
+  levelCleared: {
+    name: 'levelCleared',
+    assets,
+    run,
+    time: 'day',
+    level: 3,
+    score: 120,
+    nextTime: 'night',
+  },
+  // The sun set after the third level, so the run that began by day ends at night.
+  victory: { name: 'victory', assets, run, time: 'night', result: resultWith('won') },
+  gameOver: { name: 'gameOver', assets, run, time: 'day', result: resultWith('lost') },
   failed: { name: 'failed' },
 } satisfies Record<AppState['name'], AppState>;
 
@@ -63,6 +73,8 @@ const events = {
   gamePaused: { type: 'gamePaused' },
   gameResumed: { type: 'gameResumed' },
   runEnded: { type: 'runEnded', result: resultWith('lost') },
+  levelCleared: { type: 'levelCleared', level: 3, score: 120, nextTime: 'night' },
+  nextLevel: { type: 'nextLevel' },
   quit: { type: 'quit' },
   runFailed: { type: 'runFailed' },
   restart: { type: 'restart' },
@@ -87,23 +99,27 @@ const TRANSITIONS: readonly Row[] = [
   { from: states.loading, event: events.back, to: 'heroSelect' },
   { from: states.playing, event: events.pause, to: 'paused' },
   { from: states.playing, event: events.gamePaused, to: 'paused' },
+  { from: states.playing, event: events.levelCleared, to: 'levelCleared' },
+  { from: states.levelCleared, event: events.nextLevel, to: 'playing' },
+  { from: states.levelCleared, event: events.quit, to: 'menu' },
   {
     from: states.playing,
     event: { type: 'runEnded', result: resultWith('won') },
-    to: 'levelComplete',
+    to: 'victory',
   },
   { from: states.playing, event: events.runEnded, to: 'gameOver' },
   { from: states.playing, event: events.quit, to: 'menu' },
   { from: states.paused, event: events.resume, to: 'playing' },
   { from: states.paused, event: events.gameResumed, to: 'playing' },
   { from: states.paused, event: events.quit, to: 'menu' },
-  { from: states.levelComplete, event: events.play, to: 'playing' },
-  { from: states.levelComplete, event: events.quit, to: 'menu' },
+  { from: states.victory, event: events.play, to: 'playing' },
+  { from: states.victory, event: events.quit, to: 'menu' },
   { from: states.gameOver, event: events.play, to: 'playing' },
   { from: states.gameOver, event: events.quit, to: 'menu' },
   { from: states.playing, event: events.runFailed, to: 'failed' },
   { from: states.paused, event: events.runFailed, to: 'failed' },
-  { from: states.levelComplete, event: events.runFailed, to: 'failed' },
+  { from: states.levelCleared, event: events.runFailed, to: 'failed' },
+  { from: states.victory, event: events.runFailed, to: 'failed' },
   { from: states.gameOver, event: events.runFailed, to: 'failed' },
   { from: states.failed, event: events.restart, to: 'menu' },
 ];
@@ -141,6 +157,7 @@ describe('transition', () => {
       name: 'playing',
       assets: otherAssets,
       run: nextRun,
+      time: nextRun.mode,
     });
   });
 
@@ -163,77 +180,100 @@ describe('transition', () => {
     expect(transition(settingsMenu, events.selectHero)).toBe(settingsMenu);
   });
 
-  it('starts the next run at once over a finished one, with the assets it has', () => {
-    expect(transition(states.levelComplete, events.play)).toEqual({
+  it('starts the next run at once over a finished one, with the assets it has, at its time', () => {
+    const next = { name: 'playing', assets, run: nextRun, time: nextRun.mode };
+
+    expect(transition(states.victory, events.play)).toEqual(next);
+    expect(transition(states.gameOver, events.play)).toEqual(next);
+  });
+
+  it('holds a cleared level, then goes on at the time of day of the next one', () => {
+    const cleared = transition(states.playing, events.levelCleared);
+
+    expect(cleared).toEqual(states.levelCleared);
+    expect(transition(cleared, events.nextLevel)).toEqual({
       name: 'playing',
       assets,
-      run: nextRun,
-    });
-    expect(transition(states.gameOver, events.play)).toEqual({
-      name: 'playing',
-      assets,
-      run: nextRun,
+      run,
+      time: 'night',
     });
   });
 
   it('keeps the same run object through pause and resume', () => {
     const paused = transition(states.playing, events.gamePaused);
 
-    expect(paused).toEqual({ name: 'paused', assets, run });
+    expect(paused).toEqual({ name: 'paused', assets, run, time: 'day' });
     expect(transition(paused, events.resume)).toEqual(states.playing);
     expect(transition(states.playing, events.pause)).toEqual(paused);
     expect(transition(paused, events.gameResumed)).toEqual(states.playing);
   });
 
-  it('ends a won run as level complete and a lost run as game over, with the result', () => {
-    expect(transition(states.playing, { type: 'runEnded', result: resultWith('won') })).toEqual({
-      name: 'levelComplete',
+  it('ends a won run as a victory and a lost run as game over, with the result and the time', () => {
+    const night = { ...states.playing, time: 'night' } as const;
+
+    expect(transition(night, { type: 'runEnded', result: resultWith('won') })).toEqual({
+      name: 'victory',
       assets,
       run,
+      time: 'night',
       result: resultWith('won'),
     });
     expect(transition(states.playing, events.runEnded)).toEqual({
       name: 'gameOver',
       assets,
       run,
+      time: 'day',
       result: resultWith('lost'),
     });
   });
 
-  it('ignores an end report whose result says the run still plays', () => {
-    const event: AppEvent = { type: 'runEnded', result: resultWith('playing') };
+  it('ignores an end report whose result says the run goes on', () => {
+    for (const status of ['playing', 'levelCleared'] as const) {
+      const event: AppEvent = { type: 'runEnded', result: resultWith(status) };
 
-    expect(transition(states.playing, event)).toBe(states.playing);
+      expect(transition(states.playing, event)).toBe(states.playing);
+    }
   });
 
   it('drops a run that failed, whatever state it was in, and restarts on the main menu', () => {
-    const afterFailure = [states.playing, states.paused, states.levelComplete, states.gameOver].map(
-      (state) => transition(state, events.runFailed),
-    );
+    const runStates = [
+      states.playing,
+      states.paused,
+      states.levelCleared,
+      states.victory,
+      states.gameOver,
+    ];
+    const afterFailure = runStates.map((state) => transition(state, events.runFailed));
 
-    expect(afterFailure).toEqual(Array<AppState>(4).fill({ name: 'failed' }));
+    expect(afterFailure).toEqual(Array<AppState>(5).fill({ name: 'failed' }));
     expect(transition(states.failed, events.restart)).toEqual({ name: 'menu', panel: 'main' });
     expect(transition(states.loading, events.runFailed)).toBe(states.loading);
     expect(transition(states.menu, events.restart)).toBe(states.menu);
   });
 
   it('drops the run and its assets on quit and returns to the main menu', () => {
-    const afterQuit = [states.playing, states.paused, states.levelComplete, states.gameOver].map(
-      (state) => transition(state, events.quit),
-    );
+    const runStates = [
+      states.playing,
+      states.paused,
+      states.levelCleared,
+      states.victory,
+      states.gameOver,
+    ];
+    const afterQuit = runStates.map((state) => transition(state, events.quit));
 
-    expect(afterQuit).toEqual(Array<AppState>(4).fill({ name: 'menu', panel: 'main' }));
+    expect(afterQuit).toEqual(Array<AppState>(5).fill({ name: 'menu', panel: 'main' }));
   });
 });
 
 describe('isRunState', () => {
-  it('tells the four states of a run on screen from the other four', () => {
+  it('tells the five states of a run on screen from the other four', () => {
     const withRun = Object.values(states).filter(isRunState);
 
     expect(withRun.map((state) => state.name)).toEqual([
       'playing',
       'paused',
-      'levelComplete',
+      'levelCleared',
+      'victory',
       'gameOver',
     ]);
   });
@@ -262,8 +302,15 @@ describe('invariants of the flow', () => {
     fc.constant(events.gameResumed),
     fc.record({
       type: fc.constant('runEnded' as const),
-      result: fc.constantFrom('playing', 'won', 'lost').map(resultWith),
+      result: fc.constantFrom('playing', 'levelCleared', 'won', 'lost').map(resultWith),
     }),
+    fc.record({
+      type: fc.constant('levelCleared' as const),
+      level: fc.integer({ min: 1, max: 5 }),
+      score: fc.nat(),
+      nextTime: fc.constantFrom('day' as const, 'night' as const),
+    }),
+    fc.constant(events.nextLevel),
     fc.constant(events.quit),
     fc.constant(events.runFailed),
     fc.constant(events.restart),
@@ -296,15 +343,27 @@ describe('invariants of the flow', () => {
         return state.run === event.run ? null : 'the wait holds a different run';
       case 'playing':
         if (previous.name === 'paused') {
-          return state.run === previousRun && state.assets === previousAssets
+          return state.run === previousRun &&
+            state.assets === previousAssets &&
+            state.time === previous.time
             ? null
             : 'resume changed the run';
         }
+        if (previous.name === 'levelCleared') {
+          // The next level of the same run, at the time the cleared one announced.
+          return event.type === 'nextLevel' &&
+            state.run === previousRun &&
+            state.assets === previousAssets &&
+            state.time === previous.nextTime
+            ? null
+            : `the next level entered by ${event.type} or at the wrong time`;
+        }
         if (previous.name === 'loading') {
-          // The loaded assets join the run the player chose before the wait.
+          // The loaded assets join the run the player chose before the wait, at its first time.
           return event.type === 'gameLoaded' &&
             state.run === previousRun &&
-            state.assets === event.assets
+            state.assets === event.assets &&
+            state.time === state.run.mode
             ? null
             : `the wait ended by ${event.type} into another run`;
         }
@@ -312,26 +371,33 @@ describe('invariants of the flow', () => {
           return `playing entered by ${event.type}`;
         }
         // Play again: the new run keeps the assets of the one that ended.
-        return state.run === event.run && state.assets === previousAssets
+        return state.run === event.run &&
+          state.assets === previousAssets &&
+          state.time === event.run.mode
           ? null
           : 'play again changed the assets or started a different run';
       case 'paused':
+      case 'levelCleared':
         if (previous.name !== 'playing') {
-          return `paused from ${previous.name}`;
+          return `${state.name} from ${previous.name}`;
         }
-        return state.run === previousRun && state.assets === previousAssets
+        return state.run === previousRun &&
+          state.assets === previousAssets &&
+          state.time === previous.time
           ? null
-          : 'pause changed the run';
+          : `${state.name} changed the run`;
       case 'failed':
         return isRunState(previous) && event.type === 'runFailed'
           ? null
           : `failed from ${previous.name} by ${event.type}`;
-      case 'levelComplete':
+      case 'victory':
       case 'gameOver':
         if (previous.name !== 'playing' || event.type !== 'runEnded') {
           return `${state.name} from ${previous.name} by ${event.type}`;
         }
-        return state.run === previousRun && state.assets === previousAssets
+        return state.run === previousRun &&
+          state.assets === previousAssets &&
+          state.time === previous.time
           ? null
           : 'the end changed the run';
     }

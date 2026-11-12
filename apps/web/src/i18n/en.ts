@@ -7,6 +7,9 @@ import type { Difficulty } from '../state/settings/schema';
 import type { ThemeChoice } from '../theme';
 import type { Format } from './format';
 
+/** What the sun does between two levels: nothing, or it sets or rises (ADR-0017). */
+export type TimeChange = 'none' | 'nightFalls' | 'dayBreaks';
+
 /**
  * The English strings, the source of truth of the dictionary (ADR-0013): their shape is the
  * `Messages` type every other language must fill in full. A string with a value in it is a
@@ -176,8 +179,11 @@ function english(format: Format) {
       score: 'Score',
       lives: 'Lives',
       ammo: 'Ammo',
+      level: 'Level',
       livesValue: (lives: number, max: number) =>
         `${format.number(lives)} of ${format.number(max)}`,
+      levelValue: (level: number, last: number) =>
+        `${format.number(level)} of ${format.number(last)}`,
     },
     pause: {
       title: 'Paused',
@@ -185,8 +191,21 @@ function english(format: Format) {
       resume: 'Resume',
       quit: 'Quit to menu',
     },
+    levelCleared: {
+      title: (level: number) => `Level ${format.number(level)} cleared`,
+      description: (score: number, change: TimeChange) =>
+        `Score: ${format.number(score)}.${
+          {
+            none: '',
+            nightFalls: ' Night falls over the city.',
+            dayBreaks: ' Day breaks over the city.',
+          }[change]
+        }`,
+      next: 'Next level',
+      quit: 'Quit to menu',
+    },
     runOver: {
-      titles: { levelComplete: 'Level complete', gameOver: 'Game over' },
+      titles: { victory: 'Victory', gameOver: 'Game over' },
       score: (score: number) => `Score: ${format.number(score)}`,
       playAgain: 'Play again',
       quit: 'Back to menu',
@@ -195,7 +214,9 @@ function english(format: Format) {
       levelStart: (level: number) => `Level ${format.number(level)}. Go!`,
       lifeLost: (lives: number) =>
         `Hit! ${format.number(lives)} ${format.plural(lives, { one: 'life', other: 'lives' })} left.`,
-      levelComplete: (score: number) => `Level complete. Score: ${format.number(score)}.`,
+      levelCleared: (level: number, score: number) =>
+        `Level ${format.number(level)} cleared. Score: ${format.number(score)}.`,
+      victory: (score: number) => `Victory! Every level cleared. Score: ${format.number(score)}.`,
       gameOver: (score: number) => `Game over. Score: ${format.number(score)}.`,
     },
     error: {
