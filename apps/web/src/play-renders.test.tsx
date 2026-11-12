@@ -6,7 +6,8 @@ import { Profiler, type ProfilerOnRenderCallback } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
-import { createGameSprites } from './game/sprites';
+import { GAME_ASSETS } from './game/assets';
+import { createGameSprites, type GameImages } from './game/sprites';
 import type * as GameHudModule from './GameHud';
 import { GameHud } from './GameHud';
 import type * as GameViewModule from './GameView';
@@ -42,8 +43,13 @@ const context = {
 };
 
 const image = {} as ImageBitmap;
+// The same stand-in for every image of the manifest: the canvas here is a fake.
+// `Object.fromEntries` drops the key types; the keys are those of the manifest.
+const images = Object.fromEntries(
+  Object.keys(GAME_ASSETS).map((id) => [id, image]),
+) as GameImages<ImageBitmap>;
 const assets: GameAssets = {
-  sprites: createGameSprites<ImageBitmap>({ creatures: image, effects: image }),
+  sprites: createGameSprites(images),
   audio: createAudioMixer<GameSound, AudioBuffer>({ context: null, buffers: {} }),
 };
 

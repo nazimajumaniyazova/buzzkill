@@ -1,10 +1,17 @@
 import { SPRITES } from '@buzzkill/art';
 
-import type { AssetPlan } from './plan';
+import type { AssetPlan, BackgroundPlan } from './plan';
 
 /** The file names of the generated outputs, in `PATHS.output`. */
 export const atlasFile = (name: string): string => `${name}.webp`;
 export const wavFile = (id: string): string => `${id}.wav`;
+const backgroundId = ({ time, layer }: BackgroundPlan): string => `city-${time}-${layer}`;
+export const backgroundFile = (background: BackgroundPlan): string =>
+  `${backgroundId(background)}.webp`;
+
+/** `city-day-sky` as an identifier: `cityDaySky`. */
+const camel = (id: string): string =>
+  id.replace(/-([a-z])/g, (_match: string, letter: string) => letter.toUpperCase());
 
 /**
  * The TypeScript source of the asset manifest: the URL of every file the game loads, the size of
@@ -18,10 +25,17 @@ export function renderManifest(plan: AssetPlan): string {
     '// file no longer matches the art or the sounds.',
     '//',
     '// The input of each file, as SHA-256:',
-    ...plan.atlases.map((atlas) => `//   ${atlasFile(atlas.name).padEnd(16)}${atlas.input}`),
-    ...plan.sounds.map((sound) => `//   ${wavFile(sound.id).padEnd(16)}${sound.input}`),
+    ...plan.atlases.map((atlas) => `//   ${atlasFile(atlas.name).padEnd(22)}${atlas.input}`),
+    ...plan.backgrounds.map(
+      (background) => `//   ${backgroundFile(background).padEnd(22)}${background.input}`,
+    ),
+    ...plan.sounds.map((sound) => `//   ${wavFile(sound.id).padEnd(22)}${sound.input}`),
     '',
     ...plan.atlases.map((atlas) => `import ${atlas.name}Atlas from './${atlasFile(atlas.name)}';`),
+    ...plan.backgrounds.map(
+      (background) =>
+        `import ${camel(backgroundId(background))} from './${backgroundFile(background)}';`,
+    ),
     ...plan.sounds.flatMap((sound) => [
       `import ${sound.id}Ogg from '../../assets-src/sounds/${sound.source}';`,
       `import ${sound.id}Wav from './${wavFile(sound.id)}';`,
@@ -57,6 +71,25 @@ export function renderManifest(plan: AssetPlan): string {
       }
       lines.push('    ],', '  },');
     }
+  }
+  lines.push(
+    '} as const;',
+    '',
+    '/**',
+    ' * The layers of the city for each time of day, back to front, in world pixels: the id of each',
+    ' * image, its layer and its URL.',
+    ' */',
+    'export const BACKGROUNDS = {',
+  );
+  for (const time of new Set(plan.backgrounds.map((background) => background.time))) {
+    lines.push(`  ${time}: [`);
+    for (const background of plan.backgrounds.filter((b) => b.time === time)) {
+      const id = backgroundId(background);
+      lines.push(
+        `    { id: '${id}', layer: '${background.layer}', url: ${camel(id)}, width: ${String(background.width)}, height: ${String(background.height)} },`,
+      );
+    }
+    lines.push('  ],');
   }
   lines.push(
     '} as const;',

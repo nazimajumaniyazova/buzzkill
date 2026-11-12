@@ -39,6 +39,23 @@ const SPRITES: GameSprites<string> = {
   enemies: { wasp: animation('wasp', 6, 2) },
   projectile: atlas('shot-trail', 1),
   explosions: [atlas('smoke', 9), atlas('fire', 9)],
+  // No city here, so these tests see only the entities; the city has tests of its own below.
+  backgrounds: { day: [], night: [] },
+};
+
+const WORLD = { width: 1280, height: 720 };
+
+/** A day city of three layers, as the generated manifest gives them. */
+const CITY: GameSprites<string> = {
+  ...SPRITES,
+  backgrounds: {
+    day: [
+      { layer: 'sky', atlas: atlas('day-sky', 1) },
+      { layer: 'far', atlas: atlas('day-far', 1) },
+      { layer: 'near', atlas: atlas('day-near', 1) },
+    ],
+    night: [],
+  },
 };
 
 /** Removes the hero so a test sees only the entities it adds. */
@@ -63,14 +80,13 @@ describe('createGameDrawer', () => {
     sim = createSimulation({ seed: 1, heroId: 'female', mode: 'night' });
   });
 
-  it('frames the scene: sky of the mode, entities, end of frame', () => {
+  it('frames the scene: entities, then the end of the frame', () => {
     const { renderer, calls } = createFakeRenderer();
 
     createGameDrawer(renderer, SPRITES).render(sim.state, 0);
 
     expect(calls[0]).toEqual(['beginFrame']);
-    expect(calls[1]).toEqual(['rect', 0, 0, 1280, 720, '#121a2b']);
-    expect(calls[2]).toEqual([
+    expect(calls[1]).toEqual([
       'sprite',
       'julie',
       0,
@@ -88,7 +104,7 @@ describe('createGameDrawer', () => {
     createGameDrawer(renderer, SPRITES).render(sim.state, 0);
 
     // Four ticks per frame: tick 9 shows frame 2.
-    expect(calls[2]?.slice(0, 3)).toEqual(['sprite', 'julie', 2]);
+    expect(calls[1]?.slice(0, 3)).toEqual(['sprite', 'julie', 2]);
   });
 
   it('interpolates positions between the previous and the current tick', () => {
@@ -101,7 +117,7 @@ describe('createGameDrawer', () => {
     createGameDrawer(renderer, SPRITES).render(sim.state, 0.25);
 
     // The shot in flight: a 30 x 6 tail that ends in the head, which is the 10 x 3 hitbox.
-    expect(calls[2]).toEqual(['sprite', 'shot-trail', 0, 82.5, 196, { width: 30, height: 6 }]);
+    expect(calls[1]).toEqual(['sprite', 'shot-trail', 0, 82.5, 196, { width: 30, height: 6 }]);
   });
 
   it('animates enemies by tick from their spawn and draws their health bar', () => {
@@ -117,7 +133,7 @@ describe('createGameDrawer', () => {
 
     createGameDrawer(renderer, SPRITES).render(sim.state, 0);
 
-    expect(calls.slice(2, 5)).toEqual([
+    expect(calls.slice(1, 4)).toEqual([
       ['sprite', 'wasp', 1, 300, 400, { width: 50, height: 50 }],
       ['rect', 300, 410, 50, 10, '#0009'],
       ['rect', 300, 410, 12.5, 10, '#48bf53'],
@@ -135,9 +151,62 @@ describe('createGameDrawer', () => {
     createGameDrawer(renderer, SPRITES).render(sim.state, 0);
 
     // Four ticks per frame: tick 9 shows frame 2.
-    expect(calls.slice(2, 4)).toEqual([
+    expect(calls.slice(1, 3)).toEqual([
       ['sprite', 'smoke', 2, 0, 0, { width: 200, height: 200 }],
       ['sprite', 'fire', 2, 300, 0, { width: 200, height: 200 }],
     ]);
+  });
+});
+
+describe('the city behind the run', () => {
+  let sim: Simulation;
+
+  beforeEach(() => {
+    sim = createSimulation({ seed: 1, heroId: 'male', mode: 'day' });
+    emptyWorld(sim);
+    sim.state.tick = 100;
+  });
+
+  it('keeps the sky still and tiles every other layer at its own pace, back to front', () => {
+    const { renderer, calls } = createFakeRenderer();
+
+    createGameDrawer(renderer, CITY).render(sim.state, 0.5);
+
+    // 100.5 ticks in: the near layer moves a pixel a tick, the far one a quarter of that. Each
+    // scrolling layer is drawn twice, so it tiles across the screen.
+    expect(calls.slice(1, -1)).toEqual([
+      ['sprite', 'day-sky', 0, 0, 0, WORLD],
+      ['sprite', 'day-far', 0, -25.125, 0, WORLD],
+      ['sprite', 'day-far', 0, 1254.875, 0, WORLD],
+      ['sprite', 'day-near', 0, -100.5, 0, WORLD],
+      ['sprite', 'day-near', 0, 1179.5, 0, WORLD],
+    ]);
+  });
+
+  it('moves the city at a quarter of its pace under reduced motion', () => {
+    const { renderer, calls } = createFakeRenderer();
+
+    createGameDrawer(renderer, CITY, { reducedMotion: () => true }).render(sim.state, 0.5);
+
+    expect(calls.slice(1, -1).map((call) => call.slice(1, 4))).toEqual([
+      ['day-sky', 0, 0],
+      ['day-far', 0, -6.281_25],
+      ['day-far', 0, 1273.718_75],
+      ['day-near', 0, -25.125],
+      ['day-near', 0, 1254.875],
+    ]);
+  });
+
+  it('reads the motion setting every frame, so a change applies to the run on screen', () => {
+    const { renderer, calls } = createFakeRenderer();
+    let reduced = false;
+    const drawer = createGameDrawer(renderer, CITY, { reducedMotion: () => reduced });
+
+    drawer.render(sim.state, 0);
+    reduced = true;
+    drawer.render(sim.state, 0);
+
+    const near = calls.filter((call) => call[1] === 'day-near').map((call) => call[3]);
+    expect(near).toEqual([-100, 1180, -25, 1255]);
   });
 });

@@ -13,7 +13,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnnouncerProvider, createAnnouncer } from './announcer';
 import { ErrorBoundary } from './ErrorBoundary';
 import { reportError } from './errors/report-error';
-import { createGameSprites } from './game/sprites';
+import { GAME_ASSETS } from './game/assets';
+import type * as DrawGameModule from './game/draw-game';
+import { createGameDrawer } from './game/draw-game';
+import { createGameSprites, type GameImages } from './game/sprites';
 import { GameView } from './GameView';
 import type { GameEvent } from './state/bridge';
 import type { GameAssets, Run } from './state/machine';
@@ -25,6 +28,12 @@ vi.mock('@buzzkill/game', async (importOriginal) => {
 });
 
 vi.mock('./errors/report-error', () => ({ reportError: vi.fn() }));
+
+// The real drawing code, watched so that a test can read the options a run gave it.
+vi.mock('./game/draw-game', async (importOriginal) => {
+  const actual = await importOriginal<typeof DrawGameModule>();
+  return { ...actual, createGameDrawer: vi.fn(actual.createGameDrawer) };
+});
 
 // jsdom has no canvas: a context that accepts every call the renderer makes.
 const context = {
@@ -41,7 +50,12 @@ const context = {
 };
 
 const image = {} as ImageBitmap;
-const sprites = createGameSprites<ImageBitmap>({ creatures: image, effects: image });
+// The same stand-in for every image of the manifest: the canvas here is a fake.
+// `Object.fromEntries` drops the key types; the keys are those of the manifest.
+const images = Object.fromEntries(
+  Object.keys(GAME_ASSETS).map((id) => [id, image]),
+) as GameImages<ImageBitmap>;
+const sprites = createGameSprites(images);
 
 const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1 };
 
@@ -101,6 +115,7 @@ describe('GameView', () => {
     readonly run: Run;
     readonly paused: boolean;
     readonly keyBindings: KeyBindings<GameAction>;
+    readonly reducedMotion: boolean;
   }
 
   function renderView(props: Partial<ViewProps> = {}) {
@@ -110,6 +125,7 @@ describe('GameView', () => {
         assets={assets}
         paused={props.paused ?? false}
         keyBindings={props.keyBindings ?? DEFAULT_KEY_BINDINGS}
+        reducedMotion={props.reducedMotion ?? false}
         onEvent={onEvent}
       />,
     );
@@ -122,6 +138,7 @@ describe('GameView', () => {
             assets={assets}
             paused={next.paused ?? false}
             keyBindings={next.keyBindings ?? props.keyBindings ?? DEFAULT_KEY_BINDINGS}
+            reducedMotion={next.reducedMotion ?? props.reducedMotion ?? false}
             onEvent={onEvent}
           />,
         );
@@ -153,8 +170,8 @@ describe('GameView', () => {
 
     expect(hudValue('Score')).toBe('0');
     expect(hudValue('Ammo')).toBe('20');
-    // Every frame starts with the day sky.
-    expect(context.fillRect).toHaveBeenCalledWith(0, 0, 1280, 720);
+    // Every frame starts with the sky of the day city, still, over the whole world.
+    expect(context.drawImage).toHaveBeenCalledWith(image, 0, 0, 1280, 720, 0, 0, 1280, 720);
     expect(onEvent).not.toHaveBeenCalled();
   });
 
@@ -189,6 +206,22 @@ describe('GameView', () => {
     frames.run(2);
     fireEvent.keyUp(window, { code: 'KeyF' });
     expect(play).toHaveBeenCalledWith('shot');
+  });
+
+  it('applies a change of the motion setting to the run on screen without restarting it', () => {
+    const frames = installFrames();
+    const view = renderView();
+    frames.run(1);
+    const drawers = vi.mocked(createGameDrawer).mock.calls.length;
+    const options = vi.mocked(createGameDrawer).mock.lastCall?.[2];
+    expect(options?.reducedMotion?.()).toBe(false);
+
+    view.rerender({ reducedMotion: true });
+    frames.run(1);
+
+    // The drawer reads the setting every frame, so the city slows down in the same run.
+    expect(options?.reducedMotion?.()).toBe(true);
+    expect(vi.mocked(createGameDrawer).mock.calls).toHaveLength(drawers);
   });
 
   it('shoots on Space: a sound and one round less', () => {
@@ -279,6 +312,7 @@ describe('GameView', () => {
           assets={assets}
           paused={false}
           keyBindings={DEFAULT_KEY_BINDINGS}
+          reducedMotion={false}
           onEvent={onEvent}
         />
       </ErrorBoundary>,
@@ -364,6 +398,7 @@ describe('GameView', () => {
           assets={assets}
           paused={false}
           keyBindings={DEFAULT_KEY_BINDINGS}
+          reducedMotion={false}
           onEvent={onEvent}
         />
       </AnnouncerProvider>,

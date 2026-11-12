@@ -15,6 +15,7 @@ pipeline (#133) and lists what ships with its source and license in `ASSETS.md` 
 | ------------------------------------------------- | ---------------------- | ------ | ------------------------------------------------------ |
 | `src/assets/creatures.webp`                       | WebP, lossy, 2030×1485 | 233 kB | The heroes and the six enemies, every frame            |
 | `src/assets/effects.webp`                         | WebP, lossy, 2008×1606 | 125 kB | Both explosions, 9 frames each, and the shot in flight |
+| `src/assets/city-day-*.webp`, `city-night-*.webp` | WebP, lossy, 1280×720  | 69 kB  | The city: 5 layers by day, 4 by night (no clouds)      |
 | `assets-src/sounds/…/laserSmall_001.ogg`          | Ogg Vorbis             | 7 kB   | `shot`                                                 |
 | `assets-src/sounds/…/explosionCrunch_000.ogg`     | Ogg Vorbis             | 28 kB  | `explosion`                                            |
 | `assets-src/sounds/…/impactPunch_heavy_002.ogg`   | Ogg Vorbis             | 9 kB   | `hit`                                                  |
@@ -27,7 +28,10 @@ pipeline (#133) and lists what ships with its source and license in `ASSETS.md` 
   which is 1.8 times larger.
 - `apps/web/scripts/assets/manifest.test.ts` fails when the art, a sound or a setting changes and
   the files have not been regenerated.
-- The background is still the sky color of the theme; the city layers come next in #133.
+- The city behind the run is one image per layer, in world pixels, since two layers side by side
+  would pass the 2048 px limit. Decoded, the nine layers take about 33 MB; at twice the pixels they
+  would take four times that. The sky stays still; the other layers scroll with `parallaxOffset`,
+  the nearer the faster, and four times slower under reduced motion (#114).
 
 ## The 2023 files
 
@@ -79,8 +83,8 @@ source is not known.
 | The background, day and night | `bg-day.jpg` (1.14 MB) and `bg-night-4.jpg` (1.62 MB), scrolled as parallax | Over 1 MB, and downloaded with no recorded source | The sky color of the theme, without parallax (`COLORS.sky`) |
 | The first day enemy, `day-1`  | `enemy-1.png`                                                               | Drawn by another member of the team               | A red box with its health bar (`MISSING_SHEETS`)            |
 
-Since #133 the heroes and the first day enemy are drawn from the new art. The background stays the
-sky color until the city layers are drawn with `parallaxOffset`.
+Since #133 none is left: the heroes and the first day enemy are drawn from the new art, and the
+background is the city in parallax layers.
 
 ### Observations
 

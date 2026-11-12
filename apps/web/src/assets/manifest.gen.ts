@@ -3,14 +3,32 @@
 // file no longer matches the art or the sounds.
 //
 // The input of each file, as SHA-256:
-//   creatures.webp  ad5f2f4d257fc2be2826b500d88002f848e94e89956a4e8cfa6f80368263cdee
-//   effects.webp    3f1e9560ac60772833ec50f7b3975778c49ea4108e3e7058cb2142e40af2171a
-//   shot.wav        ab87913aba9790a0c5fa173d086267ba521ad522fcad2252271db49988313cf5
-//   explosion.wav   4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69
-//   hit.wav         7993dd4c156b9979ad69f17be5ebe31850b16039a3857f8477141be54dfee1b3
+//   creatures.webp        ad5f2f4d257fc2be2826b500d88002f848e94e89956a4e8cfa6f80368263cdee
+//   effects.webp          3f1e9560ac60772833ec50f7b3975778c49ea4108e3e7058cb2142e40af2171a
+//   city-day-sky.webp     b23707311cd5e072da086f3e6c1cb27d5f46d8a8dd6b15bbdd26d29ca87d4058
+//   city-day-clouds.webp  2dc0f3b3dc22d7b1994d228f22be769f2bafedc8159f38cc3133fceaf3ef16d4
+//   city-day-far.webp     73227709fd0f5ad695b8fb1648d6b48220ceba5704c81d5690a76ab77bb9538e
+//   city-day-mid.webp     4147522a54c5923a6755cf374176882e2eb807ff4e6851a29ed7c7ee916bf7de
+//   city-day-near.webp    8b4fc187a82dfe141fe32c06e1f064cbf2b98bee6b4b11ccda5f5a073a6948d7
+//   city-night-sky.webp   eca5363f590278a9e1a8cff731afb55db550c05aab50ba593c7c151b5be4ec10
+//   city-night-far.webp   9943a8cd0025cf7c91a4847e892061a140f1d9d593fa4c68eaab8aeb71c9fc63
+//   city-night-mid.webp   1f7bd9e147826dcc429f8660efeac5dbb25ac01236906df8f4351528feab85d3
+//   city-night-near.webp  d6b3a9a56a2733c7e1cfd5f732bfcdcd08673ba527d204984c44b74309b8c02b
+//   shot.wav              ab87913aba9790a0c5fa173d086267ba521ad522fcad2252271db49988313cf5
+//   explosion.wav         4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69
+//   hit.wav               7993dd4c156b9979ad69f17be5ebe31850b16039a3857f8477141be54dfee1b3
 
 import creaturesAtlas from './creatures.webp';
 import effectsAtlas from './effects.webp';
+import cityDaySky from './city-day-sky.webp';
+import cityDayClouds from './city-day-clouds.webp';
+import cityDayFar from './city-day-far.webp';
+import cityDayMid from './city-day-mid.webp';
+import cityDayNear from './city-day-near.webp';
+import cityNightSky from './city-night-sky.webp';
+import cityNightFar from './city-night-far.webp';
+import cityNightMid from './city-night-mid.webp';
+import cityNightNear from './city-night-near.webp';
 import shotOgg from '../../assets-src/sounds/kenney-sci-fi-sounds/laserSmall_001.ogg';
 import shotWav from './shot.wav';
 import explosionOgg from '../../assets-src/sounds/kenney-sci-fi-sounds/explosionCrunch_000.ogg';
@@ -156,6 +174,26 @@ export const SPRITES = {
       { x: 1206, y: 1206, width: 60, height: 12 },
     ],
   },
+} as const;
+
+/**
+ * The layers of the city for each time of day, back to front, in world pixels: the id of each
+ * image, its layer and its URL.
+ */
+export const BACKGROUNDS = {
+  day: [
+    { id: 'city-day-sky', layer: 'sky', url: cityDaySky, width: 1280, height: 720 },
+    { id: 'city-day-clouds', layer: 'clouds', url: cityDayClouds, width: 1280, height: 720 },
+    { id: 'city-day-far', layer: 'far', url: cityDayFar, width: 1280, height: 720 },
+    { id: 'city-day-mid', layer: 'mid', url: cityDayMid, width: 1280, height: 720 },
+    { id: 'city-day-near', layer: 'near', url: cityDayNear, width: 1280, height: 720 },
+  ],
+  night: [
+    { id: 'city-night-sky', layer: 'sky', url: cityNightSky, width: 1280, height: 720 },
+    { id: 'city-night-far', layer: 'far', url: cityNightFar, width: 1280, height: 720 },
+    { id: 'city-night-mid', layer: 'mid', url: cityNightMid, width: 1280, height: 720 },
+    { id: 'city-night-near', layer: 'near', url: cityNightNear, width: 1280, height: 720 },
+  ],
 } as const;
 
 /** Every sound: the Ogg file as downloaded, and a WAV for browsers that cannot decode it. */

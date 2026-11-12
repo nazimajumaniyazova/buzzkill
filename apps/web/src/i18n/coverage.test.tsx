@@ -251,6 +251,7 @@ describe('every text on screen comes from the dictionary', () => {
         assets={{} as GameAssets}
         paused={false}
         keyBindings={DEFAULT_KEY_BINDINGS}
+        reducedMotion={false}
         onEvent={vi.fn()}
       />,
     );
