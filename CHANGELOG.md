@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.15.0...v0.16.0) (2026-11-12)
+
+
+### Features
+
+* **engine:** try a fallback file when an asset does not decode ([#143](https://github.com/nazimajumaniyazova/buzzkill/issues/143)) ([72003af](https://github.com/nazimajumaniyazova/buzzkill/commit/72003aff8daa5c6eca97ee58ad73a5078ab34d65))
+* **web:** build the game's atlases and sounds from the art ([#145](https://github.com/nazimajumaniyazova/buzzkill/issues/145)) ([1410e85](https://github.com/nazimajumaniyazova/buzzkill/commit/1410e859f6cc4437d9b338886d97e9299cf60380))
+
 ## [0.15.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.14.0...v0.15.0) (2026-11-12)
 
 
