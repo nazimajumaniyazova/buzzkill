@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.18.0...v0.19.0) (2026-11-12)
+
+
+### Features
+
+* **web:** hold the run on a screen between levels ([#168](https://github.com/nazimajumaniyazova/buzzkill/issues/168)) ([670cf11](https://github.com/nazimajumaniyazova/buzzkill/commit/670cf11819ca69906ee2e57316cfbdd586afc3f4)), closes [#150](https://github.com/nazimajumaniyazova/buzzkill/issues/150)
+
 ## [0.18.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.17.0...v0.18.0) (2026-11-12)
 
 
