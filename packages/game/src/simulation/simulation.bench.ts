@@ -8,8 +8,8 @@ import { createSimulation, type Simulation } from './simulation';
 
 /**
  * Cost of the simulation (#44): one tick at a typical load, a three-minute run, and `simulate` on
- * the golden replays, which is the work the stage 8 server does to verify a score. Run with
- * `pnpm bench`.
+ * the first 30 s of the golden replays, which is the work the stage 8 server does to verify a
+ * score. Run with `pnpm bench`.
  *
  * Under Vitest every import between modules goes through a getter of the module runner, so these
  * absolute numbers are about four times those of the bundled game (Vitest warns about it). That
@@ -19,6 +19,13 @@ import { createSimulation, type Simulation } from './simulation';
  */
 
 const TICKS_PER_MINUTE = 60 * 60;
+/**
+ * How much of each golden replay the benchmarks simulate: its first 30 s. A whole replay lasts as
+ * long as the rules let its run last, so a change to the rules would change how much play the
+ * benchmark measures. On #173 the day replay grew by two thirds and read as 22 % slower, although
+ * a tick got cheaper (#177). Every golden replay lasts longer; `golden` makes sure of it.
+ */
+const REPLAY_SPAN_TICKS = 30 * 60;
 /**
  * CodSpeed's CPU simulation (ADR-0012) runs code many times slower than the CPU does: the
  * three-minute run alone took over two minutes there. Generous, so CI fails only on a real hang.
@@ -57,6 +64,13 @@ function golden(value: unknown): Replay {
   if (!parsed.ok) {
     throw new Error(parsed.error);
   }
+  // A replay that ends sooner would be measured over less play, and a slower tick could hide.
+  const { ticks } = simulate(parsed.replay, { maxTicks: REPLAY_SPAN_TICKS });
+  if (ticks < REPLAY_SPAN_TICKS) {
+    throw new Error(
+      `A golden replay ends after ${String(ticks)} ticks, before the ${String(REPLAY_SPAN_TICKS)} its benchmark simulates: shorten REPLAY_SPAN_TICKS.`,
+    );
+  }
   return parsed.replay;
 }
 
@@ -81,16 +95,16 @@ describe('simulation', () => {
     }).run();
   });
 
-  test('simulate the golden replays', { timeout: BENCH_TIMEOUT }, async ({ bench }) => {
+  test('simulate 30 s of the golden replays', { timeout: BENCH_TIMEOUT }, async ({ bench }) => {
     const day = golden(dayMale);
     const night = golden(nightFemale);
-    const maxTicks = 10 * TICKS_PER_MINUTE;
+    const maxTicks = REPLAY_SPAN_TICKS;
 
     await bench.compare(
-      bench('simulate day-male-2026', () => {
+      bench('simulate 30 s of day-male-2026', () => {
         simulate(day, { maxTicks });
       }),
-      bench('simulate night-female-2026', () => {
+      bench('simulate 30 s of night-female-2026', () => {
         simulate(night, { maxTicks });
       }),
     );
