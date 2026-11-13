@@ -89,3 +89,10 @@ Option A: fixed 60 Hz ticks, floating point with restricted math, `sfc32` seeded
   on it.
 - `gameVersion` in the replay must equal the version baked into the server function, otherwise the
   run is rejected and the client is told to reload.
+
+## Amendment, 2026-11-12
+
+Format version 2 (#155) adds `difficulty`: `{ formatVersion, gameVersion, seed, heroId, mode,
+difficulty, inputs }`. Runs at different difficulties play different numbers and belong on
+different boards, so the server must know which one it re-simulates. No replay of format 1 was
+ever stored; `parseReplay` rejects it.

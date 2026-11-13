@@ -1,5 +1,6 @@
 import { createFnv1a } from '@buzzkill/engine';
 
+import type { Difficulty } from '../config/difficulty';
 import type { GameMode } from '../config/enemies';
 import type { GameStatus } from '../simulation/rules';
 import type { GameState } from '../simulation/state';
@@ -22,6 +23,10 @@ const STATUS_CODE = { playing: 0, won: 1, lost: 2, levelCleared: 3 } as const sa
   number
 >;
 const MODE_CODE = { day: 0, night: 1 } as const satisfies Record<GameMode, number>;
+const DIFFICULTY_CODE = { easy: 0, normal: 1, hard: 2 } as const satisfies Record<
+  Difficulty,
+  number
+>;
 
 /**
  * Hashes a canonical serialization of the state: the run's counters, the RNG state and every live
@@ -36,6 +41,7 @@ export function hashGameState(state: GameState): string {
     .uint32(state.score)
     .uint32(state.lives)
     .uint32(state.ammo)
+    .uint32(DIFFICULTY_CODE[state.difficulty])
     .uint32(MODE_CODE[state.mode])
     .uint32(state.level)
     .uint32(state.wave)

@@ -1,5 +1,10 @@
 import type { KeyBindings } from '@buzzkill/engine';
-import { DEFAULT_KEY_BINDINGS, type GameAction } from '@buzzkill/game';
+import {
+  DEFAULT_KEY_BINDINGS,
+  type Difficulty,
+  DIFFICULTY_IDS,
+  type GameAction,
+} from '@buzzkill/game';
 import * as z from 'zod/mini';
 
 import type { MotionChoice } from '../../motion';
@@ -7,9 +12,6 @@ import type { ThemeChoice } from '../../theme';
 
 /** The version of the stored settings object. A new version comes with a step in `MIGRATIONS`. */
 export const SETTINGS_VERSION = 1;
-
-const DIFFICULTIES = ['easy', 'normal', 'hard'] as const;
-export type Difficulty = (typeof DIFFICULTIES)[number];
 
 const LANGUAGES = ['en', 'ru'] as const;
 export type Language = (typeof LANGUAGES)[number];
@@ -114,7 +116,7 @@ function storedSettingsSchema(defaults: Settings) {
     muted: z.catch(z.boolean(), defaults.muted),
     effectsVolume: volume(defaults.effectsVolume),
     musicVolume: volume(defaults.musicVolume),
-    difficulty: z.catch(z.enum(DIFFICULTIES), defaults.difficulty),
+    difficulty: z.catch(z.enum(DIFFICULTY_IDS), defaults.difficulty),
     language: z.catch(z.enum(LANGUAGES), defaults.language),
     motion: z.catch(z.enum(MOTIONS), defaults.motion),
     gameSpeed: z.catch(z.literal(GAME_SPEEDS), defaults.gameSpeed),

@@ -53,7 +53,7 @@ const assets: GameAssets = {
   audio: createAudioMixer<GameSound, AudioBuffer>({ context: null, buffers: {} }),
 };
 
-const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1 };
+const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1, difficulty: 'normal' };
 
 /** Ten seconds of play: 200 frames of 50 ms, three ticks each. */
 const FRAMES = 200;

@@ -59,10 +59,22 @@ export function timeAfterLevel(level: number, mode: GameMode): GameMode {
   return levels[level - 1]?.timeChangesAfter === true ? otherTime(mode) : mode;
 }
 
-/** Ammo after `tick`: one round back every `refillTicks` ticks, up to the maximum. */
-export function ammoAfterTick(ammo: number, tick: number): number {
-  const { refillTicks, max } = RULES.ammo;
+/** Ammo after `tick`: one round back every `refillTicks` ticks, up to `max`. */
+export function ammoAfterTick(ammo: number, tick: number, max: number = RULES.ammo.max): number {
+  const { refillTicks } = RULES.ammo;
   return tick > 0 && tick % refillTicks === 0 && ammo < max ? ammo + 1 : ammo;
+}
+
+/** A number of ticks at a difficulty's `pace`: a whole tick, never below one (#155). */
+export function paced(ticks: number, pace: number): number {
+  const scaled = Math.round(ticks * pace);
+  return scaled > 1 ? scaled : 1;
+}
+
+/** An enemy's lives with a difficulty's offset: it always keeps at least one (#155). */
+export function enemyLivesWith(lives: number, offset: number): number {
+  const total = lives + offset;
+  return total > 1 ? total : 1;
 }
 
 /** Vertical offset of a wave for one tick. Uses the engine's deterministic `sin`. */

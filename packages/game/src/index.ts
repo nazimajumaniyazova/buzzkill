@@ -9,6 +9,12 @@ export {
   type GameAction,
 } from './actions';
 export {
+  DIFFICULTIES,
+  type Difficulty,
+  DIFFICULTY_IDS,
+  type DifficultyConfig,
+} from './config/difficulty';
+export {
   DAY_ENEMIES,
   ENEMY_SETS,
   type EnemyConfig,

@@ -1,5 +1,5 @@
 import type { AudioMixer } from '@buzzkill/engine';
-import type { GameMode, GameSound, HeroId, RunResult } from '@buzzkill/game';
+import type { Difficulty, GameMode, GameSound, HeroId, RunResult } from '@buzzkill/game';
 
 import type { GameSprites } from '../game/sprites';
 import type { GameSpeed } from './settings/schema';
@@ -22,6 +22,8 @@ export interface Run extends RunChoice {
   readonly seed: number;
   /** The pace from the settings when the run started; it stays with the run (ADR-0014). */
   readonly speed: GameSpeed;
+  /** The difficulty from the settings when the run started; its replay records it (#155). */
+  readonly difficulty: Difficulty;
 }
 
 /** The screens of the menu: the main menu and the two it opens. */

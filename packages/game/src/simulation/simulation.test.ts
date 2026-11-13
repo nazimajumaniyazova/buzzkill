@@ -3,6 +3,7 @@
 import { fc, test } from '@fast-check/vitest';
 import { describe, expect, it, vi } from 'vitest';
 
+import { DIFFICULTIES, type Difficulty } from '../config/difficulty';
 import { NIGHT_ENEMIES } from '../config/enemies';
 import { LEVELS } from '../config/levels';
 import { HEROES, RULES, WORLD } from '../config/rules';
@@ -294,6 +295,61 @@ describe('createSimulation', () => {
     run(sim, 400, FIRE);
     expect(sim.state.score).toBe(150);
     expect(sim.state.level).toBe(LEVELS.length);
+  });
+
+  it('starts with the lives and ammo of the difficulty, normal by default', () => {
+    const start = (difficulty?: Difficulty) => {
+      const { state } = createSimulation({
+        seed: 1,
+        heroId: 'male',
+        mode: 'day',
+        ...(difficulty === undefined ? {} : { difficulty }),
+      });
+      return [state.difficulty, state.lives, state.ammo];
+    };
+
+    expect(start()).toEqual(['normal', 5, 20]);
+    expect(start('easy')).toEqual(['easy', DIFFICULTIES.easy.lives, DIFFICULTIES.easy.ammo.start]);
+    expect(start('hard')).toEqual(['hard', DIFFICULTIES.hard.lives, DIFFICULTIES.hard.ammo.start]);
+  });
+
+  it('paces, speeds and toughens the enemies by the difficulty', () => {
+    const firstEnemy = (difficulty: Difficulty) => {
+      const sim = createSimulation({ seed: 9, heroId: 'male', mode: 'day', difficulty });
+      while (ofKind(sim.state, Kind.enemy).length === 0) {
+        sim.step(IDLE);
+      }
+      const id = ofKind(sim.state, Kind.enemy)[0] as EntityId;
+      const { world } = sim.state;
+      return {
+        tick: sim.state.tick,
+        vx: world.vx[id] as number,
+        lives: world.health[id] as number,
+      };
+    };
+    const easy = firstEnemy('easy');
+    const normal = firstEnemy('normal');
+    const hard = firstEnemy('hard');
+
+    // The same seed rolls the same enemy; the difficulty scales it.
+    expect([easy.tick, normal.tick, hard.tick]).toEqual([
+      Math.round(LEVELS[0].breakTicks * DIFFICULTIES.easy.pace),
+      LEVELS[0].breakTicks,
+      Math.round(LEVELS[0].breakTicks * DIFFICULTIES.hard.pace),
+    ]);
+    expect(easy.vx).toBeCloseTo(normal.vx * DIFFICULTIES.easy.enemySpeed, 10);
+    expect(hard.vx).toBeCloseTo(normal.vx * DIFFICULTIES.hard.enemySpeed, 10);
+    expect(hard.lives).toBe(normal.lives + DIFFICULTIES.hard.enemyLives);
+    expect(easy.lives).toBe(Math.max(1, normal.lives + DIFFICULTIES.easy.enemyLives));
+  });
+
+  it('refills ammo up to the maximum of the difficulty', () => {
+    const sim = createSimulation({ seed: 1, heroId: 'male', mode: 'day', difficulty: 'hard' });
+    sim.state.ammo = DIFFICULTIES.hard.ammo.max - 1;
+
+    run(sim, 100);
+
+    expect(sim.state.ammo).toBe(DIFFICULTIES.hard.ammo.max);
   });
 
   it("sends a later level's enemies faster", () => {

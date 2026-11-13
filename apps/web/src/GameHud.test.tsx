@@ -49,7 +49,7 @@ function setup() {
   const onRender = vi.fn<ProfilerOnRenderCallback>();
   const view = render(
     <Profiler id="hud" onRender={onRender}>
-      <GameHud game={fake.game} />
+      <GameHud maxLives={5} game={fake.game} />
     </Profiler>,
   );
   /** Score, lives and ammo as shown. */
@@ -80,7 +80,7 @@ describe('GameHud', () => {
     const fake = createFakeGame();
     render(
       <I18nProvider i18n={i18nFor('ru')}>
-        <GameHud game={fake.game} />
+        <GameHud maxLives={5} game={fake.game} />
       </I18nProvider>,
     );
     fake.update({ score: 12345, lives: 3 });
@@ -110,6 +110,15 @@ describe('GameHud', () => {
     const { listeners } = setup();
 
     expect(listeners.size).toBe(4);
+  });
+
+  it('counts the lives out of the most the difficulty gives', () => {
+    const fake = createFakeGame();
+    render(<GameHud maxLives={7} game={fake.game} />);
+
+    fake.update({ lives: 6 });
+
+    expect(screen.getByText('6 of 7')).toBeInTheDocument();
   });
 
   it('commits only when a value it shows changes, once per publication', () => {

@@ -6,6 +6,7 @@ import {
 } from '@buzzkill/engine';
 
 import { GAME_ACTIONS, type GameAction } from '../actions';
+import type { Difficulty } from '../config/difficulty';
 import type { GameMode } from '../config/enemies';
 import { type HeroId, WORLD } from '../config/rules';
 import type { Replay } from '../replay/format';
@@ -19,6 +20,8 @@ import type { GameState } from '../simulation/state';
 export interface GameSettings {
   readonly heroId: HeroId;
   readonly mode: GameMode;
+  /** Fixed for the run and recorded in its replay (#155). */
+  readonly difficulty: Difficulty;
 }
 
 /**
@@ -129,6 +132,7 @@ export function createGame(options: CreateGameOptions): Game {
     seed: options.seed,
     heroId: settings.heroId,
     mode: settings.mode,
+    difficulty: settings.difficulty,
   });
   /** The input of the tick being simulated, reused: a tick allocates nothing. */
   const tickInput = { down: 0, pressed: 0 };
@@ -138,6 +142,7 @@ export function createGame(options: CreateGameOptions): Game {
     seed: options.seed,
     heroId: settings.heroId,
     mode: settings.mode,
+    difficulty: settings.difficulty,
   });
   const { state } = simulation;
 

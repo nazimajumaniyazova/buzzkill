@@ -6,10 +6,12 @@ import { describe, expect, it } from 'vitest';
 import { RULES } from '../config/rules';
 import {
   ammoAfterTick,
+  enemyLivesWith,
   healthAfterHit,
   intInRange,
   livesAfterHit,
   otherTime,
+  paced,
   pickWeighted,
   scoreAfterKill,
   statusFor,
@@ -71,6 +73,31 @@ describe('game rules', () => {
       expect(next - ammo).toBe(tick > 0 && tick % 12 === 0 && ammo < RULES.ammo.max ? 1 : 0);
     },
   );
+
+  it('refills ammo only up to the maximum it is given', () => {
+    expect(ammoAfterTick(39, 12, 40)).toBe(40);
+    expect(ammoAfterTick(40, 12, 40)).toBe(40);
+  });
+
+  it('paces a number of ticks by a factor, to a whole tick and never below one', () => {
+    expect(paced(90, 1)).toBe(90);
+    expect(paced(90, 1.3)).toBe(117);
+    expect(paced(26, 0.8)).toBe(21);
+    expect(paced(1, 0.1)).toBe(1);
+  });
+
+  test.prop([fc.integer({ min: 1, max: 1000 }), fc.double({ min: 0.1, max: 3, noNaN: true })])(
+    'a slower pace never leaves fewer ticks',
+    (ticks, pace) => {
+      expect(paced(ticks, pace * 1.1)).toBeGreaterThanOrEqual(paced(ticks, pace));
+    },
+  );
+
+  it("adds the difficulty's lives to an enemy's, never below one", () => {
+    expect(enemyLivesWith(3, 1)).toBe(4);
+    expect(enemyLivesWith(5, -1)).toBe(4);
+    expect(enemyLivesWith(1, -1)).toBe(1);
+  });
 
   test.prop([roll])('range helpers stay inside their ranges', (value) => {
     const x = valueInRange({ min: 1.5, max: 4.5 }, value);
