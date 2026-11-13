@@ -6,6 +6,7 @@ import {
   CITY_LAYERS,
   cityLayerSvg,
   frameSvg,
+  type SpriteArt,
   type SpriteName,
   SPRITES,
   type TimeOfDay,
@@ -107,6 +108,17 @@ describe('the art', () => {
       RULES.projectile.width * 2,
       RULES.projectile.height * 2,
     ]);
+  });
+
+  it("draws the queen's rage in her frames, so it can lie over her frame of the same number", () => {
+    const timing = ({ width, height, frames, frameTicks }: SpriteArt) => ({
+      width,
+      height,
+      frames,
+      frameTicks,
+    });
+
+    expect(timing(SPRITES['queen-rage'])).toEqual(timing(SPRITES.queen));
   });
 
   it("draws the city in the world's size", () => {
