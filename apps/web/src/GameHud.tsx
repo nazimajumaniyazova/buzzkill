@@ -22,6 +22,8 @@ const selectScore = (hud: Hud): number => hud.score;
 const selectLives = (hud: Hud): number => hud.lives;
 const selectAmmo = (hud: Hud): number => hud.ammo;
 const selectLevel = (hud: Hud): number => hud.level;
+const selectShield = (hud: Hud): number => hud.shield;
+const selectRapidFire = (hud: Hud): number => hud.rapidFire;
 
 /** One value of the HUD, subscribed on its own: it renders only when that value changes. */
 function HudValue({ game, term, select, show }: HudValueProps): JSX.Element {
@@ -34,8 +36,23 @@ function HudValue({ game, term, select, show }: HudValueProps): JSX.Element {
   );
 }
 
+/** The seconds left of a power-up's effect (#151), shown only while it lasts. */
+function HudTimer({ game, term, select, show }: HudValueProps): JSX.Element | null {
+  const seconds = useGameHud(game, select);
+  if (seconds === 0) {
+    return null;
+  }
+  return (
+    <div>
+      <dt>{term}</dt>
+      <dd>{show(seconds)}</dd>
+    </div>
+  );
+}
+
 /**
- * Score, lives, ammo and the level over the canvas. The frame subscribes to nothing but the language, so it
+ * Score, lives, ammo and the level over the canvas, and the seconds left of a shield and of rapid
+ * fire while they last. The frame subscribes to nothing but the language, so it
  * renders once per run; each value subscribes through its own selector (#109), so a shot renders
  * the ammo and nothing else. The selectors pick numbers and the language writes them (ADR-0013).
  * The pause and the end of the run are the machine's business, through the bridge.
@@ -58,6 +75,13 @@ export function GameHud({ game, maxLives }: GameHudProps): JSX.Element {
           term={t.hud.level}
           select={selectLevel}
           show={(level) => t.hud.levelValue(level, LEVELS.length)}
+        />
+        <HudTimer game={game} term={t.hud.shield} select={selectShield} show={t.hud.secondsLeft} />
+        <HudTimer
+          game={game}
+          term={t.hud.rapidFire}
+          select={selectRapidFire}
+          show={t.hud.secondsLeft}
         />
       </dl>
     </section>

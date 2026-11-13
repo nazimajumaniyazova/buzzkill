@@ -19,6 +19,7 @@ export const Kind = {
   enemy: 2,
   projectile: 3,
   explosion: 4,
+  powerUp: 5,
 } as const;
 export type Kind = (typeof Kind)[keyof typeof Kind];
 
@@ -50,7 +51,7 @@ export interface World {
   readonly angle: Float64Array;
   readonly angleSpeed: Float64Array;
   readonly amplitude: Float64Array;
-  /** Enemy: index into the mode's enemy set. Explosion: 0 smoke, 1 fire. */
+  /** Enemy: index into the mode's enemy set. Explosion: 0 smoke, 1 fire. Power-up: `POWER_UPS`. */
   readonly variant: Uint8Array;
   /** Tick the entity was spawned in, for animations and lifetimes. */
   readonly bornTick: Int32Array;

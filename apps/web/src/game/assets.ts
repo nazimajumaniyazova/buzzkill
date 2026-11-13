@@ -32,6 +32,7 @@ export const GAME_ASSETS = {
   shot: { kind: 'audio', ...SOUNDS.shot, optional: true },
   explosion: { kind: 'audio', ...SOUNDS.explosion, optional: true },
   hit: { kind: 'audio', ...SOUNDS.hit, optional: true },
+  pickup: { kind: 'audio', ...SOUNDS.pickup, optional: true },
 } as const satisfies AssetManifest & Record<GameSound, unknown>;
 
 export type GameAssetManifest = typeof GAME_ASSETS;

@@ -104,6 +104,8 @@ function createStillGame(): Game {
     mode: 'day',
     status: 'playing',
     paused: false,
+    shield: 4,
+    rapidFire: 3,
   };
   return {
     start: vi.fn(),

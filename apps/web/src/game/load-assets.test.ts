@@ -2,6 +2,7 @@ import { AssetLoadError } from '@buzzkill/engine';
 import type * as browser from '@buzzkill/engine/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SOUNDS } from '../assets/manifest.gen';
 import { GAME_ASSETS } from './assets';
 import { loadGameAssets } from './load-assets';
 
@@ -100,8 +101,9 @@ describe('loadGameAssets', () => {
 
     expect(result.ok).toBe(true);
     const sounds = decoding.requested.filter((url) => /\.(ogg|wav)$/.test(url));
-    expect(sounds.filter((url) => url.endsWith('.wav'))).toHaveLength(3);
-    expect(sounds).toHaveLength(6);
+    const count = Object.keys(SOUNDS).length;
+    expect(sounds.filter((url) => url.endsWith('.wav'))).toHaveLength(count);
+    expect(sounds).toHaveLength(count * 2);
   });
 
   it("decodes the sounds on the page's context, which the mixer then plays through", async () => {

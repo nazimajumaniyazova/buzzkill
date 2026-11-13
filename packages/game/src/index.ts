@@ -24,6 +24,12 @@ export {
   type Range,
 } from './config/enemies';
 export { type LevelConfig, LEVELS, type WaveConfig } from './config/levels';
+export {
+  POWER_UP_RULES,
+  POWER_UPS,
+  type PowerUpConfig,
+  type PowerUpKind,
+} from './config/power-ups';
 export { type HeroConfig, HEROES, type HeroId, RULES, WORLD } from './config/rules';
 export {
   createGame,

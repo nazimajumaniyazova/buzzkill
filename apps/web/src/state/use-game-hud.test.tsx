@@ -14,6 +14,8 @@ function createFakeGame() {
     mode: 'day',
     status: 'playing',
     paused: false,
+    shield: 0,
+    rapidFire: 0,
   };
   const listeners = new Set<(hud: GameHud) => void>();
   const game: Game = {

@@ -4,12 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { GAME_ACTIONS, type GameAction } from '../actions';
 import { LEVELS } from '../config/levels';
+import { POWER_UP_RULES, POWER_UPS, type PowerUpKind } from '../config/power-ups';
 import { RULES } from '../config/rules';
 import { deserializeReplay, type Replay, serializeReplay } from '../replay/format';
 import type { RunResult } from '../replay/result';
 import { simulate } from '../replay/simulate';
 import { createSimulation } from '../simulation/simulation';
 import type { GameState } from '../simulation/state';
+import { type EntityId, Kind } from '../world/world';
 import {
   createGame,
   type Game,
@@ -99,6 +101,15 @@ function sendEveryWave(s: Setup): void {
   state.wave = LEVELS[0].waves.length;
 }
 
+/** Puts a power-up of `kind` on the hero, through the live state behind the rendered view. */
+function giftPowerUp(s: Setup, kind: PowerUpKind): void {
+  // The rendered view is the simulation's state object; writing to it is what a test needs here.
+  const { world, tick } = s.view() as unknown as GameState;
+  const id = world.spawn(Kind.powerUp, tick) as EntityId;
+  world.place(id, 60, 150, POWER_UP_RULES.size, POWER_UP_RULES.size);
+  world.variant[id] = POWER_UPS.findIndex((config) => config.kind === kind);
+}
+
 /** Runs frames until the simulation reaches `tick`. */
 function runUntilTick(s: Setup, tick: number): void {
   s.fake.frame();
@@ -137,6 +148,8 @@ describe('createGame', () => {
       mode: 'day',
       status: 'playing',
       paused: false,
+      shield: 0,
+      rapidFire: 0,
     });
     s.game.start();
     s.fake.frame();
@@ -189,6 +202,25 @@ describe('createGame', () => {
     expect(s.play).toHaveBeenCalledWith('hit');
     expect(s.play).toHaveBeenCalledWith('explosion');
     expect(s.play).not.toHaveBeenCalledWith('shot');
+  });
+
+  it('plays the pickup sound and shows the whole seconds left of a shield and rapid fire', () => {
+    const s = setup();
+    s.game.start();
+    s.fake.frame();
+    giftPowerUp(s, 'shield');
+    giftPowerUp(s, 'rapidFire');
+    const start = s.view().tick;
+
+    runUntilTick(s, start + 1);
+    expect(s.play.mock.calls).toEqual([['pickup'], ['pickup']]);
+    expect(s.game.getHud()).toMatchObject({ shield: 10, rapidFire: 8 });
+
+    runUntilTick(s, start + 61);
+    expect(s.game.getHud()).toMatchObject({ shield: 9, rapidFire: 7 });
+
+    runUntilTick(s, start + 481);
+    expect(s.game.getHud()).toMatchObject({ shield: 2, rapidFire: 0 });
   });
 
   it('pauses on the pause action without simulating that tick, and resumes on request', () => {
