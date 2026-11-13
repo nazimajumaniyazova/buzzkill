@@ -3,6 +3,7 @@
  * the game in the frame sizes of its configuration. The pipeline of #133 turns these documents into
  * the atlases the game loads; nothing here touches the DOM.
  */
+import { queen, queenRage, sting } from './boss';
 import { CITY_LAYERS, type CityLayer, cityLayer, type TimeOfDay, WORLD_SIZE } from './city';
 import { explosion, shot, shotTrail } from './effects';
 import { hero } from './heroes';
@@ -108,6 +109,16 @@ export const SPRITES = {
     frameTicks: 8,
     draw: (f) => powerUp('rapidFire', f),
   },
+  // The boss of #152, twice her 300×250 box; her rage is drawn over her frame of the same number.
+  queen: { width: 600, height: 500, frames: 4, frameTicks: 2, draw: (f, id) => queen(f, 4, id) },
+  'queen-rage': {
+    width: 600,
+    height: 500,
+    frames: 4,
+    frameTicks: 2,
+    draw: (f, id) => queenRage(f, 4, id),
+  },
+  sting: { width: 64, height: 24, frames: 1, frameTicks: 1, draw: () => sting() },
 } as const satisfies Record<string, SpriteArt>;
 
 export type SpriteName = keyof typeof SPRITES;
