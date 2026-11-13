@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { RULES } from '../config/rules';
 import {
+  addCapped,
   ammoAfterTick,
   enemyLivesWith,
   healthAfterHit,
@@ -78,6 +79,24 @@ describe('game rules', () => {
     expect(ammoAfterTick(39, 12, 40)).toBe(40);
     expect(ammoAfterTick(40, 12, 40)).toBe(40);
   });
+
+  it('adds a power-up up to its cap, and never takes away what is already above it', () => {
+    expect(addCapped(20, 15, 50)).toBe(35);
+    expect(addCapped(45, 15, 50)).toBe(50);
+    expect(addCapped(5, 1, 5)).toBe(5);
+    expect(addCapped(4, 1, 5)).toBe(5);
+    expect(addCapped(60, 15, 50)).toBe(60);
+  });
+
+  test.prop([fc.nat({ max: 100 }), fc.nat({ max: 50 }), fc.nat({ max: 100 })])(
+    'a capped gain never lowers a value and never passes the cap from below',
+    (value, gain, cap) => {
+      const next = addCapped(value, gain, cap);
+      expect(next).toBeGreaterThanOrEqual(value);
+      expect(next).toBeLessThanOrEqual(Math.max(value, cap));
+      expect(next).toBe(value >= cap ? value : Math.min(value + gain, cap));
+    },
+  );
 
   it('paces a number of ticks by a factor, to a whole tick and never below one', () => {
     expect(paced(90, 1)).toBe(90);

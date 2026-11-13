@@ -19,33 +19,35 @@ here, when a row names a file the game no longer ships, and when a pack has no l
 
 In `apps/web/src/assets/`, generated from `packages/art`.
 
-| File                   | Holds                                                     | Source                                     | Author                     | License |
-| ---------------------- | --------------------------------------------------------- | ------------------------------------------ | -------------------------- | ------- |
-| `creatures.webp`       | The heroes Mike and Julie and the six enemies, all frames | `packages/art/src/heroes.ts`, `insects.ts` | Buzzkill (this repository) | MIT     |
-| `effects.webp`         | The fire and smoke explosions and the shot in flight      | `packages/art/src/effects.ts`              | Buzzkill (this repository) | MIT     |
-| `city-day-sky.webp`    | The day sky and the sun                                   | `packages/art/src/city.ts`                 | Buzzkill (this repository) | MIT     |
-| `city-day-clouds.webp` | The clouds                                                | `packages/art/src/city.ts`                 | Buzzkill (this repository) | MIT     |
-| `city-day-far.webp`    | The far towers by day                                     | `packages/art/src/city.ts`                 | Buzzkill (this repository) | MIT     |
-| `city-day-mid.webp`    | The middle towers by day                                  | `packages/art/src/city.ts`                 | Buzzkill (this repository) | MIT     |
-| `city-day-near.webp`   | The near towers and the monorail by day                   | `packages/art/src/city.ts`                 | Buzzkill (this repository) | MIT     |
-| `city-night-sky.webp`  | The night sky, the stars and the moon                     | `packages/art/src/city.ts`                 | Buzzkill (this repository) | MIT     |
-| `city-night-far.webp`  | The far towers by night                                   | `packages/art/src/city.ts`                 | Buzzkill (this repository) | MIT     |
-| `city-night-mid.webp`  | The middle towers by night, with lit windows              | `packages/art/src/city.ts`                 | Buzzkill (this repository) | MIT     |
-| `city-night-near.webp` | The near towers and the monorail by night                 | `packages/art/src/city.ts`                 | Buzzkill (this repository) | MIT     |
+| File                   | Holds                                                                    | Source                                        | Author                     | License |
+| ---------------------- | ------------------------------------------------------------------------ | --------------------------------------------- | -------------------------- | ------- |
+| `creatures.webp`       | The heroes Mike and Julie and the six enemies, all frames                | `packages/art/src/heroes.ts`, `insects.ts`    | Buzzkill (this repository) | MIT     |
+| `effects.webp`         | The fire and smoke explosions, the shot in flight and the four power-ups | `packages/art/src/effects.ts`, `power-ups.ts` | Buzzkill (this repository) | MIT     |
+| `city-day-sky.webp`    | The day sky and the sun                                                  | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |
+| `city-day-clouds.webp` | The clouds                                                               | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |
+| `city-day-far.webp`    | The far towers by day                                                    | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |
+| `city-day-mid.webp`    | The middle towers by day                                                 | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |
+| `city-day-near.webp`   | The near towers and the monorail by day                                  | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |
+| `city-night-sky.webp`  | The night sky, the stars and the moon                                    | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |
+| `city-night-far.webp`  | The far towers by night                                                  | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |
+| `city-night-mid.webp`  | The middle towers by night, with lit windows                             | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |
+| `city-night-near.webp` | The near towers and the monorail by night                                | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |
 
 ## Sounds
 
 The Ogg files are in `apps/web/assets-src/sounds/`, in a folder per pack; the WAV files are in
 `apps/web/src/assets/`.
 
-| File                        | Plays when                                           | Source                                                      | Author                                  | License                                                       |
-| --------------------------- | ---------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------- |
-| `laserSmall_001.ogg`        | The hero shoots                                      | [Sci-Fi Sounds 1.0](https://kenney.nl/assets/sci-fi-sounds) | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| `explosionCrunch_000.ogg`   | An enemy is destroyed                                | [Sci-Fi Sounds 1.0](https://kenney.nl/assets/sci-fi-sounds) | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| `impactPunch_heavy_002.ogg` | An enemy touches the hero                            | [Impact Sounds 1.0](https://kenney.nl/assets/impact-sounds) | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| `shot.wav`                  | The hero shoots, where Ogg does not decode           | `laserSmall_001.ogg`, decoded by `pnpm assets`              | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| `explosion.wav`             | An enemy is destroyed, where Ogg does not decode     | `explosionCrunch_000.ogg`, decoded by `pnpm assets`         | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
-| `hit.wav`                   | An enemy touches the hero, where Ogg does not decode | `impactPunch_heavy_002.ogg`, decoded by `pnpm assets`       | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| File                        | Plays when                                              | Source                                                      | Author                                  | License                                                       |
+| --------------------------- | ------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------- |
+| `laserSmall_001.ogg`        | The hero shoots                                         | [Sci-Fi Sounds 1.0](https://kenney.nl/assets/sci-fi-sounds) | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `explosionCrunch_000.ogg`   | An enemy is destroyed                                   | [Sci-Fi Sounds 1.0](https://kenney.nl/assets/sci-fi-sounds) | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `impactPunch_heavy_002.ogg` | An enemy touches the hero                               | [Impact Sounds 1.0](https://kenney.nl/assets/impact-sounds) | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `laserRetro_000.ogg`        | The hero collects a power-up                            | [Sci-Fi Sounds 1.0](https://kenney.nl/assets/sci-fi-sounds) | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `shot.wav`                  | The hero shoots, where Ogg does not decode              | `laserSmall_001.ogg`, decoded by `pnpm assets`              | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `explosion.wav`             | An enemy is destroyed, where Ogg does not decode        | `explosionCrunch_000.ogg`, decoded by `pnpm assets`         | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `hit.wav`                   | An enemy touches the hero, where Ogg does not decode    | `impactPunch_heavy_002.ogg`, decoded by `pnpm assets`       | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `pickup.wav`                | The hero collects a power-up, where Ogg does not decode | `laserRetro_000.ogg`, decoded by `pnpm assets`              | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 
 ## License texts
 

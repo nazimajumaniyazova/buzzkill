@@ -17,6 +17,8 @@ function createFakeGame() {
     mode: 'day',
     status: 'playing',
     paused: false,
+    shield: 0,
+    rapidFire: 0,
   };
   const listeners = new Set<(hud: Hud) => void>();
   const game = {
@@ -106,10 +108,40 @@ describe('GameHud', () => {
     expect(values()).toEqual(['7', '3 of 5', '12', '4 of 6']);
   });
 
-  it('subscribes once per value it shows', () => {
+  it('subscribes once per value it can show', () => {
     const { listeners } = setup();
 
-    expect(listeners.size).toBe(4);
+    expect(listeners.size).toBe(6);
+  });
+
+  it('shows the seconds left of a shield and of rapid fire only while they last', async () => {
+    const { update, values, container } = setup();
+    const terms = () => screen.getAllByRole('term').map((term) => term.textContent);
+
+    update({ shield: 10 });
+    expect(terms()).toEqual(['Score', 'Lives', 'Ammo', 'Level', 'Shield']);
+    expect(values().at(-1)).toBe('10 s');
+
+    update({ shield: 9, rapidFire: 8 });
+    expect(terms().slice(4)).toEqual(['Shield', 'Rapid fire']);
+    expect(values().slice(4)).toEqual(['9 s', '8 s']);
+    expect(await axe(container)).toHaveNoViolations();
+
+    update({ shield: 0, rapidFire: 0 });
+    expect(terms()).toEqual(['Score', 'Lives', 'Ammo', 'Level']);
+  });
+
+  it('writes the seconds left in Russian', () => {
+    const fake = createFakeGame();
+    render(
+      <I18nProvider i18n={i18nFor('ru')}>
+        <GameHud maxLives={5} game={fake.game} />
+      </I18nProvider>,
+    );
+    fake.update({ shield: 10, rapidFire: 8 });
+
+    expect(screen.getByText('Щит').nextSibling?.textContent).toBe('10 с');
+    expect(screen.getByText('Скорострельность').nextSibling?.textContent).toBe('8 с');
   });
 
   it('counts the lives out of the most the difficulty gives', () => {

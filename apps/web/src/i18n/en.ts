@@ -146,6 +146,8 @@ function english(format: Format) {
       title: 'Help',
       intro: (lives: number) =>
         `Shoot the insects before they reach the city. ${format.number(lives)} ${format.plural(lives, { one: 'hit', other: 'hits' })} and the run is over.`,
+      powerUps:
+        'Destroyed insects sometimes drop power-ups. Touch one to collect it: rounds, a life, or a shield or rapid fire for a few seconds.',
       keyboard: 'Keyboard',
       gamepad: 'Gamepad',
       menus: 'In the menus',
@@ -183,6 +185,9 @@ function english(format: Format) {
         `${format.number(lives)} of ${format.number(max)}`,
       levelValue: (level: number, last: number) =>
         `${format.number(level)} of ${format.number(last)}`,
+      shield: 'Shield',
+      rapidFire: 'Rapid fire',
+      secondsLeft: (seconds: number) => `${format.number(seconds)} s`,
     },
     pause: {
       title: 'Paused',
@@ -215,6 +220,12 @@ function english(format: Format) {
         `Hit! ${format.number(lives)} ${format.plural(lives, { one: 'life', other: 'lives' })} left.`,
       levelCleared: (level: number, score: number) =>
         `Level ${format.number(level)} cleared. Score: ${format.number(score)}.`,
+      lifeGained: (lives: number) =>
+        `Extra life! ${format.number(lives)} ${format.plural(lives, { one: 'life', other: 'lives' })} now.`,
+      shieldOn: (seconds: number) =>
+        `Shield on for ${format.number(seconds)} ${format.plural(seconds, { one: 'second', other: 'seconds' })}.`,
+      rapidFireOn: (seconds: number) =>
+        `Rapid fire for ${format.number(seconds)} ${format.plural(seconds, { one: 'second', other: 'seconds' })}.`,
       victory: (score: number) => `Victory! Every level cleared. Score: ${format.number(score)}.`,
       gameOver: (score: number) => `Game over. Score: ${format.number(score)}.`,
     },

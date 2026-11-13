@@ -46,7 +46,10 @@ export function hashGameState(state: GameState): string {
     .uint32(state.level)
     .uint32(state.wave)
     .uint32(state.waveSent)
-    .uint32(state.spawnTimer);
+    .uint32(state.spawnTimer)
+    .uint32(state.shieldTicks)
+    .uint32(state.rapidFireTicks)
+    .uint32(state.fireCooldown);
   for (const word of state.rng.getState()) {
     hasher.uint32(word);
   }

@@ -1,5 +1,12 @@
 import type { SpriteAtlas } from '@buzzkill/engine';
-import { DAY_ENEMIES, type GameMode, HEROES, type HeroId, NIGHT_ENEMIES } from '@buzzkill/game';
+import {
+  DAY_ENEMIES,
+  type GameMode,
+  HEROES,
+  type HeroId,
+  NIGHT_ENEMIES,
+  POWER_UPS,
+} from '@buzzkill/game';
 
 import { BACKGROUNDS, SPRITES } from '../assets/manifest.gen';
 import type { GameAssetManifest } from './assets';
@@ -35,6 +42,8 @@ export interface GameSprites<TImage> {
   readonly projectile: SpriteAtlas<TImage>;
   /** By explosion variant: 0 is smoke, 1 is fire, as the simulation rolls them. */
   readonly explosions: readonly [SpriteAtlas<TImage>, SpriteAtlas<TImage>];
+  /** By power-up variant, the index of its kind in `POWER_UPS` (#151). */
+  readonly powerUps: readonly Animation<TImage>[];
   /** The city of each time of day, back to front. */
   readonly backgrounds: Readonly<Record<GameMode, readonly BackgroundLayer<TImage>[]>>;
 }
@@ -72,6 +81,7 @@ export function createGameSprites<TImage>(images: GameImages<TImage>): GameSprit
     enemies,
     projectile: atlas('shot-trail'),
     explosions: [atlas('explosion-smoke'), atlas('explosion-fire')],
+    powerUps: POWER_UPS.map(({ sprite }) => animation(sprite.sheet)),
     backgrounds: { day: city('day'), night: city('night') },
   };
 }

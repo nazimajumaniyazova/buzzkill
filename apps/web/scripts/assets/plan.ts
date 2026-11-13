@@ -34,7 +34,15 @@ export const SETTINGS = {
  */
 const ATLAS_SPRITES = {
   creatures: ['mike', 'julie', 'beetle', 'wasp', 'dragonfly', 'moth', 'firefly', 'mosquito'],
-  effects: ['explosion-smoke', 'explosion-fire', 'shot-trail'],
+  effects: [
+    'explosion-smoke',
+    'explosion-fire',
+    'shot-trail',
+    'power-ammo',
+    'power-life',
+    'power-shield',
+    'power-rapid-fire',
+  ],
 } as const satisfies Record<string, readonly SpriteName[]>;
 
 type AtlasName = keyof typeof ATLAS_SPRITES;
@@ -54,6 +62,7 @@ const SOUND_SOURCES = {
   shot: 'kenney-sci-fi-sounds/laserSmall_001.ogg',
   explosion: 'kenney-sci-fi-sounds/explosionCrunch_000.ogg',
   hit: 'kenney-impact-sounds/impactPunch_heavy_002.ogg',
+  pickup: 'kenney-sci-fi-sounds/laserRetro_000.ogg',
 } as const satisfies Record<GameSound, string>;
 
 export interface AtlasPlan extends PackedAtlas<SpriteName> {

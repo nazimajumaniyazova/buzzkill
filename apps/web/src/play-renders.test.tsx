@@ -84,7 +84,8 @@ function installFrames() {
   };
 }
 
-const shown = (hud: Hud): string => `${String(hud.score)} ${String(hud.lives)} ${String(hud.ammo)}`;
+const shown = (hud: Hud): string =>
+  [hud.score, hud.lives, hud.ammo, hud.shield, hud.rapidFire].join(' ');
 
 describe('renders during play', () => {
   beforeEach(() => {

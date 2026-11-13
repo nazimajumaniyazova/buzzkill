@@ -8,9 +8,11 @@ import { boxesOverlap } from '@buzzkill/engine';
 import { DIFFICULTIES } from '../config/difficulty';
 import { ENEMY_SETS } from '../config/enemies';
 import { type LevelConfig, LEVELS, type WaveConfig } from '../config/levels';
+import { POWER_UP_RULES, POWER_UPS, type PowerUpConfig, RAPID_FIRE } from '../config/power-ups';
 import { RULES, WORLD } from '../config/rules';
 import { type EntityId, Kind } from '../world/world';
 import {
+  addCapped,
   ammoAfterTick,
   enemyLivesWith,
   healthAfterHit,
@@ -34,6 +36,10 @@ const FIRE = 4;
 /** The campaign, typed as levels so that a wave's optional weights can be read. */
 const CAMPAIGN: readonly LevelConfig[] = LEVELS;
 
+/** The power-ups, typed as configs so that one picked by its index can be narrowed by kind. */
+const DROPS: readonly PowerUpConfig[] = POWER_UPS;
+const DROP_WEIGHTS: readonly number[] = DROPS.map(({ weight }) => weight);
+
 /** Hero speed from the held move actions; up wins when both are held, as in 2023. */
 function controlSystem(state: GameState, input: TickInput): void {
   const { world, player } = state;
@@ -50,15 +56,34 @@ function controlSystem(state: GameState, input: TickInput): void {
  * One projectile per press of fire while rounds remain. The 2023 game fired on every keydown,
  * key auto-repeat included, and charged a round only for shots that missed; a shot now costs a
  * round when it is fired.
+ *
+ * During rapid fire (#151) fire shoots while it is held, once every `RAPID_FIRE.intervalTicks`
+ * however often it is pressed, so a turbo button gains nothing; no shot costs a round.
  */
 function shootingSystem(state: GameState, input: TickInput): void {
-  if (state.status !== 'playing' || (input.pressed & FIRE) === 0 || state.ammo <= 0) {
+  if (state.status !== 'playing') {
     return;
   }
+  if (state.rapidFireTicks > 0) {
+    if (state.fireCooldown > 0) {
+      state.fireCooldown -= 1;
+    }
+    if ((input.down & FIRE) !== 0 && state.fireCooldown === 0 && fireProjectile(state)) {
+      state.fireCooldown = RAPID_FIRE.intervalTicks;
+    }
+    return;
+  }
+  if ((input.pressed & FIRE) !== 0 && state.ammo > 0 && fireProjectile(state)) {
+    state.ammo -= 1;
+  }
+}
+
+/** Fires a projectile from the hero's muzzle. False when the world has no room for it. */
+function fireProjectile(state: GameState): boolean {
   const { world, player, hero } = state;
   const id = world.spawn(Kind.projectile, state.tick);
   if (id === undefined) {
-    return;
+    return false;
   }
   const { width, height, speed } = RULES.projectile;
   // The hero is always alive, so its position is always set.
@@ -66,8 +91,8 @@ function shootingSystem(state: GameState, input: TickInput): void {
   const y = (world.y[player] as number) + hero.muzzle.y;
   world.place(id, x, y, width, height);
   world.vx[id] = speed;
-  state.ammo -= 1;
   state.events.emit('shot', { x, y });
+  return true;
 }
 
 /** Moves every entity by its velocity; enemies also follow their wave, the hero stays on screen. */
@@ -97,7 +122,10 @@ function movementSystem(state: GameState): void {
   }
 }
 
-/** Removes projectiles past their range, enemies past the left edge and finished explosions. */
+/**
+ * Removes projectiles past their range, enemies and power-ups past the left edge, and finished
+ * explosions.
+ */
 function lifetimeSystem(state: GameState): void {
   const { world, tick } = state;
   const range = WORLD.width * RULES.projectile.rangeRatio;
@@ -108,7 +136,7 @@ function lifetimeSystem(state: GameState): void {
     const x = world.x[id] as number;
     if (
       (kind === Kind.projectile && x > range) ||
-      (kind === Kind.enemy && x + (world.width[id] as number) < 0) ||
+      ((kind === Kind.enemy || kind === Kind.powerUp) && x + (world.width[id] as number) < 0) ||
       (kind === Kind.explosion && tick - (world.bornTick[id] as number) >= explosionTicks)
     ) {
       world.kill(id);
@@ -134,6 +162,32 @@ function spawnExplosion(state: GameState, enemy: EntityId): void {
   world.variant[id] = variant;
 }
 
+/**
+ * Rolls whether a destroyed enemy drops a power-up and which one (#151), and drops it centered
+ * where the enemy was, no lower than the bottom of the world, so the hero can always reach it.
+ */
+function dropPowerUp(state: GameState, enemy: EntityId): void {
+  const { world, rng } = state;
+  // Both rolls are taken on every kill, before the spawn can fail, so the sequence of random
+  // numbers depends neither on what dropped nor on whether the world had room (ADR-0009).
+  const dropRoll = rng.nextFloat();
+  const kindRoll = rng.nextFloat();
+  if (dropRoll >= POWER_UP_RULES.dropChance) {
+    return;
+  }
+  const id = world.spawn(Kind.powerUp, state.tick);
+  if (id === undefined) {
+    return;
+  }
+  const { size, speed } = POWER_UP_RULES;
+  const x = (world.x[enemy] as number) + ((world.width[enemy] as number) - size) * 0.5;
+  const y = (world.y[enemy] as number) + ((world.height[enemy] as number) - size) * 0.5;
+  const lowest = WORLD.height - size;
+  world.place(id, x, y < 0 ? 0 : y > lowest ? lowest : y, size, size);
+  world.vx[id] = -speed;
+  world.variant[id] = pickWeighted(DROP_WEIGHTS, kindRoll);
+}
+
 const overlaps = (state: GameState, a: EntityId, b: EntityId): boolean => {
   const { x, y, width, height } = state.world;
   return boxesOverlap(
@@ -154,7 +208,9 @@ const overlaps = (state: GameState, a: EntityId, b: EntityId): boolean => {
  * hash takes over if stage 7 brings hundreds.
  *
  * A projectile is used up by its first hit, and an enemy already destroyed this tick is not hit
- * again; in 2023 one projectile could damage several enemies in the same frame.
+ * again; in 2023 one projectile could damage several enemies in the same frame. An enemy that
+ * flies into a shielded hero explodes all the same, but takes no life, scores nothing and drops
+ * nothing: only a shot earns those.
  */
 function collisionSystem(state: GameState): void {
   if (state.status !== 'playing') {
@@ -169,6 +225,9 @@ function collisionSystem(state: GameState): void {
     if (overlaps(state, player, enemy)) {
       world.kill(enemy);
       spawnExplosion(state, enemy);
+      if (state.shieldTicks > 0) {
+        continue;
+      }
       state.lives = livesAfterHit(state.lives);
       state.events.emit('playerHit', { livesLeft: state.lives });
       continue;
@@ -190,6 +249,7 @@ function collisionSystem(state: GameState): void {
       }
       world.kill(enemy);
       spawnExplosion(state, enemy);
+      dropPowerUp(state, enemy);
       const value = world.value[enemy] as number;
       state.score = scoreAfterKill(state.score, value);
       state.events.emit('enemyDestroyed', {
@@ -199,6 +259,69 @@ function collisionSystem(state: GameState): void {
       });
       break;
     }
+  }
+}
+
+/**
+ * Counts down the shield and rapid fire. It runs after the systems that read them and before a
+ * pickup sets them, so each lasts exactly its duration in ticks.
+ */
+function powerUpTimerSystem(state: GameState): void {
+  if (state.status !== 'playing') {
+    return;
+  }
+  if (state.shieldTicks > 0) {
+    state.shieldTicks -= 1;
+  }
+  if (state.rapidFireTicks > 0) {
+    state.rapidFireTicks -= 1;
+  }
+}
+
+/** Collects every power-up the hero touches, in world order (#151). */
+function pickupSystem(state: GameState): void {
+  if (state.status !== 'playing') {
+    return;
+  }
+  const { world, player } = state;
+  for (let index = 0; index < world.count; index += 1) {
+    const id = world.at(index);
+    if (world.kind[id] !== Kind.powerUp || !world.isAlive(id) || !overlaps(state, player, id)) {
+      continue;
+    }
+    world.kill(id);
+    const config = DROPS[world.variant[id] as number];
+    if (config === undefined) {
+      // Unreachable: a power-up's variant is always an index of `POWER_UPS`.
+      continue;
+    }
+    collect(state, config);
+    const half = POWER_UP_RULES.size * 0.5;
+    state.events.emit('powerUpCollected', {
+      kind: config.kind,
+      x: (world.x[id] as number) + half,
+      y: (world.y[id] as number) + half,
+    });
+  }
+}
+
+/** Applies a collected power-up, within the caps of the run's difficulty. */
+function collect(state: GameState, config: PowerUpConfig): void {
+  const preset = DIFFICULTIES[state.difficulty];
+  switch (config.kind) {
+    case 'ammo':
+      state.ammo = addCapped(state.ammo, config.rounds, preset.ammo.max);
+      break;
+    case 'life':
+      state.lives = addCapped(state.lives, config.lives, preset.lives);
+      break;
+    case 'shield':
+      state.shieldTicks = config.durationTicks;
+      break;
+    case 'rapidFire':
+      state.rapidFireTicks = config.durationTicks;
+      state.fireCooldown = 0;
+      break;
   }
 }
 
@@ -348,6 +471,8 @@ export const SYSTEMS = [
   movementSystem,
   lifetimeSystem,
   collisionSystem,
+  powerUpTimerSystem,
+  pickupSystem,
   outcomeSystem,
   ammoSystem,
   spawnSystem,

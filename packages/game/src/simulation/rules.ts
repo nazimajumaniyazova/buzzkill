@@ -65,6 +65,18 @@ export function ammoAfterTick(ammo: number, tick: number, max: number = RULES.am
   return tick > 0 && tick % refillTicks === 0 && ammo < max ? ammo + 1 : ammo;
 }
 
+/**
+ * `value` plus `gain`, up to `cap`: what a power-up gives (#151). A value already above the cap
+ * stays where it is, so collecting never takes anything away.
+ */
+export function addCapped(value: number, gain: number, cap: number): number {
+  if (value >= cap) {
+    return value;
+  }
+  const next = value + gain;
+  return next < cap ? next : cap;
+}
+
 /** A number of ticks at a difficulty's `pace`: a whole tick, never below one (#155). */
 export function paced(ticks: number, pace: number): number {
   const scaled = Math.round(ticks * pace);

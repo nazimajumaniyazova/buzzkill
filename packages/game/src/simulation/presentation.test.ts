@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { animationFrame, parallaxOffset } from './presentation';
+import { animationFrame, parallaxOffset, secondsLeft } from './presentation';
 
 describe('parallaxOffset', () => {
   it('scrolls left by the scroll speed per tick and wraps after one width', () => {
@@ -30,5 +30,16 @@ describe('animationFrame', () => {
   it('rejects a frame count or frame time below one', () => {
     expect(() => animationFrame(0, 0, 0, 1)).toThrow(RangeError);
     expect(() => animationFrame(0, 0, 1, 0.5)).toThrow(RangeError);
+  });
+});
+
+describe('secondsLeft', () => {
+  it('rounds the ticks left up to whole seconds, so the last tick still shows one', () => {
+    expect(secondsLeft(600)).toBe(10);
+    expect(secondsLeft(599)).toBe(10);
+    expect(secondsLeft(541)).toBe(10);
+    expect(secondsLeft(540)).toBe(9);
+    expect(secondsLeft(1)).toBe(1);
+    expect(secondsLeft(0)).toBe(0);
   });
 });

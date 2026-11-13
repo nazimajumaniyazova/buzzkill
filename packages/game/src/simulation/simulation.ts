@@ -66,6 +66,9 @@ export function createSimulation(options: SimulationOptions): Simulation {
     wave: 0,
     waveSent: 0,
     spawnTimer: paced(LEVELS[0].breakTicks, preset.pace),
+    shieldTicks: 0,
+    rapidFireTicks: 0,
+    fireCooldown: 0,
   };
 
   return {

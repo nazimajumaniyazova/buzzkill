@@ -19,6 +19,8 @@ function createPushedGame() {
     mode: 'day',
     status: 'playing',
     paused: false,
+    shield: 0,
+    rapidFire: 0,
   };
   const listeners = new Set<(next: GameHud) => void>();
   const game = {
@@ -76,6 +78,26 @@ describe('announceRun', () => {
     expect(announce.mock.calls).toEqual([['Hit! 4 lives left.'], ['Hit! 1 life left.']]);
   });
 
+  it('says a life gained, and a shield or rapid fire when one is collected, politely', () => {
+    const { game, push } = createPushedGame();
+    const announce = vi.fn();
+    announceRun(game, announce, messages);
+    announce.mockClear();
+
+    push({ lives: 6 });
+    push({ shield: 10 });
+    push({ shield: 9 });
+    push({ rapidFire: 8, shield: 8 });
+    push({ shield: 10, rapidFire: 7 });
+
+    expect(announce.mock.calls).toEqual([
+      ['Extra life! 6 lives now.'],
+      ['Shield on for 10 seconds.'],
+      ['Rapid fire for 8 seconds.'],
+      ['Shield on for 10 seconds.'],
+    ]);
+  });
+
   it('says game over at once, once, with the score, instead of the last life', () => {
     const { game, push } = createPushedGame();
     const announce = vi.fn();
@@ -131,5 +153,17 @@ describe('announceRun', () => {
       'Попадание! Осталась 21 жизнь.',
     ]);
     expect(russian.gameOver(1234)).toBe('Игра окончена. Счёт: 1 234.');
+    expect([1, 3, 6].map((lives) => russian.lifeGained(lives))).toEqual([
+      'Дополнительная жизнь! Теперь 1 жизнь.',
+      'Дополнительная жизнь! Теперь 3 жизни.',
+      'Дополнительная жизнь! Теперь 6 жизней.',
+    ]);
+    expect([1, 2, 10, 21].map((seconds) => russian.shieldOn(seconds))).toEqual([
+      'Щит на 1 секунду.',
+      'Щит на 2 секунды.',
+      'Щит на 10 секунд.',
+      'Щит на 21 секунду.',
+    ]);
+    expect(russian.rapidFireOn(8)).toBe('Скорострельность на 8 секунд.');
   });
 });
