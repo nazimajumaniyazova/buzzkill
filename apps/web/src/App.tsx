@@ -1,3 +1,4 @@
+import { DIFFICULTIES } from '@buzzkill/game';
 import { type JSX, lazy, Suspense, useEffect, useRef, useState } from 'react';
 
 import { AnnouncerProvider, createAnnouncer } from './announcer';
@@ -214,6 +215,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
         mode: choice.mode,
         seed: seedForRun(window.location.search),
         speed: settings.gameSpeed,
+        difficulty: settings.difficulty,
       },
     });
   };
@@ -251,7 +253,13 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
           />
         );
       case 'help':
-        return <HelpScreen keyBindings={settings.keyBindings} onBack={back} />;
+        return (
+          <HelpScreen
+            keyBindings={settings.keyBindings}
+            lives={DIFFICULTIES[settings.difficulty].lives}
+            onBack={back}
+          />
+        );
     }
   };
 

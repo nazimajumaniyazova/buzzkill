@@ -1,9 +1,8 @@
 import type { AssetFailure } from '@buzzkill/engine';
-import type { GameAction, GameMode, HeroId } from '@buzzkill/game';
+import type { Difficulty, GameAction, GameMode, HeroId } from '@buzzkill/game';
 
 import type { ErrorArea } from '../errors/report-error';
 import type { MotionChoice } from '../motion';
-import type { Difficulty } from '../state/settings/schema';
 import type { ThemeChoice } from '../theme';
 import type { Format } from './format';
 

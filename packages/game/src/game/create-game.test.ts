@@ -65,7 +65,7 @@ function setup(seed = 1): Setup {
   const play = vi.fn<GameAudio['play']>();
   const render = vi.fn<GameRenderer['render']>();
   const game = createGame({
-    settings: { heroId: 'male', mode: 'day' },
+    settings: { heroId: 'male', mode: 'day', difficulty: 'normal' },
     seed,
     gameVersion: 'test',
     input,
@@ -357,7 +357,7 @@ describe('createGame', () => {
 
     expect(() =>
       createGame({
-        settings: { heroId: 'female', mode: 'night' },
+        settings: { heroId: 'female', mode: 'night', difficulty: 'normal' },
         seed: 1,
         gameVersion: 'test',
         input,

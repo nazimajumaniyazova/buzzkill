@@ -76,6 +76,7 @@ vi.mock('./GameView', async () => {
             {betweenLevels ? ', between levels' : ''}
           </p>
           <p>Speed {run.speed}</p>
+          <p>Difficulty {run.difficulty}</p>
           <button
             type="button"
             onClick={() => {
@@ -561,7 +562,7 @@ describe('App', () => {
   });
 
   it("resumes on the player's pause key, not on the default one it replaced", () => {
-    const run: Run = { heroId: 'male', mode: 'day', seed: 3, speed: 1 };
+    const run: Run = { heroId: 'male', mode: 'day', seed: 3, speed: 1, difficulty: 'normal' };
     render(
       <App
         store={createAppStore({ name: 'paused', assets, run, time: run.mode })}
@@ -599,6 +600,24 @@ describe('App', () => {
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
   });
 
+  it('takes the difficulty of the settings for the help and the next run', async () => {
+    render(<App />);
+    click('Help');
+    expect(screen.getByText(/5 hits and the run is over.$/)).toBeInTheDocument();
+    click('Back');
+
+    click('Settings');
+    fireEvent.click(screen.getByRole('tab', { name: 'Gameplay' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
+    click('Back');
+    click('Help');
+    expect(screen.getByText(/3 hits and the run is over.$/)).toBeInTheDocument();
+    click('Back');
+    await startRun();
+
+    expect(screen.getByText('Difficulty hard')).toBeInTheDocument();
+  });
+
   it('holds the run between levels, says that night falls, and goes on at night', async () => {
     render(<App />);
     await startRun();
@@ -617,7 +636,7 @@ describe('App', () => {
   });
 
   it('renders the state of the stores it is given, the game view once its code is in place', async () => {
-    const run: Run = { heroId: 'female', mode: 'night', seed: 3, speed: 1 };
+    const run: Run = { heroId: 'female', mode: 'night', seed: 3, speed: 1, difficulty: 'normal' };
     render(
       <App
         store={createAppStore({ name: 'paused', assets, run, time: run.mode })}

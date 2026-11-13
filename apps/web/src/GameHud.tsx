@@ -1,4 +1,4 @@
-import { type Game, type GameHud as Hud, LEVELS, RULES } from '@buzzkill/game';
+import { type Game, type GameHud as Hud, LEVELS } from '@buzzkill/game';
 import type { JSX } from 'react';
 
 import { useI18n } from './i18n/i18n';
@@ -6,6 +6,8 @@ import { useGameHud } from './state/use-game-hud';
 
 interface GameHudProps {
   readonly game: Game;
+  /** The lives a run starts with at its difficulty (#155). */
+  readonly maxLives: number;
 }
 
 interface HudValueProps {
@@ -38,7 +40,7 @@ function HudValue({ game, term, select, show }: HudValueProps): JSX.Element {
  * the ammo and nothing else. The selectors pick numbers and the language writes them (ADR-0013).
  * The pause and the end of the run are the machine's business, through the bridge.
  */
-export function GameHud({ game }: GameHudProps): JSX.Element {
+export function GameHud({ game, maxLives }: GameHudProps): JSX.Element {
   const { t, format } = useI18n();
   return (
     <section className="hud" aria-label={t.hud.label}>
@@ -48,7 +50,7 @@ export function GameHud({ game }: GameHudProps): JSX.Element {
           game={game}
           term={t.hud.lives}
           select={selectLives}
-          show={(lives) => t.hud.livesValue(lives, RULES.lives)}
+          show={(lives) => t.hud.livesValue(lives, maxLives)}
         />
         <HudValue game={game} term={t.hud.ammo} select={selectAmmo} show={format.number} />
         <HudValue

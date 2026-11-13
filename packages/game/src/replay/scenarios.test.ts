@@ -15,6 +15,7 @@ const replay = (seed: number, inputs: number[], mode: 'day' | 'night' = 'day'): 
   seed,
   heroId: 'male',
   mode,
+  difficulty: 'normal',
   inputs,
 });
 
@@ -27,7 +28,7 @@ describe('pinned scenarios', () => {
   it('seed 1, standing still for 10 s', () => {
     expect(simulate(replay(1, []), { maxTicks: 600 })).toMatchInlineSnapshot(`
       {
-        "hash": "48fcde41",
+        "hash": "a8f81750",
         "level": 1,
         "livesLeft": 4,
         "score": 0,
@@ -47,7 +48,7 @@ describe('pinned scenarios', () => {
 
     expect(simulate(replay(7, inputs), { maxTicks: 1200 })).toMatchInlineSnapshot(`
       {
-        "hash": "a35dfe62",
+        "hash": "ea88c0c3",
         "level": 1,
         "livesLeft": 1,
         "score": 3,
@@ -62,7 +63,7 @@ describe('pinned scenarios', () => {
 
     expect(simulate(replay(42, inputs, 'night'), { maxTicks: 900 })).toMatchInlineSnapshot(`
       {
-        "hash": "95dea0a4",
+        "hash": "df250e2d",
         "level": 1,
         "livesLeft": 4,
         "score": 0,

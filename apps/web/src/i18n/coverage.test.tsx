@@ -173,7 +173,7 @@ describe('every text on screen comes from the dictionary', () => {
   });
 
   it('in the help', () => {
-    renderMarked(<HelpScreen keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />);
+    renderMarked(<HelpScreen lives={5} keyBindings={DEFAULT_KEY_BINDINGS} onBack={vi.fn()} />);
 
     expect(foreignText()).toEqual([]);
   });
@@ -234,7 +234,7 @@ describe('every text on screen comes from the dictionary', () => {
   });
 
   it('in the HUD', () => {
-    renderMarked(<GameHud game={createStillGame()} />);
+    renderMarked(<GameHud maxLives={5} game={createStillGame()} />);
 
     expect(foreignText()).toEqual([]);
   });
@@ -256,7 +256,7 @@ describe('every text on screen comes from the dictionary', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
     renderMarked(
       <GameView
-        run={{ heroId: 'male', mode: 'day', seed: 1, speed: 1 }}
+        run={{ heroId: 'male', mode: 'day', seed: 1, speed: 1, difficulty: 'normal' }}
         assets={{} as GameAssets}
         paused={false}
         keyBindings={DEFAULT_KEY_BINDINGS}

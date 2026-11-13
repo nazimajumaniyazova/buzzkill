@@ -16,6 +16,7 @@ import {
 import {
   createGame,
   DEFAULT_GAMEPAD_BINDINGS,
+  DIFFICULTIES,
   type Game,
   GAME_ACTIONS,
   type GameAction,
@@ -156,7 +157,7 @@ export function GameView({
       };
 
       const created = createGame({
-        settings: { heroId: run.heroId, mode: run.mode },
+        settings: { heroId: run.heroId, mode: run.mode, difficulty: run.difficulty },
         seed: run.seed,
         gameVersion: GAME_VERSION,
         input: polledInput,
@@ -231,7 +232,7 @@ export function GameView({
       {unsupported ? (
         <p role="alert">{t.game.unsupported}</p>
       ) : (
-        game !== null && <GameHud game={game} />
+        game !== null && <GameHud game={game} maxLives={DIFFICULTIES[run.difficulty].lives} />
       )}
     </main>
   );

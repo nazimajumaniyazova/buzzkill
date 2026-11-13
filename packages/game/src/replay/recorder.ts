@@ -1,3 +1,4 @@
+import type { Difficulty } from '../config/difficulty';
 import type { GameMode } from '../config/enemies';
 import type { HeroId } from '../config/rules';
 import { type Replay, REPLAY_ACTION_MASK, REPLAY_FORMAT_VERSION } from './format';
@@ -7,6 +8,7 @@ export interface ReplayRecorderOptions {
   readonly seed: number;
   readonly heroId: HeroId;
   readonly mode: GameMode;
+  readonly difficulty: Difficulty;
 }
 
 export interface ReplayRecorder {
@@ -52,6 +54,7 @@ export function createReplayRecorder(options: ReplayRecorderOptions): ReplayReco
         seed: options.seed,
         heroId: options.heroId,
         mode: options.mode,
+        difficulty: options.difficulty,
         inputs: inputs.slice(),
       };
     },

@@ -3,6 +3,7 @@
 import * as z from 'zod/mini';
 
 import { GAME_ACTIONS } from '../actions';
+import { type Difficulty, DIFFICULTY_IDS } from '../config/difficulty';
 import type { GameMode } from '../config/enemies';
 import type { HeroId } from '../config/rules';
 
@@ -22,10 +23,13 @@ export interface Replay {
   readonly seed: number;
   readonly heroId: HeroId;
   readonly mode: GameMode;
+  /** Since format 2 (#155): runs at different difficulties belong on different boards. */
+  readonly difficulty: Difficulty;
   readonly inputs: readonly number[];
 }
 
-export const REPLAY_FORMAT_VERSION = 1;
+/** 2 since #155, which added `difficulty`; no replay of format 1 was ever stored. */
+export const REPLAY_FORMAT_VERSION = 2;
 
 /**
  * The bits a replay may contain: every action but `pause`. A paused tick is never simulated, so
@@ -69,6 +73,7 @@ const replaySchema = z.object({
   seed: z.uint32(),
   heroId: z.enum(HERO_IDS),
   mode: z.enum(MODES),
+  difficulty: z.enum(DIFFICULTY_IDS),
   inputs: z.array(z.int().check(z.nonnegative(), z.lte(0x7f_ff_ff_ff))).check(
     z.maxLength(MAX_REPLAY_CHANGES * 2),
     z.superRefine((inputs, context) => {
@@ -97,8 +102,8 @@ export function parseReplay(value: unknown): ReplayParseResult {
 
 /** The replay as compact JSON with a fixed field order. */
 export function serializeReplay(replay: Replay): string {
-  const { formatVersion, gameVersion, seed, heroId, mode, inputs } = replay;
-  return JSON.stringify({ formatVersion, gameVersion, seed, heroId, mode, inputs });
+  const { formatVersion, gameVersion, seed, heroId, mode, difficulty, inputs } = replay;
+  return JSON.stringify({ formatVersion, gameVersion, seed, heroId, mode, difficulty, inputs });
 }
 
 /** Parses the output of `serializeReplay`; malformed JSON is reported like any other problem. */
