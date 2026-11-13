@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.20.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.19.0...v0.20.0) (2026-11-13)
+
+
+### Features
+
+* **art:** draw the four power-ups ([#171](https://github.com/nazimajumaniyazova/buzzkill/issues/171)) ([3c8ac61](https://github.com/nazimajumaniyazova/buzzkill/commit/3c8ac61636f8ffee7cba4ba2d7c5c49efdb355c5))
+* **game:** play the run at the difficulty of the settings ([#170](https://github.com/nazimajumaniyazova/buzzkill/issues/170)) ([7707924](https://github.com/nazimajumaniyazova/buzzkill/commit/7707924c94a66487ff5a5a34e7d606cefb407766)), closes [#155](https://github.com/nazimajumaniyazova/buzzkill/issues/155)
+
 ## [0.19.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.18.0...v0.19.0) (2026-11-12)
 
 
