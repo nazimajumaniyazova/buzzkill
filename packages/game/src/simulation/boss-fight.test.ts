@@ -268,6 +268,7 @@ describe('the queen attacking', () => {
 describe('her stings', () => {
   it('take a life from the hero they strike, and are gone', () => {
     const sim = setup();
+    sim.step(IDLE);
     const hit = listen(sim, 'playerHit');
     const { world, player } = sim.state;
     const sting = add(
@@ -288,6 +289,7 @@ describe('her stings', () => {
 
   it('break on a shield', () => {
     const sim = setup({ shielded: true });
+    sim.step(IDLE);
     const hit = listen(sim, 'playerHit');
     const { world, player } = sim.state;
     const sting = add(

@@ -178,18 +178,26 @@ function lifetimeSystem(state: GameState): void {
     const id = world.at(index);
     const kind = world.kind[id];
     const x = world.x[id] as number;
-    const y = world.y[id] as number;
-    const leftWorld = x + (world.width[id] as number) < 0;
     if (
       (kind === Kind.projectile && x > range) ||
-      ((kind === Kind.enemy || kind === Kind.powerUp) && leftWorld) ||
-      (kind === Kind.sting &&
-        (leftWorld || y + (world.height[id] as number) < 0 || y > WORLD.height)) ||
+      ((kind === Kind.enemy || kind === Kind.powerUp) && x + (world.width[id] as number) < 0) ||
+      (kind === Kind.sting && stingGone(state, id)) ||
       (kind === Kind.explosion && tick - (world.bornTick[id] as number) >= explosionTicks)
     ) {
       world.kill(id);
     }
   }
+}
+
+/** Whether a sting has left the world past the left edge, the top or the bottom. */
+function stingGone(state: GameState, id: EntityId): boolean {
+  const { world } = state;
+  const y = world.y[id] as number;
+  return (
+    (world.x[id] as number) + (world.width[id] as number) < 0 ||
+    y + (world.height[id] as number) < 0 ||
+    y > WORLD.height
+  );
 }
 
 /** An explosion centered on an entity. */
@@ -327,12 +335,16 @@ function hurtHero(state: GameState): void {
  * The boss's fight against the hero (#152). Her stings strike the hero and break; her charge
  * strikes the hero once however long they overlap; the hero's shots hit her while she has health,
  * and pass through her once it is gone and she falls. Shots pass through stings.
+ *
+ * Stings exist only while she is in the world: she shoots them, and her defeat clears them. So a
+ * tick without her skips the system, and a level without a boss pays nothing for it.
  */
 function bossCollisionSystem(state: GameState): void {
-  if (state.status !== 'playing') {
+  const { world, player, boss } = state;
+  const id = boss.id;
+  if (state.status !== 'playing' || id === undefined) {
     return;
   }
-  const { world, player, boss } = state;
   for (let index = 0; index < world.count; index += 1) {
     const sting = world.at(index);
     if (
@@ -343,10 +355,6 @@ function bossCollisionSystem(state: GameState): void {
       world.kill(sting);
       hurtHero(state);
     }
-  }
-  const id = boss.id;
-  if (id === undefined) {
-    return;
   }
   if (boss.phase === 'charging' && !boss.struck && overlaps(state, player, id)) {
     boss.struck = true;
