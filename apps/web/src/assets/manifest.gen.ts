@@ -4,7 +4,7 @@
 //
 // The input of each file, as SHA-256:
 //   creatures.webp        ad5f2f4d257fc2be2826b500d88002f848e94e89956a4e8cfa6f80368263cdee
-//   effects.webp          3f1e9560ac60772833ec50f7b3975778c49ea4108e3e7058cb2142e40af2171a
+//   effects.webp          7c3b8fab0b5624e40c994392542b612c9159e075f4918fe5897c84d400b690ea
 //   city-day-sky.webp     b23707311cd5e072da086f3e6c1cb27d5f46d8a8dd6b15bbdd26d29ca87d4058
 //   city-day-clouds.webp  2dc0f3b3dc22d7b1994d228f22be769f2bafedc8159f38cc3133fceaf3ef16d4
 //   city-day-far.webp     73227709fd0f5ad695b8fb1648d6b48220ceba5704c81d5690a76ab77bb9538e
@@ -17,6 +17,7 @@
 //   shot.wav              ab87913aba9790a0c5fa173d086267ba521ad522fcad2252271db49988313cf5
 //   explosion.wav         4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69
 //   hit.wav               7993dd4c156b9979ad69f17be5ebe31850b16039a3857f8477141be54dfee1b3
+//   pickup.wav            2a203a007d24cc7e607eb8bec1d86bedba7f551911217ce2c4c1f31393aed32c
 
 import creaturesAtlas from './creatures.webp';
 import effectsAtlas from './effects.webp';
@@ -35,11 +36,13 @@ import explosionOgg from '../../assets-src/sounds/kenney-sci-fi-sounds/explosion
 import explosionWav from './explosion.wav';
 import hitOgg from '../../assets-src/sounds/kenney-impact-sounds/impactPunch_heavy_002.ogg';
 import hitWav from './hit.wav';
+import pickupOgg from '../../assets-src/sounds/kenney-sci-fi-sounds/laserRetro_000.ogg';
+import pickupWav from './pickup.wav';
 
 /** The atlases the game loads, with their size in pixels. */
 export const ATLASES = {
   creatures: { url: creaturesAtlas, width: 2030, height: 1485 },
-  effects: { url: effectsAtlas, width: 2008, height: 1606 },
+  effects: { url: effectsAtlas, width: 2008, height: 1672 },
 } as const;
 
 /**
@@ -167,11 +170,51 @@ export const SPRITES = {
       { x: 804, y: 1206, width: 400, height: 400 },
     ],
   },
+  'power-ammo': {
+    atlas: 'effects',
+    frameTicks: 8,
+    frames: [
+      { x: 1206, y: 1206, width: 64, height: 64 },
+      { x: 1272, y: 1206, width: 64, height: 64 },
+      { x: 1338, y: 1206, width: 64, height: 64 },
+      { x: 1404, y: 1206, width: 64, height: 64 },
+    ],
+  },
+  'power-life': {
+    atlas: 'effects',
+    frameTicks: 8,
+    frames: [
+      { x: 1470, y: 1206, width: 64, height: 64 },
+      { x: 1536, y: 1206, width: 64, height: 64 },
+      { x: 1602, y: 1206, width: 64, height: 64 },
+      { x: 1668, y: 1206, width: 64, height: 64 },
+    ],
+  },
+  'power-rapid-fire': {
+    atlas: 'effects',
+    frameTicks: 8,
+    frames: [
+      { x: 1734, y: 1206, width: 64, height: 64 },
+      { x: 1800, y: 1206, width: 64, height: 64 },
+      { x: 1866, y: 1206, width: 64, height: 64 },
+      { x: 1932, y: 1206, width: 64, height: 64 },
+    ],
+  },
+  'power-shield': {
+    atlas: 'effects',
+    frameTicks: 8,
+    frames: [
+      { x: 0, y: 1608, width: 64, height: 64 },
+      { x: 66, y: 1608, width: 64, height: 64 },
+      { x: 132, y: 1608, width: 64, height: 64 },
+      { x: 198, y: 1608, width: 64, height: 64 },
+    ],
+  },
   'shot-trail': {
     atlas: 'effects',
     frameTicks: 1,
     frames: [
-      { x: 1206, y: 1206, width: 60, height: 12 },
+      { x: 264, y: 1608, width: 60, height: 12 },
     ],
   },
 } as const;
@@ -201,4 +244,5 @@ export const SOUNDS = {
   shot: { url: shotOgg, fallbackUrl: shotWav },
   explosion: { url: explosionOgg, fallbackUrl: explosionWav },
   hit: { url: hitOgg, fallbackUrl: hitWav },
+  pickup: { url: pickupOgg, fallbackUrl: pickupWav },
 } as const;

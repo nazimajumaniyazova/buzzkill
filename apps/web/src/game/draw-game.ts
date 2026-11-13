@@ -118,6 +118,17 @@ export function createGameDrawer<TImage>(
             renderer.drawSprite(sprites.projectile, 0, x - headX, y - headY, SHOT_TRAIL.size);
             break;
           }
+          case Kind.powerUp: {
+            // Every kind has its art (see sprites.ts), so nothing is skipped in play.
+            const animation = sprites.powerUps[world.variant[id] as number];
+            if (animation !== undefined) {
+              const { atlas, frameTicks } = animation;
+              const born = world.bornTick[id] as number;
+              const frame = animationFrame(tick, born, atlas.frames.length, frameTicks);
+              renderer.drawSprite(atlas, frame, x, y, size);
+            }
+            break;
+          }
           case Kind.explosion: {
             const atlas = sprites.explosions[world.variant[id] === 1 ? 1 : 0];
             const frame = animationFrame(

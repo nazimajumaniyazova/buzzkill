@@ -3,7 +3,7 @@
  * classes kept animation frames and the background position as state; both follow from the tick,
  * so they stay out of the replayed state and cannot make two runs differ.
  */
-import { RULES } from '../config/rules';
+import { RULES, WORLD } from '../config/rules';
 
 /**
  * Horizontal offset of a background layer at `tick`, in [-width, 0]. The layer is drawn twice,
@@ -32,4 +32,12 @@ export function animationFrame(
   }
   const elapsed = tick > bornTick ? tick - bornTick : 0;
   return Math.floor(elapsed / frameTicks) % frames;
+}
+
+/**
+ * Whole seconds left of `ticks`, rounded up: the HUD shows 10 for the first second of a 10 s
+ * effect and 1 for its last tick, and 0 only once it is over.
+ */
+export function secondsLeft(ticks: number): number {
+  return ticks > 0 ? Math.ceil(ticks / WORLD.ticksPerSecond) : 0;
 }

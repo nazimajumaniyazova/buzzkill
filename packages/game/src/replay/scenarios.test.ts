@@ -28,7 +28,7 @@ describe('pinned scenarios', () => {
   it('seed 1, standing still for 10 s', () => {
     expect(simulate(replay(1, []), { maxTicks: 600 })).toMatchInlineSnapshot(`
       {
-        "hash": "a8f81750",
+        "hash": "39865fc0",
         "level": 1,
         "livesLeft": 4,
         "score": 0,
@@ -48,7 +48,7 @@ describe('pinned scenarios', () => {
 
     expect(simulate(replay(7, inputs), { maxTicks: 1200 })).toMatchInlineSnapshot(`
       {
-        "hash": "ea88c0c3",
+        "hash": "04e2418a",
         "level": 1,
         "livesLeft": 1,
         "score": 3,
@@ -63,7 +63,7 @@ describe('pinned scenarios', () => {
 
     expect(simulate(replay(42, inputs, 'night'), { maxTicks: 900 })).toMatchInlineSnapshot(`
       {
-        "hash": "df250e2d",
+        "hash": "a802c00d",
         "level": 1,
         "livesLeft": 4,
         "score": 0,

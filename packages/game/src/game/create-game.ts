@@ -12,6 +12,7 @@ import { type HeroId, WORLD } from '../config/rules';
 import type { Replay } from '../replay/format';
 import { createReplayRecorder } from '../replay/recorder';
 import { type RunResult, runResultOf } from '../replay/result';
+import { secondsLeft } from '../simulation/presentation';
 import { type GameStatus, isRunOver } from '../simulation/rules';
 import { createSimulation } from '../simulation/simulation';
 import type { GameState } from '../simulation/state';
@@ -42,8 +43,8 @@ export interface GameRenderer {
   render(view: GameView, alpha: number): void;
 }
 
-/** The sound effects of the game, the three of the 2023 version. */
-export type GameSound = 'shot' | 'explosion' | 'hit';
+/** The sound effects of the game: the three of the 2023 version and a power-up's pickup (#151). */
+export type GameSound = 'shot' | 'explosion' | 'hit' | 'pickup';
 
 /** Plays sound effects. The Web Audio implementation arrives with #36. */
 export interface GameAudio {
@@ -62,6 +63,13 @@ export interface GameHud {
   readonly status: GameStatus;
   /** True while the run is paused by the `pause` action or by `pause()`. */
   readonly paused: boolean;
+  /**
+   * Whole seconds the shield still lasts, rounded up; 0 when there is none (#151). Seconds rather
+   * than ticks, so the HUD changes once a second and not at 60 Hz.
+   */
+  readonly shield: number;
+  /** Whole seconds rapid fire still lasts, rounded up; 0 when it is off. */
+  readonly rapidFire: number;
 }
 
 export interface CreateGameOptions {
@@ -156,6 +164,9 @@ export function createGame(options: CreateGameOptions): Game {
   state.events.on('playerHit', () => {
     audio.play('hit');
   });
+  state.events.on('powerUpCollected', () => {
+    audio.play('pickup');
+  });
 
   const hudBus = createEventBus<{ change: GameHud }>();
   let paused = false;
@@ -173,7 +184,9 @@ export function createGame(options: CreateGameOptions): Game {
       hud.level === state.level &&
       hud.mode === state.mode &&
       hud.status === state.status &&
-      hud.paused === paused
+      hud.paused === paused &&
+      hud.shield === secondsLeft(state.shieldTicks) &&
+      hud.rapidFire === secondsLeft(state.rapidFireTicks)
     ) {
       return;
     }
@@ -291,5 +304,7 @@ function snapshotHud(state: GameState, paused: boolean): GameHud {
     mode: state.mode,
     status: state.status,
     paused,
+    shield: secondsLeft(state.shieldTicks),
+    rapidFire: secondsLeft(state.rapidFireTicks),
   };
 }

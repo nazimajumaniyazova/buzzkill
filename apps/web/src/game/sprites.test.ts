@@ -1,4 +1,4 @@
-import { DAY_ENEMIES, HEROES, NIGHT_ENEMIES, RULES } from '@buzzkill/game';
+import { DAY_ENEMIES, HEROES, NIGHT_ENEMIES, POWER_UPS, RULES } from '@buzzkill/game';
 import { describe, expect, it } from 'vitest';
 
 import { ATLASES, BACKGROUNDS, SPRITES } from '../assets/manifest.gen';
@@ -27,7 +27,7 @@ describe('game assets and sprites', () => {
     ]);
   });
 
-  it.each([GAME_ASSETS.shot, GAME_ASSETS.explosion, GAME_ASSETS.hit])(
+  it.each([GAME_ASSETS.shot, GAME_ASSETS.explosion, GAME_ASSETS.hit, GAME_ASSETS.pickup])(
     'keeps the sound $url optional, with a WAV fallback',
     (sound) => {
       expect(sound).toMatchObject({ kind: 'audio', optional: true });
@@ -71,6 +71,18 @@ describe('game assets and sprites', () => {
     expect(SPRITES['explosion-smoke'].frameTicks).toBe(RULES.explosion.frameTicks);
     expect(SPRITES['explosion-fire'].frameTicks).toBe(RULES.explosion.frameTicks);
     expect(sprites.projectile).toEqual({ image: 'effects', frames: SPRITES['shot-trail'].frames });
+  });
+
+  it('animates each power-up with its art, in the order of the simulation, from the effects atlas', () => {
+    const sprites = createGameSprites(IMAGES);
+
+    expect(sprites.powerUps).toEqual(
+      POWER_UPS.map(({ sprite }) => ({
+        atlas: { image: 'effects', frames: SPRITES[sprite.sheet].frames },
+        frameTicks: SPRITES[sprite.sheet].frameTicks,
+      })),
+    );
+    expect(sprites.powerUps.map(({ atlas }) => atlas.frames.length)).toEqual([4, 4, 4, 4]);
   });
 
   it('loads every layer of the city and lays each time of day out back to front', () => {

@@ -116,6 +116,8 @@ export const ru: Dictionary = (format): Messages => ({
     title: 'Справка',
     intro: (lives) =>
       `Сбивайте насекомых, пока они не долетели до города. ${format.number(lives)} ${format.plural(lives, { one: 'попадание', few: 'попадания', many: 'попаданий', other: 'попадания' })} — и игра окончена.`,
+    powerUps:
+      'Сбитые насекомые иногда роняют бонусы. Коснитесь бонуса, чтобы подобрать его: патроны, жизнь, щит или скорострельность на несколько секунд.',
     keyboard: 'Клавиатура',
     gamepad: 'Геймпад',
     menus: 'В меню',
@@ -150,6 +152,9 @@ export const ru: Dictionary = (format): Messages => ({
     level: 'Уровень',
     livesValue: (lives, max) => `${format.number(lives)} из ${format.number(max)}`,
     levelValue: (level, last) => `${format.number(level)} из ${format.number(last)}`,
+    shield: 'Щит',
+    rapidFire: 'Скорострельность',
+    secondsLeft: (seconds) => `${format.number(seconds)} с`,
   },
   pause: {
     title: 'Пауза',
@@ -189,6 +194,17 @@ export const ru: Dictionary = (format): Messages => ({
     },
     levelCleared: (level, score) =>
       `Уровень ${format.number(level)} пройден. Счёт: ${format.number(score)}.`,
+    lifeGained: (lives) =>
+      `Дополнительная жизнь! Теперь ${format.number(lives)} ${format.plural(lives, {
+        one: 'жизнь',
+        few: 'жизни',
+        many: 'жизней',
+        other: 'жизни',
+      })}.`,
+    shieldOn: (seconds) =>
+      `Щит на ${format.number(seconds)} ${format.plural(seconds, { one: 'секунду', few: 'секунды', many: 'секунд', other: 'секунды' })}.`,
+    rapidFireOn: (seconds) =>
+      `Скорострельность на ${format.number(seconds)} ${format.plural(seconds, { one: 'секунду', few: 'секунды', many: 'секунд', other: 'секунды' })}.`,
     victory: (score) => `Победа! Все уровни пройдены. Счёт: ${format.number(score)}.`,
     gameOver: (score) => `Игра окончена. Счёт: ${format.number(score)}.`,
   },

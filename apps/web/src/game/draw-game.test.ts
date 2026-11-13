@@ -39,6 +39,12 @@ const SPRITES: GameSprites<string> = {
   enemies: { wasp: animation('wasp', 6, 2) },
   projectile: atlas('shot-trail', 1),
   explosions: [atlas('smoke', 9), atlas('fire', 9)],
+  powerUps: [
+    animation('power-ammo', 4, 8),
+    animation('power-life', 4, 8),
+    animation('power-shield', 4, 8),
+    animation('power-rapid-fire', 4, 8),
+  ],
   // No city here, so these tests see only the entities; the city has tests of its own below.
   backgrounds: { day: [], night: [] },
 };
@@ -154,6 +160,28 @@ describe('createGameDrawer', () => {
     expect(calls.slice(1, 3)).toEqual([
       ['sprite', 'smoke', 2, 0, 0, { width: 200, height: 200 }],
       ['sprite', 'fire', 2, 300, 0, { width: 200, height: 200 }],
+    ]);
+  });
+});
+
+describe('power-ups', () => {
+  it('draw by kind, their halo pulsing from the tick they dropped', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const sim = createSimulation({ seed: 1, heroId: 'male', mode: 'day' });
+    emptyWorld(sim);
+    const shield = add(sim, Kind.powerUp, 400, 300, 32);
+    sim.state.world.variant[shield] = 2;
+    sim.state.tick += 20;
+    const rapid = add(sim, Kind.powerUp, 500, 300, 32);
+    sim.state.world.variant[rapid] = 3;
+    sim.state.tick += 9;
+
+    createGameDrawer(renderer, SPRITES).render(sim.state, 0);
+
+    // Eight ticks per frame: the shield is 29 ticks old, frame 3; rapid fire 9 ticks, frame 1.
+    expect(calls.slice(1, 3)).toEqual([
+      ['sprite', 'power-shield', 3, 400, 300, { width: 32, height: 32 }],
+      ['sprite', 'power-rapid-fire', 1, 500, 300, { width: 32, height: 32 }],
     ]);
   });
 });

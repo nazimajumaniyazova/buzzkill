@@ -2,6 +2,7 @@ import type { EventBus, Rng } from '@buzzkill/engine';
 
 import type { Difficulty } from '../config/difficulty';
 import type { EnemyConfig, GameMode } from '../config/enemies';
+import type { PowerUpKind } from '../config/power-ups';
 import type { HeroConfig, HeroId } from '../config/rules';
 import type { EntityId, World } from '../world/world';
 import type { GameStatus } from './rules';
@@ -14,8 +15,10 @@ export interface GameEvents {
   enemyHit: { readonly id: EntityId; readonly healthLeft: number };
   /** An enemy was destroyed by a projectile and scored `value`. */
   enemyDestroyed: { readonly x: number; readonly y: number; readonly value: number };
-  /** An enemy flew into the hero. */
+  /** An enemy flew into the hero and took a life; a shield takes the blow without this event. */
   playerHit: { readonly livesLeft: number };
+  /** The hero collected a power-up centered on this point (#151). */
+  powerUpCollected: { readonly kind: PowerUpKind; readonly x: number; readonly y: number };
   /** An explosion started, centered on this point. */
   explosion: { readonly x: number; readonly y: number; readonly variant: number };
   /** Every wave of `level` was sent and no enemy is left; the next level starts on the next tick. */
@@ -57,6 +60,12 @@ export interface GameState {
   waveSent: number;
   /** Ticks until the next enemy of the wave, or until the wave starts after its calm. */
   spawnTimer: number;
+  /** Ticks the shield still lasts; 0 when the hero has none (#151). */
+  shieldTicks: number;
+  /** Ticks rapid fire still lasts; 0 when it is off (#151). */
+  rapidFireTicks: number;
+  /** Ticks until held fire shoots again during rapid fire. */
+  fireCooldown: number;
 }
 
 /** The actions of one tick as bit masks over `GAME_ACTIONS` (the engine's `InputSnapshot`). */

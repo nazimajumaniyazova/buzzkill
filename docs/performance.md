@@ -9,10 +9,10 @@ Web Vitals, and the measurements before and after each optimization.
 | What                                    | Limit                 | Today                                                | Checked by                                                                                |
 | --------------------------------------- | --------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Any file tracked by git                 | 1 MB, 1,000,000 bytes | 338 kB at most (`pnpm-lock.yaml`)                    | `scripts/check-file-sizes.mjs`, in `pnpm lint:repo` and the CI Quality job                |
-| The game's images and sounds in a build | 1 MB, 1,000,000 bytes | 675 kB in 17 files; 482 kB without the WAV fallbacks | `assetBudget` in `apps/web/vite.config.ts`, in every build: the CI Build job and Vercel's |
+| The game's images and sounds in a build | 1 MB, 1,000,000 bytes | 728 kB in 19 files; 514 kB without the WAV fallbacks | `assetBudget` in `apps/web/vite.config.ts`, in every build: the CI Build job and Vercel's |
 
 The build prints the second line every time, for example
-`Game assets: 674.7 kB of the 1000.0 kB budget (67%), 17 files`, and fails above the budget.
+`Game assets: 727.7 kB of the 1000.0 kB budget (73%), 19 files`, and fails above the budget.
 
 ### Why these numbers
 
@@ -20,14 +20,15 @@ The build prints the second line every time, for example
   2023 two backgrounds were over 1 MB (1.14 and 1.62 MB) and two sprite sheets over 400 kB; none
   of them is in the repository since #133.
 - **The assets.** The game loads its images and sounds before the first frame, starting at the
-  first hover of Play (#112). On slow 4G, about 200 kB/s, the 482 kB a browser downloads today
-  take about 2.4 s; the budget keeps the worst case near 5 s.
+  first hover of Play (#112). On slow 4G, about 200 kB/s, the 514 kB a browser downloads today
+  take about 2.6 s; the budget keeps the worst case near 5 s.
 - **The choice.** The owner chose 1 MB on 2026-11-12 over two other options:
-  - 800 kB, 84% used today, which stage 7 would soon have to raise;
+  - 800 kB, 84% used at the time, which stage 7 would soon have to raise;
   - 600 kB for what a browser downloads, which is harder to check, since the WAV fallbacks would
     have to be told apart.
 
-  1 MB leaves room for the sprites of stage 7: the boss and the bonuses.
+  1 MB leaves room for the sprites of stage 7: the boss and the power-ups. The power-ups and
+  their pickup sound took 53 kB of it (#151).
 
 - **What it counts.** Every image and sound the build emits, the WAV fallbacks too, though most
   browsers download only the Ogg files. Code and styles get budgets of their own in stage 9. A

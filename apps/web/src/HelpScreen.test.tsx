@@ -29,6 +29,7 @@ describe('HelpScreen', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Help' })).toBeInTheDocument();
     expect(screen.getByText(/5 hits and the run is over.$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Destroyed insects sometimes drop power-ups\./)).toBeInTheDocument();
     expect(rows('Keyboard')).toEqual([
       'Move up: ↑Arrow up or W',
       'Move down: ↓Arrow down or S',
@@ -58,6 +59,7 @@ describe('HelpScreen', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Справка' })).toBeInTheDocument();
     expect(screen.getByText(/5 попаданий — и игра окончена.$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Сбитые насекомые иногда роняют бонусы\./)).toBeInTheDocument();
     expect(rows('Клавиатура')).toEqual([
       'Вверх: ↑Стрелка вверх или W',
       'Вниз: ↓Стрелка вниз или S',
