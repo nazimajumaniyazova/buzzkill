@@ -2,8 +2,9 @@ import { createFnv1a } from '@buzzkill/engine';
 
 import type { Difficulty } from '../config/difficulty';
 import type { GameMode } from '../config/enemies';
+import type { BossPhase } from '../simulation/boss';
 import type { GameStatus } from '../simulation/rules';
-import type { GameState } from '../simulation/state';
+import type { BossState, GameState } from '../simulation/state';
 
 /** The outcome of a run, as the leaderboard stores and verifies it (ADR-0009). */
 export interface RunResult {
@@ -27,11 +28,28 @@ const DIFFICULTY_CODE = { easy: 0, normal: 1, hard: 2 } as const satisfies Recor
   Difficulty,
   number
 >;
+const BOSS_PHASE_CODE = {
+  entering: 0,
+  attacking: 1,
+  enraged: 2,
+  windup: 3,
+  charging: 4,
+  returning: 5,
+  defeated: 6,
+  beaten: 7,
+} as const satisfies Record<Exclude<BossState['phase'], 'absent'>, number> &
+  Record<BossPhase, number>;
+/** Stands for the boss's entity once she has left the world. */
+const NO_ENTITY = 0xff_ff_ff_ff;
 
 /**
  * Hashes a canonical serialization of the state: the run's counters, the RNG state and every live
  * entity in iteration order with all of its components, floats by their raw bits. Anything that
  * can change the rest of a run is included, so two states with one hash continue alike.
+ *
+ * The boss's counters come last, and only once she has arrived in the level (#152): while she is
+ * absent they are always at rest, so they would add nothing, and the runs pinned before her keep
+ * their hashes.
  */
 export function hashGameState(state: GameState): string {
   const hasher = createFnv1a();
@@ -77,6 +95,16 @@ export function hashGameState(state: GameState): string {
       .float64(world.amplitude[id] as number)
       .uint32(world.variant[id] as number)
       .uint32(world.bornTick[id] as number);
+  }
+
+  const { boss } = state;
+  if (boss.phase !== 'absent') {
+    hasher
+      .uint32(BOSS_PHASE_CODE[boss.phase])
+      .uint32(boss.id ?? NO_ENTITY)
+      .uint32(boss.phaseTicks)
+      .float64(boss.targetY)
+      .uint32(boss.struck ? 1 : 0);
   }
   return hasher.hex();
 }

@@ -15,6 +15,8 @@ export interface DifficultyConfig {
   readonly pace: number;
   /** Added to each enemy's lives, and so to its score; an enemy keeps at least one life. */
   readonly enemyLives: number;
+  /** Multiplies the boss's health, and so her score (#152); she keeps at least one hit. */
+  readonly bossHealth: number;
   /** The hero's lives at the start of a run. */
   readonly lives: number;
   /** The hero's rounds at the start, and the most the refill gives back. */
@@ -26,13 +28,28 @@ export interface DifficultyConfig {
  * no difficulty is easier in one respect and harder in another; a test checks it.
  */
 export const DIFFICULTIES = {
-  easy: { enemySpeed: 0.8, pace: 1.3, enemyLives: -1, lives: 7, ammo: { start: 30, max: 60 } },
+  easy: {
+    enemySpeed: 0.8,
+    pace: 1.3,
+    enemyLives: -1,
+    bossHealth: 0.75,
+    lives: 7,
+    ammo: { start: 30, max: 60 },
+  },
   normal: {
     enemySpeed: 1,
     pace: 1,
     enemyLives: 0,
+    bossHealth: 1,
     lives: RULES.lives,
     ammo: { start: RULES.ammo.start, max: RULES.ammo.max },
   },
-  hard: { enemySpeed: 1.2, pace: 0.8, enemyLives: 1, lives: 3, ammo: { start: 15, max: 40 } },
+  hard: {
+    enemySpeed: 1.2,
+    pace: 0.8,
+    enemyLives: 1,
+    bossHealth: 1.25,
+    lives: 3,
+    ammo: { start: 15, max: 40 },
+  },
 } as const satisfies Record<Difficulty, DifficultyConfig>;

@@ -25,6 +25,11 @@ export interface LevelConfig {
   readonly speedScale: number;
   /** The sun sets or rises when the level is cleared: the next level plays at the other time. */
   readonly timeChangesAfter: boolean;
+  /**
+   * The queen (#152, `QUEEN`) ends the level: she arrives once every wave is sent and no enemy
+   * is left, and the level is cleared when she is beaten. `health` is hers at normal difficulty.
+   */
+  readonly boss?: { readonly health: number };
 }
 
 /**

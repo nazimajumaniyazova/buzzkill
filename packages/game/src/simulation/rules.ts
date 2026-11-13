@@ -54,8 +54,11 @@ export function otherTime(mode: GameMode): GameMode {
 }
 
 /** The time of day of the level after `level`, which was played at `mode` (ADR-0017). */
-export function timeAfterLevel(level: number, mode: GameMode): GameMode {
-  const levels: readonly LevelConfig[] = LEVELS;
+export function timeAfterLevel(
+  level: number,
+  mode: GameMode,
+  levels: readonly LevelConfig[] = LEVELS,
+): GameMode {
   return levels[level - 1]?.timeChangesAfter === true ? otherTime(mode) : mode;
 }
 
