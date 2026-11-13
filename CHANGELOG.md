@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.20.0...v0.21.0) (2026-11-13)
+
+
+### Features
+
+* **art:** draw the queen wasp, her rage and her sting ([#174](https://github.com/nazimajumaniyazova/buzzkill/issues/174)) ([4d1077c](https://github.com/nazimajumaniyazova/buzzkill/commit/4d1077ca8b8c7f0679084f5354ef44a8c10c6e1a))
+
 ## [0.20.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.19.0...v0.20.0) (2026-11-13)
 
 
