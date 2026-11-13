@@ -7,8 +7,9 @@ import { CITY_LAYERS, type CityLayer, cityLayer, type TimeOfDay, WORLD_SIZE } fr
 import { explosion, shot, shotTrail } from './effects';
 import { hero } from './heroes';
 import { beetle, dragonfly, firefly, mosquito, moth, wasp } from './insects';
+import { powerUp, type PowerUpKind } from './power-ups';
 
-export { CITY_LAYERS, type CityLayer, type TimeOfDay, WORLD_SIZE };
+export { CITY_LAYERS, type CityLayer, type PowerUpKind, type TimeOfDay, WORLD_SIZE };
 
 /** A sprite: its frame size, its frames and how to draw one. */
 export interface SpriteArt {
@@ -77,6 +78,35 @@ export const SPRITES = {
     frames: 1,
     frameTicks: 1,
     draw: (_f, id) => shotTrail(id),
+  },
+  // The power-ups of #151, twice their 32×32 box: a crate, a heart, a hexagon and a diamond.
+  'power-ammo': {
+    width: 64,
+    height: 64,
+    frames: 4,
+    frameTicks: 8,
+    draw: (f) => powerUp('ammo', f),
+  },
+  'power-life': {
+    width: 64,
+    height: 64,
+    frames: 4,
+    frameTicks: 8,
+    draw: (f) => powerUp('life', f),
+  },
+  'power-shield': {
+    width: 64,
+    height: 64,
+    frames: 4,
+    frameTicks: 8,
+    draw: (f) => powerUp('shield', f),
+  },
+  'power-rapid-fire': {
+    width: 64,
+    height: 64,
+    frames: 4,
+    frameTicks: 8,
+    draw: (f) => powerUp('rapidFire', f),
   },
 } as const satisfies Record<string, SpriteArt>;
 
