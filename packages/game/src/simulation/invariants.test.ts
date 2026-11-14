@@ -4,10 +4,11 @@ import { fc, test } from '@fast-check/vitest';
 import { describe, expect } from 'vitest';
 
 import { DIFFICULTIES, DIFFICULTY_IDS } from '../config/difficulty';
-import { LEVELS } from '../config/levels';
+import { type LevelConfig, LEVELS } from '../config/levels';
 import { POWER_UP_RULES, POWER_UPS, RAPID_FIRE, SHIELD } from '../config/power-ups';
 import { Kind } from '../world/world';
 import { createSimulation, type Simulation } from './simulation';
+import type { BossState } from './state';
 
 /** Puts a power-up on the hero, as if one had dropped there; skipped when the world is full. */
 function gift(sim: Simulation, variant: number): void {
@@ -115,6 +116,148 @@ describe('simulation invariants', () => {
           };
         }
       }
+    },
+  );
+});
+
+/** Puts a shot inside the queen's box, as if one had reached her; skipped when she is away. */
+function strike(sim: Simulation): void {
+  const { world, boss, tick } = sim.state;
+  if (boss.id === undefined) {
+    return;
+  }
+  const id = world.spawn(Kind.projectile, tick);
+  if (id === undefined) {
+    return;
+  }
+  world.place(id, (world.x[boss.id] as number) + 10, (world.y[boss.id] as number) + 120, 10, 3);
+}
+
+/** A campaign of a short level that the queen ends, then a short level without her. */
+const queenCampaign = (health: number): readonly LevelConfig[] => [
+  {
+    breakTicks: 30,
+    speedScale: 1,
+    timeChangesAfter: false,
+    waves: [{ count: 2, intervalTicks: 30 }],
+    boss: { health },
+  },
+  {
+    breakTicks: 30,
+    speedScale: 1,
+    timeChangesAfter: false,
+    waves: [{ count: 2, intervalTicks: 30 }],
+  },
+];
+
+/** Every phase the queen's state may hold after a tick that began in a phase (#152). */
+const NEXT: Readonly<Record<BossState['phase'], readonly BossState['phase'][]>> = {
+  absent: ['absent', 'entering'],
+  entering: ['entering', 'attacking', 'defeated'],
+  attacking: ['attacking', 'enraged', 'defeated'],
+  enraged: ['enraged', 'windup', 'defeated'],
+  windup: ['windup', 'charging', 'defeated'],
+  charging: ['charging', 'returning', 'defeated'],
+  returning: ['returning', 'enraged', 'defeated'],
+  defeated: ['defeated', 'beaten'],
+  beaten: ['beaten', 'absent'],
+};
+
+describe('boss fight invariants', () => {
+  const fight = fc.record({
+    seed: fc.nat({ max: 0xff_ff_ff_ff }),
+    heroId: fc.constantFrom('male' as const, 'female' as const),
+    mode: fc.constantFrom('day' as const, 'night' as const),
+    difficulty: fc.constantFrom(...DIFFICULTY_IDS),
+    // A small health, so that random play often enrages and defeats her.
+    health: fc.integer({ min: 1, max: 15 }),
+    // Long enough for her arrival, her rage and a charge.
+    holds: fc.array(fc.tuple(fc.nat({ max: 7 }), fc.integer({ min: 1, max: 120 })), {
+      minLength: 30,
+      maxLength: 60,
+    }),
+    capacity: fc.integer({ min: 4, max: 64 }),
+    // Bursts of shots put into her, one a tick, from this many ticks after she arrives, taking
+    // this share of her health: random play alone seldom hits her, and so seldom enrages or
+    // defeats her. Two bursts let one enrage her and the next defeat her after a charge.
+    bursts: fc.array(
+      fc.record({
+        after: fc.integer({ min: 150, max: 1500 }),
+        share: fc.double({ min: 0, max: 1.2, noNaN: true }),
+      }),
+      { maxLength: 2 },
+    ),
+    // A hero who holds a shield all run lives long enough to meet her charge.
+    shielded: fc.boolean(),
+  });
+
+  test.prop([fight], { numRuns: 100 })(
+    'her health only falls, she is in the world exactly while she fights, her phases follow her fight, and her level waits for her',
+    ({ seed, heroId, mode, difficulty, health, holds, capacity, bursts, shielded }) => {
+      const levels = queenCampaign(health);
+      const simulation = createSimulation({ seed, heroId, mode, difficulty, capacity, levels });
+      const { state } = simulation;
+      if (shielded) {
+        state.shieldTicks = Number.MAX_SAFE_INTEGER;
+      }
+      const { world, boss } = state;
+      let maxHealth = 0;
+      let arrived = Number.POSITIVE_INFINITY;
+      state.events.on('bossEntered', (entered) => {
+        maxHealth = entered.maxHealth;
+        arrived = state.tick;
+      });
+      let previous = { phase: boss.phase, health: 0, down: 0 };
+      // The checks of a tick are plain conditions: an `expect` per check and tick would make the
+      // long runs of this property too slow. The first broken one is kept with its tick.
+      let broken: string | undefined;
+      const check = (ok: boolean, what: string): void => {
+        if (!ok && broken === undefined) {
+          broken = `tick ${String(state.tick)}: ${what}`;
+        }
+      };
+
+      for (const [down, ticks] of holds) {
+        for (let i = 0; i < ticks && broken === undefined; i += 1) {
+          const next = state.tick + 1;
+          for (const { after, share } of bursts) {
+            const from = arrived + after;
+            if (next >= from && next < from + Math.round(share * maxHealth)) {
+              strike(simulation);
+            }
+          }
+          simulation.step({ down, pressed: down & ~previous.down });
+
+          check(NEXT[previous.phase].includes(boss.phase), `${previous.phase} to ${boss.phase}`);
+          const fighting = boss.phase !== 'absent' && boss.phase !== 'beaten';
+          let bosses = 0;
+          for (let index = 0; index < world.count; index += 1) {
+            const id = world.at(index);
+            if (world.kind[id] === Kind.boss) {
+              bosses += 1;
+              check(id === boss.id, 'a boss entity that is not hers');
+            }
+          }
+          check(bosses === (fighting ? 1 : 0), `${String(bosses)} bosses while ${boss.phase}`);
+          check((boss.id !== undefined) === fighting, `her entity while ${boss.phase}`);
+
+          const left = boss.id === undefined ? 0 : (world.health[boss.id] as number);
+          if (boss.id !== undefined) {
+            check(left >= 0 && left <= maxHealth, `health ${String(left)} of ${String(maxHealth)}`);
+            check(
+              previous.phase === 'absent' || left <= previous.health,
+              `health rose from ${String(previous.health)} to ${String(left)}`,
+            );
+            check(world.value[boss.id] === maxHealth, 'her most health changed');
+          }
+          if (state.level === 1 && (state.status === 'levelCleared' || state.status === 'won')) {
+            check(boss.phase === 'beaten', `level 1 over while she is ${boss.phase}`);
+          }
+          previous = { phase: boss.phase, health: left, down };
+        }
+      }
+
+      expect(broken).toBeUndefined();
     },
   );
 });

@@ -8,6 +8,7 @@ export {
   GAME_ACTIONS,
   type GameAction,
 } from './actions';
+export { type BossConfig, QUEEN } from './config/boss';
 export {
   DIFFICULTIES,
   type Difficulty,

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { DAY_ENEMIES, HEROES, NIGHT_ENEMIES, RULES, WORLD } from '@buzzkill/game';
+import { DAY_ENEMIES, HEROES, NIGHT_ENEMIES, QUEEN, RULES, WORLD } from '@buzzkill/game';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -107,6 +107,18 @@ describe('the art', () => {
     expect([SPRITES.shot.width, SPRITES.shot.height]).toEqual([
       RULES.projectile.width * 2,
       RULES.projectile.height * 2,
+    ]);
+  });
+
+  it("draws the queen and her sting at twice the boxes of the game's boss", () => {
+    // The configuration names her sprites: a name the art lacks would not compile.
+    const { sheet, rage, sting, frameWidth, frameHeight } = QUEEN.sprite;
+
+    expect([SPRITES[sheet].width, SPRITES[sheet].height]).toEqual([frameWidth, frameHeight]);
+    expect([SPRITES[rage].width, SPRITES[rage].height]).toEqual([frameWidth, frameHeight]);
+    expect([SPRITES[sting].width, SPRITES[sting].height]).toEqual([
+      QUEEN.sting.width * 2,
+      QUEEN.sting.height * 2,
     ]);
   });
 
