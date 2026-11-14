@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.21.0...v0.22.0) (2026-11-13)
+
+
+### Features
+
+* **game:** drop power-ups that the hero collects ([#173](https://github.com/nazimajumaniyazova/buzzkill/issues/173)) ([fb2bd8f](https://github.com/nazimajumaniyazova/buzzkill/commit/fb2bd8f367520ad86371a8f3f1589040010e7ba2)), closes [#151](https://github.com/nazimajumaniyazova/buzzkill/issues/151)
+
 ## [0.21.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.20.0...v0.21.0) (2026-11-13)
 
 
