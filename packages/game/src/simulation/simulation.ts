@@ -2,7 +2,7 @@ import { createEventBus, createRng } from '@buzzkill/engine';
 
 import { DIFFICULTIES, type Difficulty } from '../config/difficulty';
 import { ENEMY_SETS, type GameMode } from '../config/enemies';
-import { LEVELS } from '../config/levels';
+import { type LevelConfig, LEVELS } from '../config/levels';
 import { HEROES, type HeroId, RULES } from '../config/rules';
 import { createWorld, Kind } from '../world/world';
 import { paced } from './rules';
@@ -17,6 +17,11 @@ export interface SimulationOptions {
   readonly mode: GameMode;
   /** Normal when left out: the numbers of the 2023 game (#155). */
   readonly difficulty?: Difficulty;
+  /**
+   * The campaign; `LEVELS` when left out. Replays always play `LEVELS`; tests give short
+   * campaigns of their own, to reach a level's end without playing the levels before it.
+   */
+  readonly levels?: readonly LevelConfig[];
   /** Most entities alive at once. Spawns beyond it are skipped. Default 256. */
   readonly capacity?: number;
 }
@@ -34,6 +39,11 @@ export interface Simulation {
  * in an edge function and give the same state bit for bit.
  */
 export function createSimulation(options: SimulationOptions): Simulation {
+  const levels: readonly LevelConfig[] = options.levels ?? LEVELS;
+  const first = levels[0];
+  if (first === undefined) {
+    throw new RangeError('createSimulation: a campaign needs at least one level');
+  }
   const world = createWorld(options.capacity ?? 256);
   const hero = HEROES[options.heroId];
   const player = world.spawn(Kind.player, 0);
@@ -53,6 +63,7 @@ export function createSimulation(options: SimulationOptions): Simulation {
     heroId: options.heroId,
     hero,
     difficulty,
+    levels,
     mode: options.mode,
     enemies,
     enemyWeights: enemies.map((enemy) => enemy.weight),
@@ -65,10 +76,11 @@ export function createSimulation(options: SimulationOptions): Simulation {
     level: 1,
     wave: 0,
     waveSent: 0,
-    spawnTimer: paced(LEVELS[0].breakTicks, preset.pace),
+    spawnTimer: paced(first.breakTicks, preset.pace),
     shieldTicks: 0,
     rapidFireTicks: 0,
     fireCooldown: 0,
+    boss: { phase: 'absent', id: undefined, phaseTicks: 0, targetY: 0, struck: false },
   };
 
   return {

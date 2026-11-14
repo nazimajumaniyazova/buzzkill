@@ -106,3 +106,14 @@ A and A, chosen by the owner on 2026-11-12.
   - The golden replays change once, with this decision.
 - **The shell.** It shows the screen between levels, the level in the HUD and the theme of the
   current time. That is the second part of #150.
+
+## Amendment, 2026-11-13
+
+A level may end with a boss (#152). `LevelConfig.boss` names the queen of `QUEEN` and her health
+at normal difficulty; the owner approved her fight on 2026-11-13. She arrives once every wave of
+her level is sent and no enemy is left, and her level ends only when she is beaten, not when the
+last enemy is gone.
+
+`createSimulation` takes the campaign as `levels`, `LEVELS` when left out. Replays always play
+`LEVELS`; tests give short campaigns of their own, to reach the end of a level without playing
+the levels before it.

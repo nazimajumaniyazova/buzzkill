@@ -20,6 +20,8 @@ export const Kind = {
   projectile: 3,
   explosion: 4,
   powerUp: 5,
+  boss: 6,
+  sting: 7,
 } as const;
 export type Kind = (typeof Kind)[keyof typeof Kind];
 
@@ -43,9 +45,9 @@ export interface World {
   /** Velocity in pixels per tick. */
   readonly vx: Float64Array;
   readonly vy: Float64Array;
-  /** Enemy: hits left. */
+  /** Enemy and boss: hits left. */
   readonly health: Int32Array;
-  /** Enemy: score awarded when destroyed. */
+  /** Enemy: score awarded when destroyed. Boss: her health when she arrived, and her score. */
   readonly value: Int32Array;
   /** Enemy: vertical wave, `y += amplitude * sin(angle)`, `angle += angleSpeed`. */
   readonly angle: Float64Array;

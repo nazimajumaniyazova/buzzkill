@@ -28,6 +28,7 @@ describe('DIFFICULTIES', () => {
       enemySpeed: 1,
       pace: 1,
       enemyLives: 0,
+      bossHealth: 1,
       lives: RULES.lives,
       ammo: { start: RULES.ammo.start, max: RULES.ammo.max },
     });
@@ -39,6 +40,7 @@ describe('DIFFICULTIES', () => {
         easier.enemySpeed > harder.enemySpeed ||
         easier.pace < harder.pace ||
         easier.enemyLives > harder.enemyLives ||
+        easier.bossHealth > harder.bossHealth ||
         easier.lives < harder.lives ||
         easier.ammo.start < harder.ammo.start ||
         easier.ammo.max < harder.ammo.max,

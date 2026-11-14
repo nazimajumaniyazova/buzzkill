@@ -410,4 +410,17 @@ describe('createSimulation', () => {
 
     expect(enemiesAfter(1)).not.toEqual(enemiesAfter(2));
   });
+
+  it('plays the campaign it is given, and refuses one without levels', () => {
+    const level = { breakTicks: 7, speedScale: 1, timeChangesAfter: false, waves: [] };
+    const sim = createSimulation({ seed: 1, heroId: 'male', mode: 'day', levels: [level] });
+
+    expect(sim.state.levels).toEqual([level]);
+    expect(sim.state.spawnTimer).toBe(7);
+    sim.step(IDLE);
+    expect(sim.state.status).toBe('won');
+    expect(() => createSimulation({ seed: 1, heroId: 'male', mode: 'day', levels: [] })).toThrow(
+      RangeError,
+    );
+  });
 });

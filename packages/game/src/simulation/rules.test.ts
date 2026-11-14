@@ -66,6 +66,17 @@ describe('game rules', () => {
     expect(timeAfterLevel(4, 'night')).toBe('night');
   });
 
+  it('follows the campaign it is given', () => {
+    const level = { breakTicks: 1, speedScale: 1, waves: [] };
+    const levels = [
+      { ...level, timeChangesAfter: true },
+      { ...level, timeChangesAfter: false },
+    ];
+
+    expect(timeAfterLevel(1, 'day', levels)).toBe('night');
+    expect(timeAfterLevel(2, 'night', levels)).toBe('night');
+  });
+
   test.prop([fc.integer({ min: 0, max: RULES.ammo.max }), fc.nat({ max: 100_000 })])(
     'ammo comes back one round every 12 ticks and never exceeds the maximum',
     (ammo, tick) => {
