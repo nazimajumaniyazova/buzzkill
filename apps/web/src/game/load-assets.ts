@@ -29,9 +29,14 @@ export async function loadGameAssets(
     return { ok: false, failures: result.failures };
   }
   const { assets } = result;
-  const audio = createAudioMixer<GameSound, AudioBuffer>({
-    context: audioContext,
-    buffers: { shot: assets.shot, explosion: assets.explosion, hit: assets.hit },
-  });
+  // Every sound of the game, checked against `GameSound`: the mixer takes a partial record, so a
+  // sound left out here would compile and never play, as the pickup sound did (#181).
+  const buffers = {
+    shot: assets.shot,
+    explosion: assets.explosion,
+    hit: assets.hit,
+    pickup: assets.pickup,
+  } satisfies Record<GameSound, AudioBuffer | undefined>;
+  const audio = createAudioMixer<GameSound, AudioBuffer>({ context: audioContext, buffers });
   return { ok: true, assets: { sprites: createGameSprites(assets), audio } };
 }

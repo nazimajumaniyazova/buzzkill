@@ -1,3 +1,4 @@
+import type * as engine from '@buzzkill/engine';
 import { AssetLoadError } from '@buzzkill/engine';
 import type * as browser from '@buzzkill/engine/browser';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -14,6 +15,22 @@ const decoding = vi.hoisted(() => ({
   /** Every URL a decoder was asked for. */
   requested: [] as string[],
 }));
+
+const mixing = vi.hoisted(() => ({
+  /** The sounds the last mixer was built with. */
+  sounds: [] as string[],
+}));
+
+vi.mock('@buzzkill/engine', async (importOriginal) => {
+  const original = await importOriginal<typeof engine>();
+  return {
+    ...original,
+    createAudioMixer: (options: Parameters<typeof original.createAudioMixer>[0]) => {
+      mixing.sounds = Object.keys(options.buffers);
+      return original.createAudioMixer(options);
+    },
+  };
+});
 
 vi.mock('@buzzkill/engine/browser', async (importOriginal) => ({
   ...(await importOriginal<typeof browser>()),
@@ -67,6 +84,16 @@ describe('loadGameAssets', () => {
     expect(result.assets.sprites.heroes.male.atlas.frames.length).toBeGreaterThan(0);
     // Without an audio context the mixer is silent.
     expect(result.assets.audio.available).toBe(false);
+  });
+
+  it('gives the mixer every sound the game loads (#181)', async () => {
+    const result = await loadGameAssets(null, () => undefined);
+
+    expect(result.ok).toBe(true);
+    const sounds = Object.entries(GAME_ASSETS)
+      .filter(([, asset]) => asset.kind === 'audio')
+      .map(([id]) => id);
+    expect(mixing.sounds.toSorted()).toEqual(sounds.toSorted());
   });
 
   it('reports what failed to load', async () => {
