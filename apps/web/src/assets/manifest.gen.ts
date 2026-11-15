@@ -5,6 +5,7 @@
 // The input of each file, as SHA-256:
 //   creatures.webp        ad5f2f4d257fc2be2826b500d88002f848e94e89956a4e8cfa6f80368263cdee
 //   effects.webp          7c3b8fab0b5624e40c994392542b612c9159e075f4918fe5897c84d400b690ea
+//   boss.webp             8766dd83104626e2ed491f37068491e5b09d980a9d5d0f9e868281085239daeb
 //   city-day-sky.webp     b23707311cd5e072da086f3e6c1cb27d5f46d8a8dd6b15bbdd26d29ca87d4058
 //   city-day-clouds.webp  2dc0f3b3dc22d7b1994d228f22be769f2bafedc8159f38cc3133fceaf3ef16d4
 //   city-day-far.webp     73227709fd0f5ad695b8fb1648d6b48220ceba5704c81d5690a76ab77bb9538e
@@ -18,9 +19,11 @@
 //   explosion.wav         4b597d658d0ae101f0a030fbeea5fc3a4292ab85f017470a8254a8e7959cbd69
 //   hit.wav               7993dd4c156b9979ad69f17be5ebe31850b16039a3857f8477141be54dfee1b3
 //   pickup.wav            2a203a007d24cc7e607eb8bec1d86bedba7f551911217ce2c4c1f31393aed32c
+//   bossPhase.wav         ef29c3943ee701616f65e3d596c13eb3ff6b11ca5b3ac01e7bc923366a5c6f76
 
 import creaturesAtlas from './creatures.webp';
 import effectsAtlas from './effects.webp';
+import bossAtlas from './boss.webp';
 import cityDaySky from './city-day-sky.webp';
 import cityDayClouds from './city-day-clouds.webp';
 import cityDayFar from './city-day-far.webp';
@@ -38,11 +41,14 @@ import hitOgg from '../../assets-src/sounds/kenney-impact-sounds/impactPunch_hea
 import hitWav from './hit.wav';
 import pickupOgg from '../../assets-src/sounds/kenney-sci-fi-sounds/laserRetro_000.ogg';
 import pickupWav from './pickup.wav';
+import bossPhaseOgg from '../../assets-src/sounds/kenney-sci-fi-sounds/impactMetal_003.ogg';
+import bossPhaseWav from './bossPhase.wav';
 
 /** The atlases the game loads, with their size in pixels. */
 export const ATLASES = {
   creatures: { url: creaturesAtlas, width: 2030, height: 1485 },
   effects: { url: effectsAtlas, width: 2008, height: 1672 },
+  boss: { url: bossAtlas, width: 1804, height: 1504 },
 } as const;
 
 /**
@@ -217,6 +223,33 @@ export const SPRITES = {
       { x: 264, y: 1608, width: 60, height: 12 },
     ],
   },
+  queen: {
+    atlas: 'boss',
+    frameTicks: 2,
+    frames: [
+      { x: 0, y: 0, width: 600, height: 500 },
+      { x: 602, y: 0, width: 600, height: 500 },
+      { x: 1204, y: 0, width: 600, height: 500 },
+      { x: 0, y: 502, width: 600, height: 500 },
+    ],
+  },
+  'queen-rage': {
+    atlas: 'boss',
+    frameTicks: 2,
+    frames: [
+      { x: 602, y: 502, width: 600, height: 500 },
+      { x: 1204, y: 502, width: 600, height: 500 },
+      { x: 0, y: 1004, width: 600, height: 500 },
+      { x: 602, y: 1004, width: 600, height: 500 },
+    ],
+  },
+  sting: {
+    atlas: 'boss',
+    frameTicks: 1,
+    frames: [
+      { x: 1204, y: 1004, width: 64, height: 24 },
+    ],
+  },
 } as const;
 
 /**
@@ -245,4 +278,5 @@ export const SOUNDS = {
   explosion: { url: explosionOgg, fallbackUrl: explosionWav },
   hit: { url: hitOgg, fallbackUrl: hitWav },
   pickup: { url: pickupOgg, fallbackUrl: pickupWav },
+  bossPhase: { url: bossPhaseOgg, fallbackUrl: bossPhaseWav },
 } as const;

@@ -106,6 +106,9 @@ function createStillGame(): Game {
     paused: false,
     shield: 4,
     rapidFire: 3,
+    bossHealth: 40,
+    bossMaxHealth: 60,
+    bossEnraged: false,
   };
   return {
     start: vi.fn(),

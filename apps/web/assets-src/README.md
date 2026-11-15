@@ -8,14 +8,15 @@ as it is, and a WAV that the pipeline writes to `src/assets` for browsers that c
 ## Sounds
 
 From two CC0 packs by Kenney (<https://kenney.nl>), chosen by the owner on 2026-11-11 (#132), and
-the pickup sound on 2026-11-13 (#151). Each pack's `License.txt` is the one that came with it.
+the pickup sound and the boss's phase sound on 2026-11-13 (#151, #152). Each pack's `License.txt` is the one that came with it.
 
-| Game sound  | Plays when                   | File                                                    | Length |
-| ----------- | ---------------------------- | ------------------------------------------------------- | ------ |
-| `shot`      | The hero shoots              | `sounds/kenney-sci-fi-sounds/laserSmall_001.ogg`        | 0.25 s |
-| `explosion` | An enemy is destroyed        | `sounds/kenney-sci-fi-sounds/explosionCrunch_000.ogg`   | 0.78 s |
-| `hit`       | An enemy touches the hero    | `sounds/kenney-impact-sounds/impactPunch_heavy_002.ogg` | 0.46 s |
-| `pickup`    | The hero collects a power-up | `sounds/kenney-sci-fi-sounds/laserRetro_000.ogg`        | 0.24 s |
+| Game sound  | Plays when                             | File                                                    | Length |
+| ----------- | -------------------------------------- | ------------------------------------------------------- | ------ |
+| `shot`      | The hero shoots                        | `sounds/kenney-sci-fi-sounds/laserSmall_001.ogg`        | 0.25 s |
+| `explosion` | An enemy is destroyed                  | `sounds/kenney-sci-fi-sounds/explosionCrunch_000.ogg`   | 0.78 s |
+| `hit`       | An enemy touches the hero              | `sounds/kenney-impact-sounds/impactPunch_heavy_002.ogg` | 0.46 s |
+| `pickup`    | The hero collects a power-up           | `sounds/kenney-sci-fi-sounds/laserRetro_000.ogg`        | 0.24 s |
+| `bossPhase` | The queen arrives, and her rage begins | `sounds/kenney-sci-fi-sounds/impactMetal_003.ogg`       | 0.78 s |
 
 | Pack          | Version, date   | Source                                   | License |
 | ------------- | --------------- | ---------------------------------------- | ------- |

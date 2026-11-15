@@ -148,6 +148,7 @@ function english(format: Format) {
         `Shoot the insects before they reach the city. ${format.number(lives)} ${format.plural(lives, { one: 'hit', other: 'hits' })} and the run is over.`,
       powerUps:
         'Destroyed insects sometimes drop power-ups. Touch one to collect it: rounds, a life, or a shield or rapid fire for a few seconds.',
+      boss: 'The third and the sixth level end with the Wasp Queen. Dodge her stings and shoot her while she glides. Once her bar turns red, she charges: red lines mark her path first, so leave it.',
       keyboard: 'Keyboard',
       gamepad: 'Gamepad',
       menus: 'In the menus',
@@ -188,6 +189,9 @@ function english(format: Format) {
       shield: 'Shield',
       rapidFire: 'Rapid fire',
       secondsLeft: (seconds: number) => `${format.number(seconds)} s`,
+      boss: 'Wasp Queen',
+      bossHealth: (health: number, max: number) =>
+        `${format.number(health)} of ${format.number(max)}`,
     },
     pause: {
       title: 'Paused',
@@ -226,6 +230,9 @@ function english(format: Format) {
         `Shield on for ${format.number(seconds)} ${format.plural(seconds, { one: 'second', other: 'seconds' })}.`,
       rapidFireOn: (seconds: number) =>
         `Rapid fire for ${format.number(seconds)} ${format.plural(seconds, { one: 'second', other: 'seconds' })}.`,
+      bossArrived: 'The Wasp Queen is here! Dodge her stings.',
+      bossEnraged: 'The queen is enraged! Watch out for her charge.',
+      bossDefeated: (score: number) => `The queen is defeated! Plus ${format.number(score)}.`,
       victory: (score: number) => `Victory! Every level cleared. Score: ${format.number(score)}.`,
       gameOver: (score: number) => `Game over. Score: ${format.number(score)}.`,
     },

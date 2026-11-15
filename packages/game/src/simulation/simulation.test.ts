@@ -61,6 +61,22 @@ function sendEveryWave(sim: Simulation): void {
   sim.state.wave = levelOf(sim.state).waves.length;
 }
 
+/**
+ * Beats the queen of a level whose waves are sent (#152): she arrives, her health is gone at
+ * once, and her defeat plays out. The level is cleared in the tick she is beaten.
+ */
+function beatTheQueen(sim: Simulation): void {
+  sim.step(IDLE);
+  const { boss, world } = sim.state;
+  if (boss.id === undefined) {
+    throw new Error('the queen did not arrive');
+  }
+  world.health[boss.id] = 0;
+  for (let tick = 0; tick < 600 && boss.phase !== 'beaten'; tick += 1) {
+    sim.step(IDLE);
+  }
+}
+
 describe('createSimulation', () => {
   it('starts a run with the 2023 numbers, on the first level, at the chosen time of day', () => {
     const { state } = setup();
@@ -271,8 +287,10 @@ describe('createSimulation', () => {
     sim.state.events.on('levelStarted', started);
     sim.state.level = LEVELS.findIndex((level) => level.timeChangesAfter) + 1;
     sendEveryWave(sim);
+    // The level that changes the time is one the queen ends.
+    beatTheQueen(sim);
 
-    run(sim, 2);
+    sim.step(IDLE);
 
     expect(sim.state.mode).toBe('night');
     expect(sim.state.enemies).toBe(NIGHT_ENEMIES);
@@ -287,13 +305,14 @@ describe('createSimulation', () => {
     sim.state.score = 150;
     sendEveryWave(sim);
 
-    sim.step(IDLE);
+    // The last level ends with the queen, who scores her 100 hits.
+    beatTheQueen(sim);
     expect(sim.state.status).toBe('won');
-    expect(over).toHaveBeenCalledExactlyOnceWith({ result: 'won', score: 150 });
+    expect(over).toHaveBeenCalledExactlyOnceWith({ result: 'won', score: 250 });
 
     addEnemy(sim, 200, 150, 1, 50);
     run(sim, 400, FIRE);
-    expect(sim.state.score).toBe(150);
+    expect(sim.state.score).toBe(250);
     expect(sim.state.level).toBe(LEVELS.length);
   });
 

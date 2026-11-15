@@ -21,6 +21,9 @@ function createPushedGame() {
     paused: false,
     shield: 0,
     rapidFire: 0,
+    bossHealth: 0,
+    bossMaxHealth: 0,
+    bossEnraged: false,
   };
   const listeners = new Set<(next: GameHud) => void>();
   const game = {
@@ -98,6 +101,26 @@ describe('announceRun', () => {
     ]);
   });
 
+  it("says the queen's arrival, her rage and her defeat, once each, politely", () => {
+    const { game, push } = createPushedGame();
+    const announce = vi.fn();
+    announceRun(game, announce, messages);
+    announce.mockClear();
+
+    push({ bossHealth: 60, bossMaxHealth: 60 });
+    push({ bossHealth: 30 });
+    push({ bossHealth: 20, bossEnraged: true });
+    push({ bossHealth: 19 });
+    push({ bossHealth: 0, bossEnraged: false, score: 60 });
+    push({ bossMaxHealth: 0 });
+
+    expect(announce.mock.calls).toEqual([
+      ['The Wasp Queen is here! Dodge her stings.'],
+      ['The queen is enraged! Watch out for her charge.'],
+      ['The queen is defeated! Plus 60.'],
+    ]);
+  });
+
   it('says game over at once, once, with the score, instead of the last life', () => {
     const { game, push } = createPushedGame();
     const announce = vi.fn();
@@ -165,5 +188,8 @@ describe('announceRun', () => {
       'Щит на 21 секунду.',
     ]);
     expect(russian.rapidFireOn(8)).toBe('Скорострельность на 8 секунд.');
+    expect(russian.bossArrived).toBe('Королева ос! Уворачивайтесь от жал.');
+    expect(russian.bossEnraged).toBe('Королева в ярости! Берегитесь тарана.');
+    expect(russian.bossDefeated(100)).toBe('Королева повержена! Плюс 100.');
   });
 });

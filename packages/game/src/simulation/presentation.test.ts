@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { animationFrame, parallaxOffset, secondsLeft } from './presentation';
+import { animationFrame, isBossEnraged, parallaxOffset, secondsLeft } from './presentation';
 
 describe('parallaxOffset', () => {
   it('scrolls left by the scroll speed per tick and wraps after one width', () => {
@@ -41,5 +41,15 @@ describe('secondsLeft', () => {
     expect(secondsLeft(540)).toBe(9);
     expect(secondsLeft(1)).toBe(1);
     expect(secondsLeft(0)).toBe(0);
+  });
+});
+
+describe('isBossEnraged', () => {
+  it('is true from her rage through her charges, and false before it and once she falls', () => {
+    const calm = ['absent', 'entering', 'attacking', 'defeated', 'beaten'] as const;
+    const enraged = ['enraged', 'windup', 'charging', 'returning'] as const;
+
+    expect(calm.map((phase) => isBossEnraged(phase))).toEqual(calm.map(() => false));
+    expect(enraged.map((phase) => isBossEnraged(phase))).toEqual(enraged.map(() => true));
   });
 });

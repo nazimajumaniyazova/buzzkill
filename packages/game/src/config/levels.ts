@@ -35,7 +35,8 @@ export interface LevelConfig {
 /**
  * The campaign. The pace grows from an enemy every 1.5 s to one every 0.43 s, close to the peak
  * of the 2023 game, and the speed by a quarter. The first wave of all leaves out the third enemy
- * of each set; the last wave of the third and the sixth level sends only it.
+ * of each set; the last wave of the third and the sixth level sends only it. The queen ends those
+ * two levels (#152), with more health the second time.
  */
 export const LEVELS = [
   {
@@ -65,6 +66,7 @@ export const LEVELS = [
       { count: 14, intervalTicks: 50 },
       { count: 6, intervalTicks: 40, weights: [0, 0, 1] },
     ],
+    boss: { health: 60 },
   },
   {
     breakTicks: 120,
@@ -93,5 +95,6 @@ export const LEVELS = [
       { count: 18, intervalTicks: 32 },
       { count: 8, intervalTicks: 26, weights: [0, 0, 1] },
     ],
+    boss: { health: 100 },
   },
 ] as const satisfies readonly LevelConfig[];

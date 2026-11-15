@@ -1,5 +1,12 @@
 import type { Renderer } from '@buzzkill/engine';
-import { animationFrame, type GameRenderer, Kind, parallaxOffset, RULES } from '@buzzkill/game';
+import {
+  animationFrame,
+  type GameRenderer,
+  isBossEnraged,
+  Kind,
+  parallaxOffset,
+  RULES,
+} from '@buzzkill/game';
 import { tokens } from '@buzzkill/ui';
 
 import type { CityLayerName, GameSprites } from './sprites';
@@ -10,7 +17,15 @@ const { palette } = tokens.primitives;
 const COLORS = {
   healthTrack: palette.shade[60].value,
   health: palette.green[500].value,
+  chargeLane: palette.red[400].value,
 } as const;
+
+/**
+ * While the queen winds up a charge (#152), red lines this thick run along the top and the bottom
+ * of her path across the whole screen, and she shakes this many pixels to either side, turning
+ * every two ticks. Under reduced motion she keeps still, and the lines alone give the warning.
+ */
+const CHARGE_WARNING = { line: 4, shake: 4, shakeTicks: 2 } as const;
 
 /**
  * How fast each layer of the city scrolls, as a share of `RULES.scrollSpeed`: the nearer, the
@@ -127,6 +142,34 @@ export function createGameDrawer<TImage>(
               const frame = animationFrame(tick, born, atlas.frames.length, frameTicks);
               renderer.drawSprite(atlas, frame, x, y, size);
             }
+            break;
+          }
+          case Kind.boss: {
+            const { queen, rage } = sprites.boss;
+            const frame = animationFrame(
+              tick,
+              world.bornTick[id] as number,
+              queen.atlas.frames.length,
+              queen.frameTicks,
+            );
+            let shake = 0;
+            if (view.boss.phase === 'windup') {
+              const { line } = CHARGE_WARNING;
+              renderer.fillRect(0, y, worldSize.width, line, COLORS.chargeLane);
+              renderer.fillRect(0, y + height - line, worldSize.width, line, COLORS.chargeLane);
+              if (!reducedMotion()) {
+                const turn = Math.floor(tick / CHARGE_WARNING.shakeTicks) % 2;
+                shake = turn === 0 ? -CHARGE_WARNING.shake : CHARGE_WARNING.shake;
+              }
+            }
+            renderer.drawSprite(queen.atlas, frame, x + shake, y, size);
+            if (isBossEnraged(view.boss.phase)) {
+              renderer.drawSprite(rage.atlas, frame, x + shake, y, size);
+            }
+            break;
+          }
+          case Kind.sting: {
+            renderer.drawSprite(sprites.boss.sting, 0, x, y, size);
             break;
           }
           case Kind.explosion: {

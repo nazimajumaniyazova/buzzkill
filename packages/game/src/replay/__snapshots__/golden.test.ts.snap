@@ -24,12 +24,12 @@ exports[`golden replays > night, female hero gives the pinned result 1`] = `
 
 exports[`golden replays > the campaign inputs at easy difficulty give the pinned result 1`] = `
 {
-  "hash": "c67db147",
-  "level": 4,
+  "hash": "96042962",
+  "level": 3,
   "livesLeft": 0,
-  "score": 111,
+  "score": 80,
   "status": "lost",
-  "ticks": 9074,
+  "ticks": 8700,
 }
 `;
 
@@ -46,22 +46,22 @@ exports[`golden replays > the campaign inputs at hard difficulty give the pinned
 
 exports[`golden replays > the campaign, day, male hero, seed 3 gives the pinned result 1`] = `
 {
-  "hash": "9ad1304e",
-  "level": 5,
+  "hash": "be3fb94b",
+  "level": 3,
   "livesLeft": 0,
-  "score": 274,
+  "score": 189,
   "status": "lost",
-  "ticks": 8307,
+  "ticks": 6564,
 }
 `;
 
-exports[`golden replays > the easy campaign won, day, male hero, seed 6 gives the pinned result 1`] = `
+exports[`golden replays > the easy campaign won, night, female hero, seed 11 gives the pinned result 1`] = `
 {
-  "hash": "52bf0d60",
+  "hash": "6778de66",
   "level": 6,
-  "livesLeft": 2,
-  "score": 336,
+  "livesLeft": 1,
+  "score": 473,
   "status": "won",
-  "ticks": 14353,
+  "ticks": 16386,
 }
 `;

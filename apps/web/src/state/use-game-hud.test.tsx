@@ -16,6 +16,9 @@ function createFakeGame() {
     paused: false,
     shield: 0,
     rapidFire: 0,
+    bossHealth: 0,
+    bossMaxHealth: 0,
+    bossEnraged: false,
   };
   const listeners = new Set<(hud: GameHud) => void>();
   const game: Game = {

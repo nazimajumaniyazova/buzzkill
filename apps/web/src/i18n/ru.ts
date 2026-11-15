@@ -118,6 +118,7 @@ export const ru: Dictionary = (format): Messages => ({
       `Сбивайте насекомых, пока они не долетели до города. ${format.number(lives)} ${format.plural(lives, { one: 'попадание', few: 'попадания', many: 'попаданий', other: 'попадания' })} — и игра окончена.`,
     powerUps:
       'Сбитые насекомые иногда роняют бонусы. Коснитесь бонуса, чтобы подобрать его: патроны, жизнь, щит или скорострельность на несколько секунд.',
+    boss: 'Третий и шестой уровни заканчиваются королевой ос. Уворачивайтесь от её жал и стреляйте, пока она парит. Когда её полоса краснеет, она идёт на таран: сначала красные линии отмечают её путь, уйдите с него.',
     keyboard: 'Клавиатура',
     gamepad: 'Геймпад',
     menus: 'В меню',
@@ -155,6 +156,8 @@ export const ru: Dictionary = (format): Messages => ({
     shield: 'Щит',
     rapidFire: 'Скорострельность',
     secondsLeft: (seconds) => `${format.number(seconds)} с`,
+    boss: 'Королева ос',
+    bossHealth: (health, max) => `${format.number(health)} из ${format.number(max)}`,
   },
   pause: {
     title: 'Пауза',
@@ -205,6 +208,9 @@ export const ru: Dictionary = (format): Messages => ({
       `Щит на ${format.number(seconds)} ${format.plural(seconds, { one: 'секунду', few: 'секунды', many: 'секунд', other: 'секунды' })}.`,
     rapidFireOn: (seconds) =>
       `Скорострельность на ${format.number(seconds)} ${format.plural(seconds, { one: 'секунду', few: 'секунды', many: 'секунд', other: 'секунды' })}.`,
+    bossArrived: 'Королева ос! Уворачивайтесь от жал.',
+    bossEnraged: 'Королева в ярости! Берегитесь тарана.',
+    bossDefeated: (score) => `Королева повержена! Плюс ${format.number(score)}.`,
     victory: (score) => `Победа! Все уровни пройдены. Счёт: ${format.number(score)}.`,
     gameOver: (score) => `Игра окончена. Счёт: ${format.number(score)}.`,
   },
