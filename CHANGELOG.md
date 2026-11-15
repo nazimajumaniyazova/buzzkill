@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.22.0...v0.23.0) (2026-11-14)
+
+
+### Features
+
+* **game:** fight the queen wasp in the simulation ([#179](https://github.com/nazimajumaniyazova/buzzkill/issues/179)) ([9ea020a](https://github.com/nazimajumaniyazova/buzzkill/commit/9ea020acb3e7c36496c8232a9844ae993c628102))
+
 ## [0.22.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.21.0...v0.22.0) (2026-11-13)
 
 
