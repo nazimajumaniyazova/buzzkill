@@ -19,3 +19,10 @@ export {
   type KeyboardTarget,
 } from './keyboard';
 export { attachPointerButton, type PointerEventLike, type PointerTarget } from './pointer-button';
+export {
+  attachPointerStick,
+  type PointerStickOptions,
+  type StickActions,
+  type StickEventLike,
+  type StickTarget,
+} from './pointer-stick';
