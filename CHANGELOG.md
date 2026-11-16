@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.24.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.23.0...v0.24.0) (2026-11-16)
+
+
+### Features
+
+* **game:** end the third and the sixth level with the queen ([#183](https://github.com/nazimajumaniyazova/buzzkill/issues/183)) ([7307923](https://github.com/nazimajumaniyazova/buzzkill/commit/7307923103f421a4f9a4257f75af42bf7f33b58c))
+
+
+### Bug fixes
+
+* **web:** give the mixer every sound of the game ([#182](https://github.com/nazimajumaniyazova/buzzkill/issues/182)) ([9dd9649](https://github.com/nazimajumaniyazova/buzzkill/commit/9dd9649f091b433a4870548ef627327574c99c2c)), closes [#181](https://github.com/nazimajumaniyazova/buzzkill/issues/181)
+
 ## [0.23.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.22.0...v0.23.0) (2026-11-14)
 
 
