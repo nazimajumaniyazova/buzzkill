@@ -92,8 +92,8 @@ The rules are enforced three times over:
    `not-to-unresolvable`.
 3. **ESLint and TypeScript** for `packages/game` and the main entry of `packages/engine`: no DOM lib in
    their `tsconfig.json`; the engine's DOM adapters (animation-frame host, keyboard, pointer
-   buttons, gamepad) live in `src/browser` behind the `@buzzkill/engine/browser` entry with a
-   tsconfig of their own, and only `apps/web` imports them. For the game, ESLint also bans
+   buttons and stick, gamepad) live in `src/browser` behind the `@buzzkill/engine/browser` entry
+   with a tsconfig of their own, and only `apps/web` imports them. For the game, ESLint also bans
    `window`, `document`, `fetch`, `Math.random`, `Date.now`, `performance.now` and transcendental
    `Math` functions, so the simulation stays headless and deterministic.
 
@@ -128,7 +128,7 @@ flowchart TB
   subgraph adapters["@buzzkill/engine/browser: DOM adapters"]
     direction TB
     host["browser host<br/>requestAnimationFrame, Page Visibility"]
-    sources["input sources<br/>keyboard, pointer buttons, gamepad"]
+    sources["input sources<br/>keyboard, pointer buttons and stick, gamepad"]
     decoders["asset decoders<br/>fetch, ImageBitmap, decodeAudioData"]
     context["audio context<br/>created on the first gesture"]
   end

@@ -438,6 +438,47 @@ describe('GameView', () => {
     expect(polite).toHaveTextContent('Level 1. Go!');
   });
 
+  it('shoots on the fire button of a touch screen: a sound and one round less', () => {
+    const frames = installFrames();
+    renderView();
+    frames.run(1);
+    const fire = screen.getByTestId('touch-fire');
+
+    fireEvent.pointerDown(fire, { pointerId: 1 });
+    frames.run(2);
+    fireEvent.pointerUp(fire, { pointerId: 1 });
+
+    expect(play).toHaveBeenCalledWith('shot');
+    expect(hudValue('Ammo')).toBe('19');
+  });
+
+  it('pauses by the pause button of a touch screen, reported like its own pause', () => {
+    const frames = installFrames();
+    renderView();
+    frames.run(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
+
+    expect(reported()).toEqual(['gamePaused']);
+    expect(frames.pending()).toBe(0);
+  });
+
+  it('suggests turning the screen sideways while it is upright and narrow, until it turns', () => {
+    vi.stubGlobal('innerWidth', 412);
+    vi.stubGlobal('innerHeight', 915);
+    installFrames();
+    renderView();
+    expect(screen.getByText('Turn your phone sideways for a bigger picture.')).toBeVisible();
+
+    act(() => {
+      vi.stubGlobal('innerWidth', 915);
+      vi.stubGlobal('innerHeight', 412);
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    expect(screen.queryByText(/sideways/)).not.toBeInTheDocument();
+  });
+
   it('explains when the browser has no 2D canvas context', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 

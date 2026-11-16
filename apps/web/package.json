@@ -9,6 +9,7 @@
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
+    "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "@buzzkill/art": "workspace:*",
     "@buzzkill/config": "workspace:*",
     "@fast-check/vitest": "catalog:",
+    "@playwright/test": "catalog:",
     "@resvg/resvg-js": "catalog:",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",

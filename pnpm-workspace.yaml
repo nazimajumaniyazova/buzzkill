@@ -47,6 +47,9 @@ catalog:
   '@vitest/browser': ^5.1.0
   '@vitest/browser-playwright': ^5.1.0
   playwright: ^1.65.0
+  # End-to-end tests of the built app (#153); the same release as `playwright`, so CI installs
+  # one Chromium for both
+  '@playwright/test': ^1.65.0
   # CSS Modules (ADR-0005): typed class names for tsc, unused-class and token-name checks
   '@css-modules-kit/codegen': ^1.4.1
   '@css-modules-kit/stylelint-plugin': ^1.4.1

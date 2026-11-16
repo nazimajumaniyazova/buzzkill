@@ -151,6 +151,14 @@ function english(format: Format) {
       boss: 'The third and the sixth level end with the Wasp Queen. Dodge her stings and shoot her while she glides. Once her bar turns red, she charges: red lines mark her path first, so leave it.',
       keyboard: 'Keyboard',
       gamepad: 'Gamepad',
+      touch: 'Touch screen',
+      /** Where each action is on a touch screen (#153). */
+      touchControls: {
+        moveUp: 'Push the stick at the bottom left up',
+        moveDown: 'Push the stick at the bottom left down',
+        fire: 'Hold the button at the bottom right',
+        pause: 'Tap the button at the top right',
+      } satisfies Record<GameAction, string>,
       menus: 'In the menus',
       or: 'or',
       move: 'Move',
@@ -175,6 +183,7 @@ function english(format: Format) {
       label: 'Game',
       canvas: 'Buzzkill game screen',
       unsupported: 'Your browser does not support the canvas element, so the game cannot run.',
+      turnSideways: 'Turn your phone sideways for a bigger picture.',
     },
     hud: {
       label: 'Game status',
