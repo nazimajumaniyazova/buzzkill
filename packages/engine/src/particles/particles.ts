@@ -34,7 +34,10 @@ export interface ParticleBurst<TStyle> {
   readonly life: ParticleRange;
   /** Size at birth in pixels. */
   readonly size: ParticleRange;
-  /** Size at the end of life as a share of the size at birth: 1 by default, 0 shrinks to nothing. */
+  /**
+   * Size at the end of life as a share of the size at birth: 1 by default, and 0 shrinks to
+   * nothing.
+   */
   readonly endSize?: number;
   /** Added to the downward speed each unit of time. 0 by default. */
   readonly gravity?: number;

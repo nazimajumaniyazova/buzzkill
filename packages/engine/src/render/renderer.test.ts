@@ -5,7 +5,10 @@ import { type Context2DLike, createCanvas2DRenderer } from './renderer';
 
 type Call = readonly [string, ...unknown[]];
 
-/** A context that records calls; `drawImage` and `fillRect` also record the opacity they drew with. */
+/**
+ * A context that records calls; `drawImage` and `fillRect` also record the opacity they drew
+ * with.
+ */
 function createFakeContext() {
   const calls: Call[] = [];
   const record =
