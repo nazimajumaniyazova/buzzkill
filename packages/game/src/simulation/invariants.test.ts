@@ -10,6 +10,14 @@ import { Kind } from '../world/world';
 import { createSimulation, type Simulation } from './simulation';
 import type { BossState } from './state';
 
+/**
+ * Each property here plays up to 60 holds of up to 120 ticks a run, 60 or 100 runs, so it cannot
+ * hang; it is only long. Alone with coverage each took about 2 s on a laptop, but CI runs them with
+ * coverage beside every other project on two cores, where long random runs passed Vitest's 5 s
+ * default (#185), and so did a loaded laptop. This leaves them room; a hang would still fail.
+ */
+const PROPERTY_TIMEOUT = 30_000;
+
 /** Puts a power-up on the hero, as if one had dropped there; skipped when the world is full. */
 function gift(sim: Simulation, variant: number): void {
   const { world, player, tick } = sim.state;
@@ -117,6 +125,7 @@ describe('simulation invariants', () => {
         }
       }
     },
+    PROPERTY_TIMEOUT,
   );
 });
 
@@ -149,14 +158,6 @@ const queenCampaign = (health: number): readonly LevelConfig[] => [
     waves: [{ count: 2, intervalTicks: 30 }],
   },
 ];
-
-/**
- * The boss fight property plays 100 runs of up to 60 holds of up to 120 ticks, so it cannot hang;
- * it is only long. Alone with coverage it took about 1.7 s on a laptop, but CI runs it with
- * coverage beside every other project on two cores, where long random fights passed Vitest's 5 s
- * default once (#185). This leaves it room; a hang would still fail.
- */
-const BOSS_FIGHT_TIMEOUT = 30_000;
 
 /** Every phase the queen's state may hold after a tick that began in a phase (#152). */
 const NEXT: Readonly<Record<BossState['phase'], readonly BossState['phase'][]>> = {
@@ -267,6 +268,6 @@ describe('boss fight invariants', () => {
 
       expect(broken).toBeUndefined();
     },
-    BOSS_FIGHT_TIMEOUT,
+    PROPERTY_TIMEOUT,
   );
 });
