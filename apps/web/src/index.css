@@ -217,7 +217,8 @@ html:has(.game) {
   outline-offset: 2px;
 }
 
-/* The stick and the fire button let the world show through: insects fly under the bottom corners. */
+/* The stick and the fire button let the world show through: insects fly under the bottom
+   corners. */
 .touch-stick,
 .touch-fire {
   opacity: 0.7;

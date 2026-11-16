@@ -61,9 +61,10 @@ interface GameViewProps {
  * The canvas and one run of the game on it. The effect that the run keys creates everything the
  * run needs and passes it to `createGame`: the input with its keyboard and gamepad sources, the
  * frame host, the Canvas 2D renderer with the game's drawing code, and the shared mixer, whose
- * volumes the settings set. The touch controls attach to the same input once it exists (#153). The machine then drives the game through `paused`, and the game
- * drives the machine through the bridge, so each side learns of the other's pause without a
- * loop: `pause` and `resume` do nothing when the game is there already.
+ * volumes the settings set. The touch controls attach to the same input once it exists (#153).
+ * The machine then drives the game through `paused`, and the game drives the machine through the
+ * bridge, so each side learns of the other's pause without a loop: `pause` and `resume` do
+ * nothing when the game is there already.
  *
  * An error in a frame runs outside React, where it would stop the loop without a word; it is kept
  * and thrown in the next render, so the error boundary around the run sees it (#113). A run that
