@@ -150,6 +150,14 @@ const queenCampaign = (health: number): readonly LevelConfig[] => [
   },
 ];
 
+/**
+ * The boss fight property plays 100 runs of up to 60 holds of up to 120 ticks, so it cannot hang;
+ * it is only long. Alone with coverage it took about 1.7 s on a laptop, but CI runs it with
+ * coverage beside every other project on two cores, where long random fights passed Vitest's 5 s
+ * default once (#185). This leaves it room; a hang would still fail.
+ */
+const BOSS_FIGHT_TIMEOUT = 30_000;
+
 /** Every phase the queen's state may hold after a tick that began in a phase (#152). */
 const NEXT: Readonly<Record<BossState['phase'], readonly BossState['phase'][]>> = {
   absent: ['absent', 'entering'],
@@ -259,5 +267,6 @@ describe('boss fight invariants', () => {
 
       expect(broken).toBeUndefined();
     },
+    BOSS_FIGHT_TIMEOUT,
   );
 });
