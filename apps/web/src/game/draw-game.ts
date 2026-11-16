@@ -9,6 +9,7 @@ import {
 } from '@buzzkill/game';
 import { tokens } from '@buzzkill/ui';
 
+import { createHitStop } from './hit-stop';
 import { createParticleEffects } from './particles';
 import { createShakeEffects } from './screen-shake';
 import { createSpriteEffects, FLASH, NO_SCALE, type SpriteScale } from './sprite-effects';
@@ -57,6 +58,10 @@ export interface GameDrawerOptions {
   readonly hitFlash?: () => boolean;
   /** The squash and stretch setting (#159), read every frame. Defaults to on. */
   readonly squashStretch?: () => boolean;
+  /** The hit-stop setting (#158), read every frame and at every event. Defaults to on. */
+  readonly hitStop?: () => boolean;
+  /** The clock of the hit-stop in milliseconds. Defaults to `performance.now`. */
+  readonly now?: () => number;
   /** Seeds the particles' and the shake's own randomness, never the simulation's. Defaults to 1. */
   readonly seed?: number;
 }
@@ -86,7 +91,8 @@ const SHOT_TRAIL = { size: { width: 30, height: 6 }, headX: 20, headY: 1.5 } as 
  * the hero and the insects, sparks and debris in front of them. So does the screen shake (#157),
  * which moves the camera of the whole frame, and so do the flashes of hits (#159), which tint a
  * sprite white for a moment. The hero squashes when it fires and insects stretch as they bob, both
- * about the middle of their base.
+ * about the middle of their base. A strong blow holds the picture for a moment (#158): the frames
+ * of the hold draw nothing, so the canvas keeps the last one while the ticks go on.
  */
 export function createGameDrawer<TImage>(
   renderer: Renderer<TImage>,
@@ -112,6 +118,11 @@ export function createGameDrawer<TImage>(
     hitFlash: options.hitFlash ?? (() => true),
     squashStretch: options.squashStretch ?? (() => true),
     reducedMotion,
+  });
+  const hitStop = createHitStop({
+    enabled: options.hitStop ?? (() => true),
+    reducedMotion,
+    now: options.now ?? (() => performance.now()),
   });
   let lastTick: number | undefined;
 
@@ -147,8 +158,12 @@ export function createGameDrawer<TImage>(
       effects.listen(events);
       shake.listen(events);
       spriteEffects.listen(events);
+      hitStop.listen(events);
     },
     render(view, alpha) {
+      if (hitStop.holds()) {
+        return;
+      }
       const { world, tick } = view;
       const time = tick + alpha;
       renderer.beginFrame(shake.advance(time));
@@ -292,6 +307,7 @@ export function createGameDrawer<TImage>(
       }
       effects.drawFront(renderer);
       renderer.endFrame();
+      hitStop.drawn();
     },
   };
 }

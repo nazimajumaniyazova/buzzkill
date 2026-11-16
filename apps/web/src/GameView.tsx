@@ -57,6 +57,8 @@ interface GameViewProps {
   readonly hitFlash: boolean;
   /** The squash and stretch setting (#159); a change applies to the run on screen. */
   readonly squashStretch: boolean;
+  /** The hit-stop setting (#158); a change applies to the run on screen. */
+  readonly hitStop: boolean;
   /**
    * The machine shows the screen between levels. The game holds itself on a cleared level; when
    * this turns false again, the next level starts (ADR-0017).
@@ -89,6 +91,7 @@ export function GameView({
   screenShake,
   hitFlash,
   squashStretch,
+  hitStop,
   betweenLevels,
   onEvent,
 }: GameViewProps): JSX.Element {
@@ -109,6 +112,7 @@ export function GameView({
   const screenShakeRef = useRef(screenShake);
   const hitFlashRef = useRef(hitFlash);
   const squashStretchRef = useRef(squashStretch);
+  const hitStopRef = useRef(hitStop);
   const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
@@ -199,6 +203,7 @@ export function GameView({
           screenShake: () => screenShakeRef.current,
           hitFlash: () => hitFlashRef.current,
           squashStretch: () => squashStretchRef.current,
+          hitStop: () => hitStopRef.current,
           seed: run.seed,
         }),
         audio: assets.audio,
@@ -232,7 +237,8 @@ export function GameView({
   useEffect(() => {
     hitFlashRef.current = hitFlash;
     squashStretchRef.current = squashStretch;
-  }, [hitFlash, squashStretch]);
+    hitStopRef.current = hitStop;
+  }, [hitFlash, squashStretch, hitStop]);
 
   useEffect(() => {
     if (bindingsRef.current === keyBindings) {

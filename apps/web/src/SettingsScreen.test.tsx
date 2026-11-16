@@ -160,7 +160,7 @@ describe('SettingsScreen', () => {
       within(screen.getByRole('tabpanel'))
         .getAllByRole('switch')
         .map((item) => item.textContent),
-    ).toEqual(['Particles', 'Screen shake', 'Hit flash', 'Squash and stretch']);
+    ).toEqual(['Particles', 'Screen shake', 'Hit flash', 'Squash and stretch', 'Hit-stop']);
     const shake = screen.getByRole('switch', { name: 'Screen shake' });
     expect(shake).toBeChecked();
     expect(shake).toHaveAccessibleDescription(/Never while motion is reduced\.$/);
@@ -197,6 +197,19 @@ describe('SettingsScreen', () => {
 
     expect(onChange.mock.calls).toEqual([[{ hitFlash: false }], [{ squashStretch: false }]]);
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('turns the hit-stop off in the effects tab', () => {
+    const onChange = vi.fn();
+    render(<SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+    const hitStop = screen.getByRole('switch', { name: 'Hit-stop' });
+    expect(hitStop).toBeChecked();
+    expect(hitStop).toHaveAccessibleDescription(/the game itself goes on\. Never while motion/);
+    fireEvent.click(hitStop);
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ hitStop: false });
   });
 
   it('offers the game speed on the gameplay tab, with what a slower game means', () => {

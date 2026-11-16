@@ -181,6 +181,14 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
                     onCheckedChange={(squashStretch) => {
                       onChange({ squashStretch });
                     }}
+                  />{' '}
+                  <EffectSwitch
+                    label={t.settings.hitStop}
+                    hint={t.settings.hitStopHint}
+                    checked={settings.hitStop}
+                    onCheckedChange={(hitStop) => {
+                      onChange({ hitStop });
+                    }}
                   />
                 </Stack>
               ),

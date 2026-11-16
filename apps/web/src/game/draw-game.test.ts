@@ -18,6 +18,7 @@ import { tokens } from '@buzzkill/ui';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createGameDrawer } from './draw-game';
+import { HIT_STOP_MS } from './hit-stop';
 import { PARTICLE_BURSTS } from './particles';
 import { FLASH, SQUASH, STRETCH } from './sprite-effects';
 import type { GameSprites } from './sprites';
@@ -563,5 +564,42 @@ describe('the flash of a hit, and squash and stretch', () => {
       100,
       { width: sim.state.hero.width, height: sim.state.hero.height },
     ]);
+  });
+});
+
+describe('hit-stop', () => {
+  let sim: Simulation;
+
+  beforeEach(() => {
+    sim = createSimulation({ seed: 1, heroId: 'female', mode: 'day' });
+  });
+
+  /** Renders three frames around a hit on the hero: the hit, 30 ms later, and when it ends. */
+  function hitAndHold(options: Parameters<typeof createGameDrawer>[2]): number {
+    let now = 0;
+    const { renderer, calls } = createFakeRenderer();
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES, { ...options, now: () => now });
+    drawer.listen?.(events);
+
+    events.emit('playerHit', { livesLeft: 2 });
+    drawer.render(sim.state, 0);
+    now = 30;
+    sim.state.tick += 2;
+    drawer.render(sim.state, 0);
+    now = HIT_STOP_MS.playerHit;
+    drawer.render(sim.state, 0);
+
+    return calls.filter((call) => call[0] === 'beginFrame').length;
+  }
+
+  it('draws the frame of a hit on the hero, then leaves it on the canvas while the ticks go on', () => {
+    // The frame between draws nothing, not even a clear: the canvas keeps the picture.
+    expect(hitAndHold({})).toBe(2);
+  });
+
+  it('never holds while it is off or while motion is reduced', () => {
+    expect(hitAndHold({ hitStop: () => false })).toBe(3);
+    expect(hitAndHold({ reducedMotion: () => true })).toBe(3);
   });
 });

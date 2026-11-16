@@ -270,6 +270,7 @@ describe('every text on screen comes from the dictionary', () => {
         screenShake
         hitFlash
         squashStretch
+        hitStop
         betweenLevels={false}
         onEvent={vi.fn()}
       />,
