@@ -12,16 +12,18 @@ pipeline (#133) and lists what ships with its source and license in [ASSETS.md](
 `apps/web/src/assets/manifest.gen.ts`. `apps/web/src/game/assets.ts` loads them, and
 `apps/web/src/game/sprites.ts` cuts the atlases with the frames of the manifest.
 
-| File                                                            | Format                 | Size   | Holds                                                                                    |
-| --------------------------------------------------------------- | ---------------------- | ------ | ---------------------------------------------------------------------------------------- |
-| `src/assets/creatures.webp`                                     | WebP, lossy, 2030×1485 | 233 kB | The heroes and the six enemies, every frame                                              |
-| `src/assets/effects.webp`                                       | WebP, lossy, 2008×1672 | 144 kB | Both explosions, 9 frames each, the shot in flight and the four power-ups, 4 frames each |
-| `src/assets/city-day-*.webp`, `city-night-*.webp`               | WebP, lossy, 1280×720  | 69 kB  | The city: 5 layers by day, 4 by night (no clouds)                                        |
-| `assets-src/sounds/…/laserSmall_001.ogg`                        | Ogg Vorbis             | 7 kB   | `shot`                                                                                   |
-| `assets-src/sounds/…/explosionCrunch_000.ogg`                   | Ogg Vorbis             | 28 kB  | `explosion`                                                                              |
-| `assets-src/sounds/…/impactPunch_heavy_002.ogg`                 | Ogg Vorbis             | 9 kB   | `hit`                                                                                    |
-| `assets-src/sounds/…/laserRetro_000.ogg`                        | Ogg Vorbis             | 13 kB  | `pickup` (#151)                                                                          |
-| `src/assets/shot.wav`, `explosion.wav`, `hit.wav`, `pickup.wav` | WAV, 16-bit PCM        | 214 kB | The same sounds, for browsers that cannot decode Ogg                                     |
+| File                                                                             | Format                 | Size   | Holds                                                                                    |
+| -------------------------------------------------------------------------------- | ---------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| `src/assets/creatures.webp`                                                      | WebP, lossy, 2030×1485 | 233 kB | The heroes and the six enemies, every frame                                              |
+| `src/assets/effects.webp`                                                        | WebP, lossy, 2008×1672 | 144 kB | Both explosions, 9 frames each, the shot in flight and the four power-ups, 4 frames each |
+| `src/assets/boss.webp`                                                           | WebP, lossy, 1804×1504 | 103 kB | The queen (#152), 4 frames, the overlay of her rage, 4 frames, and her sting             |
+| `src/assets/city-day-*.webp`, `city-night-*.webp`                                | WebP, lossy, 1280×720  | 69 kB  | The city: 5 layers by day, 4 by night (no clouds)                                        |
+| `assets-src/sounds/…/laserSmall_001.ogg`                                         | Ogg Vorbis             | 7 kB   | `shot`                                                                                   |
+| `assets-src/sounds/…/explosionCrunch_000.ogg`                                    | Ogg Vorbis             | 28 kB  | `explosion`                                                                              |
+| `assets-src/sounds/…/impactPunch_heavy_002.ogg`                                  | Ogg Vorbis             | 9 kB   | `hit`                                                                                    |
+| `assets-src/sounds/…/laserRetro_000.ogg`                                         | Ogg Vorbis             | 13 kB  | `pickup` (#151)                                                                          |
+| `assets-src/sounds/…/impactMetal_003.ogg`                                        | Ogg Vorbis             | 17 kB  | `bossPhase` (#152)                                                                       |
+| `src/assets/shot.wav`, `explosion.wav`, `hit.wav`, `pickup.wav`, `bossPhase.wav` | WAV, 16-bit PCM        | 282 kB | The same sounds, for browsers that cannot decode Ogg                                     |
 
 - The frames are drawn at twice the world's pixels, so they stay sharp at a device pixel ratio of 2.
   Each atlas is at most 2048 px on a side, with 2 px between frames.

@@ -28,11 +28,13 @@ function backgroundImages(): BackgroundImages {
 export const GAME_ASSETS = {
   creatures: { kind: 'image', url: ATLASES.creatures.url },
   effects: { kind: 'image', url: ATLASES.effects.url },
+  boss: { kind: 'image', url: ATLASES.boss.url },
   ...backgroundImages(),
   shot: { kind: 'audio', ...SOUNDS.shot, optional: true },
   explosion: { kind: 'audio', ...SOUNDS.explosion, optional: true },
   hit: { kind: 'audio', ...SOUNDS.hit, optional: true },
   pickup: { kind: 'audio', ...SOUNDS.pickup, optional: true },
+  bossPhase: { kind: 'audio', ...SOUNDS.bossPhase, optional: true },
 } as const satisfies AssetManifest & Record<GameSound, unknown>;
 
 export type GameAssetManifest = typeof GAME_ASSETS;

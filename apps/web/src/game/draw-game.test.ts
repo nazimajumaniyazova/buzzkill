@@ -1,5 +1,6 @@
 import { createGridAtlas, type Renderer, type SpriteAtlas } from '@buzzkill/engine';
-import { createSimulation, type EntityId, Kind, type Simulation } from '@buzzkill/game';
+import { createSimulation, type EntityId, Kind, QUEEN, type Simulation } from '@buzzkill/game';
+import { tokens } from '@buzzkill/ui';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createGameDrawer } from './draw-game';
@@ -45,6 +46,11 @@ const SPRITES: GameSprites<string> = {
     animation('power-shield', 4, 8),
     animation('power-rapid-fire', 4, 8),
   ],
+  boss: {
+    queen: animation('queen', 4, 2),
+    rage: animation('queen-rage', 4, 2),
+    sting: atlas('sting', 1),
+  },
   // No city here, so these tests see only the entities; the city has tests of its own below.
   backgrounds: { day: [], night: [] },
 };
@@ -183,6 +189,81 @@ describe('power-ups', () => {
       ['sprite', 'power-shield', 3, 400, 300, { width: 32, height: 32 }],
       ['sprite', 'power-rapid-fire', 1, 500, 300, { width: 32, height: 32 }],
     ]);
+  });
+});
+
+describe('the queen', () => {
+  const BOX = { width: QUEEN.hitbox.width, height: QUEEN.hitbox.height };
+  const LANE = tokens.primitives.palette.red[400].value;
+
+  /** The queen in `phase`, still at her post since tick 0, and the tick moved on by `ticks`. */
+  function queenIn(phase: Simulation['state']['boss']['phase'], ticks: number) {
+    const sim = createSimulation({ seed: 1, heroId: 'male', mode: 'day' });
+    emptyWorld(sim);
+    const { world } = sim.state;
+    const id = world.spawn(Kind.boss, 0) as EntityId;
+    world.place(id, 940, 200, BOX.width, BOX.height);
+    Object.assign(sim.state.boss, { phase, id });
+    sim.state.tick = ticks;
+    return sim;
+  }
+
+  it('beats her wings from her arrival, and draws her stings in their boxes', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const sim = queenIn('attacking', 5);
+    const sting = add(sim, Kind.sting, 600, 330);
+    sim.state.world.place(sting, 600, 330, 32, 12);
+
+    createGameDrawer(renderer, SPRITES).render(sim.state, 0);
+
+    // Two ticks a frame: five ticks after her arrival she shows frame 2.
+    expect(calls.slice(1, 3)).toEqual([
+      ['sprite', 'queen', 2, 940, 200, BOX],
+      ['sprite', 'sting', 0, 600, 330, { width: 32, height: 12 }],
+    ]);
+  });
+
+  it('lays her rage over the same frame, from her rage through her charges', () => {
+    for (const phase of ['enraged', 'charging', 'returning'] as const) {
+      const { renderer, calls } = createFakeRenderer();
+
+      createGameDrawer(renderer, SPRITES).render(queenIn(phase, 7).state, 0);
+
+      expect(calls.slice(1, 3)).toEqual([
+        ['sprite', 'queen', 3, 940, 200, BOX],
+        ['sprite', 'queen-rage', 3, 940, 200, BOX],
+      ]);
+    }
+  });
+
+  it('marks the path of her charge with red lines while she winds it up, and shakes her', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const drawer = createGameDrawer(renderer, SPRITES);
+    const xs = [0, 1, 2, 3].map((tick) => {
+      calls.length = 0;
+      drawer.render(queenIn('windup', tick).state, 0);
+      return calls.find((call) => call[0] === 'sprite' && call[1] === 'queen')?.[3];
+    });
+
+    expect(calls.filter((call) => call[0] === 'rect')).toEqual([
+      ['rect', 0, 200, 1280, 4, LANE],
+      ['rect', 0, 200 + BOX.height - 4, 1280, 4, LANE],
+    ]);
+    expect(new Set(xs).size).toBe(2);
+    expect(xs.every((x) => typeof x === 'number' && Math.abs(x - 940) <= 4)).toBe(true);
+  });
+
+  it('keeps the red lines but not the shaking under reduced motion', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const drawer = createGameDrawer(renderer, SPRITES, { reducedMotion: () => true });
+    const xs = [0, 1, 2, 3].map((tick) => {
+      calls.length = 0;
+      drawer.render(queenIn('windup', tick).state, 0);
+      return calls.find((call) => call[0] === 'sprite' && call[1] === 'queen')?.[3];
+    });
+
+    expect(xs).toEqual([940, 940, 940, 940]);
+    expect(calls.filter((call) => call[0] === 'rect')).toHaveLength(2);
   });
 });
 

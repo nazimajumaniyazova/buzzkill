@@ -6,6 +6,7 @@ import {
   type HeroId,
   NIGHT_ENEMIES,
   POWER_UPS,
+  QUEEN,
 } from '@buzzkill/game';
 
 import { BACKGROUNDS, SPRITES } from '../assets/manifest.gen';
@@ -44,6 +45,15 @@ export interface GameSprites<TImage> {
   readonly explosions: readonly [SpriteAtlas<TImage>, SpriteAtlas<TImage>];
   /** By power-up variant, the index of its kind in `POWER_UPS` (#151). */
   readonly powerUps: readonly Animation<TImage>[];
+  /**
+   * The queen of #152: her wings beating, her rage, drawn over her frame of the same number, and
+   * the sting she shoots.
+   */
+  readonly boss: {
+    readonly queen: Animation<TImage>;
+    readonly rage: Animation<TImage>;
+    readonly sting: SpriteAtlas<TImage>;
+  };
   /** The city of each time of day, back to front. */
   readonly backgrounds: Readonly<Record<GameMode, readonly BackgroundLayer<TImage>[]>>;
 }
@@ -82,6 +92,11 @@ export function createGameSprites<TImage>(images: GameImages<TImage>): GameSprit
     projectile: atlas('shot-trail'),
     explosions: [atlas('explosion-smoke'), atlas('explosion-fire')],
     powerUps: POWER_UPS.map(({ sprite }) => animation(sprite.sheet)),
+    boss: {
+      queen: animation(QUEEN.sprite.sheet),
+      rage: animation(QUEEN.sprite.rage),
+      sting: atlas(QUEEN.sprite.sting),
+    },
     backgrounds: { day: city('day'), night: city('night') },
   };
 }

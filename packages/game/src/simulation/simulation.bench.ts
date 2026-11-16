@@ -2,6 +2,7 @@ import { describe, test } from 'vitest';
 
 import dayMale from '../../fixtures/replays/day-male-2026.json' with { type: 'json' };
 import nightFemale from '../../fixtures/replays/night-female-2026.json' with { type: 'json' };
+import { type LevelConfig, LEVELS } from '../config/levels';
 import { parseReplay, type Replay } from '../replay/format';
 import { simulate } from '../replay/simulate';
 import { createSimulation, type Simulation } from './simulation';
@@ -40,13 +41,61 @@ function sweep(tick: number): number {
 }
 
 /**
+ * The campaign without its queen (#152). The endless hero never fires, so the queen would hold
+ * the run in her level for good; without her the run keeps the pace of the levels it measures,
+ * as it did before she came. Her fight has a benchmark of its own.
+ */
+const WAVES_ONLY: readonly LevelConfig[] = LEVELS.map(
+  ({ breakTicks, speedScale, timeChangesAfter, waves }) => ({
+    breakTicks,
+    speedScale,
+    timeChangesAfter,
+    waves,
+  }),
+);
+
+/**
  * A run that does not end early: the hero never runs out of lives. Real runs often end in the
  * first levels, too soon to measure the later ones, where enemies come every half second. This one
  * is in the fourth level after two minutes and in the sixth after three.
  */
 function endlessRun(): Simulation {
-  const simulation = createSimulation({ seed: 2026, heroId: 'male', mode: 'day' });
+  const simulation = createSimulation({
+    seed: 2026,
+    heroId: 'male',
+    mode: 'day',
+    levels: WAVES_ONLY,
+  });
   simulation.state.lives = Number.MAX_SAFE_INTEGER;
+  return simulation;
+}
+
+/** A level of nothing but a queen who outlasts any benchmark. */
+const QUEEN_ONLY: LevelConfig = {
+  breakTicks: 1,
+  speedScale: 1,
+  timeChangesAfter: false,
+  waves: [],
+  boss: { health: 300_000 },
+};
+
+/**
+ * The queen in her rage against the endless hero (#152), from the tick she arrives: her stings,
+ * fans and broods, and a charge every few seconds. Her rage is her busiest phase.
+ */
+function queenInRage(): Simulation {
+  const simulation = createSimulation({
+    seed: 2026,
+    heroId: 'male',
+    mode: 'day',
+    levels: [QUEEN_ONLY],
+  });
+  simulation.state.lives = Number.MAX_SAFE_INTEGER;
+  simulation.step({ down: 0, pressed: 0 });
+  const { boss, world } = simulation.state;
+  if (boss.id !== undefined) {
+    world.health[boss.id] = Math.floor((world.value[boss.id] as number) / 3);
+  }
   return simulation;
 }
 
@@ -92,6 +141,15 @@ describe('simulation', () => {
     await bench('10 800 ticks from a new run', () => {
       input.down = 0;
       play(endlessRun(), 3 * TICKS_PER_MINUTE, input);
+    }).run();
+  });
+
+  test("a minute of the queen's rage", { timeout: BENCH_TIMEOUT }, async ({ bench }) => {
+    const input = { down: 0, pressed: 0 };
+
+    await bench("3600 ticks of the queen's rage", () => {
+      input.down = 0;
+      play(queenInRage(), TICKS_PER_MINUTE, input);
     }).run();
   });
 

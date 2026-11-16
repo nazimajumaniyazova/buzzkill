@@ -85,7 +85,16 @@ function installFrames() {
 }
 
 const shown = (hud: Hud): string =>
-  [hud.score, hud.lives, hud.ammo, hud.shield, hud.rapidFire].join(' ');
+  [
+    hud.score,
+    hud.lives,
+    hud.ammo,
+    hud.shield,
+    hud.rapidFire,
+    hud.bossHealth,
+    hud.bossMaxHealth,
+    hud.bossEnraged,
+  ].join(' ');
 
 describe('renders during play', () => {
   beforeEach(() => {

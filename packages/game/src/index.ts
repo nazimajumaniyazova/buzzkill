@@ -60,7 +60,7 @@ export {
 } from './replay/recorder';
 export { hashGameState, type RunResult } from './replay/result';
 export { simulate, type SimulateOptions } from './replay/simulate';
-export { animationFrame, parallaxOffset } from './simulation/presentation';
+export { animationFrame, isBossEnraged, parallaxOffset } from './simulation/presentation';
 export { type GameStatus, isRunOver, timeAfterLevel } from './simulation/rules';
 export { createSimulation, type Simulation, type SimulationOptions } from './simulation/simulation';
 export type { GameEvents, GameState, TickInput } from './simulation/state';

@@ -93,6 +93,8 @@ A and A, chosen by the owner on 2026-11-12.
   - The pace grows from an enemy every 1.5 s to one every 0.43 s, close to the 2023 peak. The
     speed grows by a quarter.
   - The first wave of the first level leaves the third enemy of each set out.
+  - The queen of #152 ends the third level with 60 hits and the sixth with 100, at normal
+    difficulty (see the amendment below).
 - **Ending a level.** A level ends when all its waves are sent and no enemy is left. The run is
   then `levelCleared` until the next tick, which starts the next level, or `won` after the sixth.
   `RULES.winningScore` and the old spawn ramp are gone; lives still end a run as `lost`.

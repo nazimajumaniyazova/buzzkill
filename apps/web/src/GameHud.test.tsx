@@ -19,6 +19,9 @@ function createFakeGame() {
     paused: false,
     shield: 0,
     rapidFire: 0,
+    bossHealth: 0,
+    bossMaxHealth: 0,
+    bossEnraged: false,
   };
   const listeners = new Set<(hud: Hud) => void>();
   const game = {
@@ -111,7 +114,7 @@ describe('GameHud', () => {
   it('subscribes once per value it can show', () => {
     const { listeners } = setup();
 
-    expect(listeners.size).toBe(6);
+    expect(listeners.size).toBe(9);
   });
 
   it('shows the seconds left of a shield and of rapid fire only while they last', async () => {
@@ -131,6 +134,26 @@ describe('GameHud', () => {
     expect(terms()).toEqual(['Score', 'Lives', 'Ammo', 'Level']);
   });
 
+  it("shows the queen's health as a meter only while she is in the world, red in her rage", async () => {
+    const { update, container } = setup();
+    const meter = () => screen.queryByRole('meter', { name: 'Wasp Queen' });
+    expect(meter()).toBeNull();
+
+    update({ bossHealth: 60, bossMaxHealth: 60 });
+    expect(meter()).toHaveAttribute('aria-valuenow', '60');
+    expect(meter()).toHaveAttribute('aria-valuemax', '60');
+    expect(meter()).toHaveAttribute('aria-valuetext', '60 of 60');
+    expect(meter()).toHaveAttribute('data-enraged', 'false');
+    expect(await axe(container)).toHaveNoViolations();
+
+    update({ bossHealth: 15, bossEnraged: true });
+    expect(meter()).toHaveAttribute('aria-valuetext', '15 of 60');
+    expect(meter()).toHaveAttribute('data-enraged', 'true');
+
+    update({ bossHealth: 0, bossMaxHealth: 0, bossEnraged: false });
+    expect(meter()).toBeNull();
+  });
+
   it('writes the seconds left in Russian', () => {
     const fake = createFakeGame();
     render(
@@ -142,6 +165,12 @@ describe('GameHud', () => {
 
     expect(screen.getByText('Щит').nextSibling?.textContent).toBe('10 с');
     expect(screen.getByText('Скорострельность').nextSibling?.textContent).toBe('8 с');
+
+    fake.update({ bossHealth: 45, bossMaxHealth: 60 });
+    expect(screen.getByRole('meter', { name: 'Королева ос' })).toHaveAttribute(
+      'aria-valuetext',
+      '45 из 60',
+    );
   });
 
   it('counts the lives out of the most the difficulty gives', () => {

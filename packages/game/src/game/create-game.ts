@@ -12,7 +12,7 @@ import { type HeroId, WORLD } from '../config/rules';
 import type { Replay } from '../replay/format';
 import { createReplayRecorder } from '../replay/recorder';
 import { type RunResult, runResultOf } from '../replay/result';
-import { secondsLeft } from '../simulation/presentation';
+import { isBossEnraged, secondsLeft } from '../simulation/presentation';
 import { type GameStatus, isRunOver } from '../simulation/rules';
 import { createSimulation } from '../simulation/simulation';
 import type { GameState } from '../simulation/state';
@@ -26,12 +26,13 @@ export interface GameSettings {
 }
 
 /**
- * What a renderer may read: the world and the values of the run. The RNG and the event bus are
- * left out on purpose, so drawing can never change the course of a run.
+ * What a renderer may read: the world and the values of the run, and the boss's phase for her
+ * rage and the warning before her charge (#152). The RNG and the event bus are left out on
+ * purpose, so drawing can never change the course of a run.
  */
 export type GameView = Pick<
   GameState,
-  'world' | 'tick' | 'status' | 'mode' | 'heroId' | 'hero' | 'enemies' | 'player'
+  'world' | 'tick' | 'status' | 'mode' | 'heroId' | 'hero' | 'enemies' | 'player' | 'boss'
 >;
 
 /** Draws the run. The Canvas 2D implementation arrives with #35. */
@@ -43,8 +44,11 @@ export interface GameRenderer {
   render(view: GameView, alpha: number): void;
 }
 
-/** The sound effects of the game: the three of the 2023 version and a power-up's pickup (#151). */
-export type GameSound = 'shot' | 'explosion' | 'hit' | 'pickup';
+/**
+ * The sound effects of the game: the three of the 2023 version, a power-up's pickup (#151), and
+ * the boss's phase changing, when she arrives and when her rage begins (#152).
+ */
+export type GameSound = 'shot' | 'explosion' | 'hit' | 'pickup' | 'bossPhase';
 
 /** Plays sound effects. The Web Audio implementation arrives with #36. */
 export interface GameAudio {
@@ -70,6 +74,12 @@ export interface GameHud {
   readonly shield: number;
   /** Whole seconds rapid fire still lasts, rounded up; 0 when it is off. */
   readonly rapidFire: number;
+  /** The boss's health left while she is in the world (#152); 0 once she falls, and without her. */
+  readonly bossHealth: number;
+  /** Her health when she arrived, while she is in the world; 0 without her, which hides her bar. */
+  readonly bossMaxHealth: number;
+  /** True from her rage through her charges until she falls. */
+  readonly bossEnraged: boolean;
 }
 
 export interface CreateGameOptions {
@@ -167,6 +177,12 @@ export function createGame(options: CreateGameOptions): Game {
   state.events.on('powerUpCollected', () => {
     audio.play('pickup');
   });
+  state.events.on('bossEntered', () => {
+    audio.play('bossPhase');
+  });
+  state.events.on('bossEnraged', () => {
+    audio.play('bossPhase');
+  });
 
   const hudBus = createEventBus<{ change: GameHud }>();
   let paused = false;
@@ -177,7 +193,11 @@ export function createGame(options: CreateGameOptions): Game {
 
   /** Publishes the HUD if any value differs from the last published one. */
   const publishHud = (): void => {
+    const boss = bossHud(state);
     if (
+      hud.bossHealth === boss.health &&
+      hud.bossMaxHealth === boss.maxHealth &&
+      hud.bossEnraged === isBossEnraged(state.boss.phase) &&
       hud.score === state.score &&
       hud.lives === state.lives &&
       hud.ammo === state.ammo &&
@@ -295,7 +315,22 @@ export function createGame(options: CreateGameOptions): Game {
   };
 }
 
+/** The boss's health and the most she had, both 0 while she is not in the world. */
+function bossHud(state: GameState): { readonly health: number; readonly maxHealth: number } {
+  const { id } = state.boss;
+  if (id === undefined) {
+    return NO_BOSS;
+  }
+  return {
+    health: state.world.health[id] as number,
+    maxHealth: state.world.value[id] as number,
+  };
+}
+
+const NO_BOSS = { health: 0, maxHealth: 0 } as const;
+
 function snapshotHud(state: GameState, paused: boolean): GameHud {
+  const boss = bossHud(state);
   return {
     score: state.score,
     lives: state.lives,
@@ -306,5 +341,8 @@ function snapshotHud(state: GameState, paused: boolean): GameHud {
     paused,
     shield: secondsLeft(state.shieldTicks),
     rapidFire: secondsLeft(state.rapidFireTicks),
+    bossHealth: boss.health,
+    bossMaxHealth: boss.maxHealth,
+    bossEnraged: isBossEnraged(state.boss.phase),
   };
 }

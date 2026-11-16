@@ -30,6 +30,9 @@ describe('HelpScreen', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Help' })).toBeInTheDocument();
     expect(screen.getByText(/5 hits and the run is over.$/)).toBeInTheDocument();
     expect(screen.getByText(/^Destroyed insects sometimes drop power-ups\./)).toBeInTheDocument();
+    expect(
+      screen.getByText(/^The third and the sixth level end with the Wasp Queen\./),
+    ).toBeInTheDocument();
     expect(rows('Keyboard')).toEqual([
       'Move up: ↑Arrow up or W',
       'Move down: ↓Arrow down or S',

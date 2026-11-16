@@ -110,10 +110,36 @@ function giftPowerUp(s: Setup, kind: PowerUpKind): void {
   world.variant[id] = POWER_UPS.findIndex((config) => config.kind === kind);
 }
 
-/** Runs frames until the simulation reaches `tick`. */
+/**
+ * Moves the run to the end of the third level's waves with no enemy left, so the queen comes on
+ * the next tick (#152).
+ */
+function reachTheQueen(s: Setup): GameState {
+  // The rendered view is the simulation's state object; writing to it is what a test needs here.
+  const state = s.view() as unknown as GameState;
+  const { world } = state;
+  for (let index = 0; index < world.count; index += 1) {
+    const id = world.at(index);
+    if (world.kind[id] === Kind.enemy) {
+      world.kill(id);
+    }
+  }
+  state.level = 3;
+  state.wave = LEVELS[2].waves.length;
+  state.shieldTicks = Number.MAX_SAFE_INTEGER;
+  return state;
+}
+
+/**
+ * Runs frames until the simulation reaches `tick`. A run held on a cleared level never gets
+ * there, so a test that waits wrongly fails instead of hanging.
+ */
 function runUntilTick(s: Setup, tick: number): void {
   s.fake.frame();
-  while (s.view().tick < tick) {
+  for (let frames = 0; s.view().tick < tick; frames += 1) {
+    if (frames > 100_000) {
+      throw new Error(`runUntilTick: the run stopped before tick ${String(tick)}`);
+    }
     s.fake.frame();
   }
 }
@@ -150,6 +176,9 @@ describe('createGame', () => {
       paused: false,
       shield: 0,
       rapidFire: 0,
+      bossHealth: 0,
+      bossMaxHealth: 0,
+      bossEnraged: false,
     });
     s.game.start();
     s.fake.frame();
@@ -221,6 +250,53 @@ describe('createGame', () => {
 
     runUntilTick(s, start + 481);
     expect(s.game.getHud()).toMatchObject({ shield: 2, rapidFire: 0 });
+  });
+
+  it("plays the queen's phase sound when she arrives and when she rages, and shows her health", () => {
+    const s = setup();
+    s.game.start();
+    s.fake.frame();
+    const state = reachTheQueen(s);
+
+    runUntilTick(s, state.tick + 2);
+    expect(s.play).toHaveBeenCalledExactlyOnceWith('bossPhase');
+    expect(s.game.getHud()).toMatchObject({
+      level: 3,
+      bossHealth: 60,
+      bossMaxHealth: 60,
+      bossEnraged: false,
+    });
+    expect(s.view().boss.phase).toBe('entering');
+
+    // Her rage can begin once she is at her post.
+    for (let frame = 0; frame < 300 && s.view().boss.phase !== 'attacking'; frame += 1) {
+      s.fake.frame();
+    }
+    const { world } = state;
+    const queen = (): EntityId => {
+      const id = state.boss.id;
+      if (id === undefined) {
+        throw new Error('the queen is not in the world');
+      }
+      return id;
+    };
+    world.health[queen()] = 20;
+    runUntilTick(s, state.tick + 2);
+    expect(s.play.mock.calls.filter(([sound]) => sound === 'bossPhase')).toHaveLength(2);
+    expect(s.game.getHud()).toMatchObject({ bossHealth: 20, bossEnraged: true });
+
+    world.health[queen()] = 0;
+    runUntilTick(s, state.tick + 2);
+    expect(s.game.getHud()).toMatchObject({
+      bossHealth: 0,
+      bossMaxHealth: 60,
+      bossEnraged: false,
+    });
+    // Her fall plays out, then the level is cleared and the game holds for the next one.
+    for (let frame = 0; frame < 300 && s.game.getHud().status !== 'levelCleared'; frame += 1) {
+      s.fake.frame();
+    }
+    expect(s.game.getHud()).toMatchObject({ bossMaxHealth: 0, status: 'levelCleared' });
   });
 
   it('pauses on the pause action without simulating that tick, and resumes on request', () => {

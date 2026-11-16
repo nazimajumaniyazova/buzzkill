@@ -4,6 +4,7 @@
  * so they stay out of the replayed state and cannot make two runs differ.
  */
 import { RULES, WORLD } from '../config/rules';
+import type { BossState } from './state';
 
 /**
  * Horizontal offset of a background layer at `tick`, in [-width, 0]. The layer is drawn twice,
@@ -40,4 +41,12 @@ export function animationFrame(
  */
 export function secondsLeft(ticks: number): number {
   return ticks > 0 ? Math.ceil(ticks / WORLD.ticksPerSecond) : 0;
+}
+
+/**
+ * Whether the boss is in her rage (#152): from the moment it begins through every charge that
+ * follows, until she falls. The renderer draws her red then, and the HUD reddens her bar.
+ */
+export function isBossEnraged(phase: BossState['phase']): boolean {
+  return phase === 'enraged' || phase === 'windup' || phase === 'charging' || phase === 'returning';
 }

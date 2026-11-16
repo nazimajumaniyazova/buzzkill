@@ -36,6 +36,7 @@ export async function loadGameAssets(
     explosion: assets.explosion,
     hit: assets.hit,
     pickup: assets.pickup,
+    bossPhase: assets.bossPhase,
   } satisfies Record<GameSound, AudioBuffer | undefined>;
   const audio = createAudioMixer<GameSound, AudioBuffer>({ context: audioContext, buffers });
   return { ok: true, assets: { sprites: createGameSprites(assets), audio } };

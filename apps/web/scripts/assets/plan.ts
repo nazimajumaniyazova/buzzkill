@@ -30,7 +30,8 @@ export const SETTINGS = {
 /**
  * The sprites of each atlas. The game draws all of them during a run, so the split only keeps
  * each atlas within `SETTINGS.atlas.maxSize`. The art's `shot` sprite is not here: the game draws
- * the shot in flight, `shot-trail`.
+ * the shot in flight, `shot-trail`. The queen of #152 has an atlas of her own: her 600×500 frames
+ * do not fit beside the creatures.
  */
 const ATLAS_SPRITES = {
   creatures: ['mike', 'julie', 'beetle', 'wasp', 'dragonfly', 'moth', 'firefly', 'mosquito'],
@@ -43,6 +44,7 @@ const ATLAS_SPRITES = {
     'power-shield',
     'power-rapid-fire',
   ],
+  boss: ['queen', 'queen-rage', 'sting'],
 } as const satisfies Record<string, readonly SpriteName[]>;
 
 type AtlasName = keyof typeof ATLAS_SPRITES;
@@ -63,6 +65,7 @@ const SOUND_SOURCES = {
   explosion: 'kenney-sci-fi-sounds/explosionCrunch_000.ogg',
   hit: 'kenney-impact-sounds/impactPunch_heavy_002.ogg',
   pickup: 'kenney-sci-fi-sounds/laserRetro_000.ogg',
+  bossPhase: 'kenney-sci-fi-sounds/impactMetal_003.ogg',
 } as const satisfies Record<GameSound, string>;
 
 export interface AtlasPlan extends PackedAtlas<SpriteName> {

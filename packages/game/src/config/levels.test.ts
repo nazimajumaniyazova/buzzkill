@@ -49,6 +49,17 @@ describe('LEVELS', () => {
     expect(speeds).toEqual(speeds.toSorted((a, b) => a - b));
   });
 
+  it('end the third and the sixth level with the queen, stronger the second time (#152)', () => {
+    expect(CAMPAIGN.map((level) => level.boss?.health)).toEqual([
+      undefined,
+      undefined,
+      60,
+      undefined,
+      undefined,
+      100,
+    ]);
+  });
+
   it('change the time of day once, after the third level, and never after the last', () => {
     expect(CAMPAIGN.map((level) => level.timeChangesAfter)).toEqual([
       false,

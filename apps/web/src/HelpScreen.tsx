@@ -63,6 +63,7 @@ export function HelpScreen({ keyBindings, lives, onBack }: HelpScreenProps): JSX
           <h1 id={titleId}>{t.help.title}</h1>
           <p>{t.help.intro(lives)}</p>
           <p>{t.help.powerUps}</p>
+          <p>{t.help.boss}</p>
         </Stack>
         <Stack gap="lg">
           <section aria-labelledby={`${titleId}-keyboard`}>

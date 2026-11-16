@@ -1,4 +1,4 @@
-import { DAY_ENEMIES, HEROES, NIGHT_ENEMIES, POWER_UPS, RULES } from '@buzzkill/game';
+import { DAY_ENEMIES, HEROES, NIGHT_ENEMIES, POWER_UPS, QUEEN, RULES } from '@buzzkill/game';
 import { describe, expect, it } from 'vitest';
 
 import { ATLASES, BACKGROUNDS, SPRITES } from '../assets/manifest.gen';
@@ -8,6 +8,7 @@ import { createGameSprites } from './sprites';
 const IMAGES = {
   creatures: 'creatures',
   effects: 'effects',
+  boss: 'boss',
   'city-day-sky': 'city-day-sky',
   'city-day-clouds': 'city-day-clouds',
   'city-day-far': 'city-day-far',
@@ -20,21 +21,25 @@ const IMAGES = {
 };
 
 describe('game assets and sprites', () => {
-  it('loads both atlases of the generated manifest', () => {
-    expect([GAME_ASSETS.creatures, GAME_ASSETS.effects]).toEqual([
+  it('loads the atlases of the generated manifest', () => {
+    expect([GAME_ASSETS.creatures, GAME_ASSETS.effects, GAME_ASSETS.boss]).toEqual([
       { kind: 'image', url: ATLASES.creatures.url },
       { kind: 'image', url: ATLASES.effects.url },
+      { kind: 'image', url: ATLASES.boss.url },
     ]);
   });
 
-  it.each([GAME_ASSETS.shot, GAME_ASSETS.explosion, GAME_ASSETS.hit, GAME_ASSETS.pickup])(
-    'keeps the sound $url optional, with a WAV fallback',
-    (sound) => {
-      expect(sound).toMatchObject({ kind: 'audio', optional: true });
-      expect(sound.url).toMatch(/\.ogg$/);
-      expect(sound.fallbackUrl).toMatch(/\.wav$/);
-    },
-  );
+  it.each([
+    GAME_ASSETS.shot,
+    GAME_ASSETS.explosion,
+    GAME_ASSETS.hit,
+    GAME_ASSETS.pickup,
+    GAME_ASSETS.bossPhase,
+  ])('keeps the sound $url optional, with a WAV fallback', (sound) => {
+    expect(sound).toMatchObject({ kind: 'audio', optional: true });
+    expect(sound.url).toMatch(/\.ogg$/);
+    expect(sound.fallbackUrl).toMatch(/\.wav$/);
+  });
 
   it('animates every enemy of the configuration with the frames and pace of its art', () => {
     const sprites = createGameSprites(IMAGES);
@@ -83,6 +88,26 @@ describe('game assets and sprites', () => {
       })),
     );
     expect(sprites.powerUps.map(({ atlas }) => atlas.frames.length)).toEqual([4, 4, 4, 4]);
+  });
+
+  it('animates the queen and her rage alike from the boss atlas, and cuts her sting from it', () => {
+    const sprites = createGameSprites(IMAGES);
+    const { sheet, rage, sting } = QUEEN.sprite;
+
+    expect(sprites.boss).toEqual({
+      queen: {
+        atlas: { image: 'boss', frames: SPRITES[sheet].frames },
+        frameTicks: SPRITES[sheet].frameTicks,
+      },
+      rage: {
+        atlas: { image: 'boss', frames: SPRITES[rage].frames },
+        frameTicks: SPRITES[rage].frameTicks,
+      },
+      sting: { image: 'boss', frames: SPRITES[sting].frames },
+    });
+    // The rage lies over her frame of the same number, so it has her frames and pace.
+    expect(sprites.boss.rage.atlas.frames).toHaveLength(sprites.boss.queen.atlas.frames.length);
+    expect(sprites.boss.rage.frameTicks).toBe(sprites.boss.queen.frameTicks);
   });
 
   it('loads every layer of the city and lays each time of day out back to front', () => {
