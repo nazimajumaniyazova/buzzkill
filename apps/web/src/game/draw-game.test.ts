@@ -1,9 +1,17 @@
-import { createGridAtlas, type Renderer, type SpriteAtlas } from '@buzzkill/engine';
-import { createSimulation, type EntityId, Kind, QUEEN, type Simulation } from '@buzzkill/game';
+import { createEventBus, createGridAtlas, type Renderer, type SpriteAtlas } from '@buzzkill/engine';
+import {
+  createSimulation,
+  type EntityId,
+  type GameEvents,
+  Kind,
+  QUEEN,
+  type Simulation,
+} from '@buzzkill/game';
 import { tokens } from '@buzzkill/ui';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createGameDrawer } from './draw-game';
+import { PARTICLE_BURSTS } from './particles';
 import type { GameSprites } from './sprites';
 
 type Call = readonly unknown[];
@@ -317,5 +325,92 @@ describe('the city behind the run', () => {
 
     const near = calls.filter((call) => call[1] === 'day-near').map((call) => call[3]);
     expect(near).toEqual([-100, 1180, -25, 1255]);
+  });
+});
+
+describe('the particles of the run', () => {
+  let sim: Simulation;
+
+  beforeEach(() => {
+    sim = createSimulation({ seed: 1, heroId: 'female', mode: 'day' });
+    emptyWorld(sim);
+  });
+
+  type Burst = keyof typeof PARTICLE_BURSTS;
+
+  /**
+   * What a call drew: a sprite's image, or which of `bursts` has a rectangle's color. Some bursts
+   * share a color, so a test names the bursts it expects.
+   */
+  const drawn = (call: Call, bursts: readonly Burst[]): string => {
+    if (call[0] === 'sprite') {
+      return String(call[1]);
+    }
+    const color = String(call[5]);
+    return bursts.find((burst) => PARTICLE_BURSTS[burst].colors.includes(color)) ?? color;
+  };
+
+  /** The kinds drawn in a frame, each run of the same kind once. */
+  const order = (calls: readonly Call[], bursts: readonly Burst[]): string[] =>
+    calls
+      .slice(1, -1)
+      .map((call) => drawn(call, bursts))
+      .filter((kind, index, kinds) => kind !== kinds[index - 1]);
+
+  it('follows the events of the run: dust behind the insects, debris in front of them', () => {
+    const { renderer, calls } = createFakeRenderer();
+    add(sim, Kind.explosion, 300, 0, 200);
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, CITY);
+    drawer.listen?.(events);
+
+    events.emit('enemyDestroyed', { x: 400, y: 100, value: 1 });
+    events.emit('explosion', { x: 400, y: 100, variant: 0 });
+    drawer.render(sim.state, 0);
+
+    expect(order(calls, ['dust', 'debris'])).toEqual([
+      'day-sky',
+      'day-far',
+      'day-near',
+      'dust',
+      'smoke',
+      'debris',
+    ]);
+  });
+
+  it('sheds a trail behind each shot for every tick since the last frame', () => {
+    const { renderer, calls } = createFakeRenderer();
+    add(sim, Kind.projectile, 100, 200, 10);
+    const drawer = createGameDrawer(renderer, SPRITES);
+
+    drawer.render(sim.state, 0);
+    sim.state.tick += 2;
+    drawer.render(sim.state, 0);
+    calls.length = 0;
+    drawer.render(sim.state, 0);
+
+    // Half a speck a tick: one for the two ticks, at the middle of the shot's left edge.
+    const specks = calls.filter((call) => call[0] === 'rect');
+    expect(specks.map((call) => drawn(call, ['trail']))).toEqual(['trail']);
+    // A rectangle's call: its name, then its position and size.
+    const [, x, y, width, height] = specks[0] as readonly [string, number, number, number, number];
+    expect([x + width / 2, y + height / 2]).toEqual([100, 205]);
+  });
+
+  it('draws no particles while they are off', () => {
+    const { renderer, calls } = createFakeRenderer();
+    add(sim, Kind.projectile, 100, 200, 10);
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES, { particles: () => false });
+    drawer.listen?.(events);
+
+    // An insect of no world: the particles take the point of a hit and never read the insect.
+    events.emit('enemyHit', { id: 3 as EntityId, healthLeft: 1, x: 400, y: 100 });
+    drawer.render(sim.state, 0);
+    sim.state.tick += 2;
+    drawer.render(sim.state, 0);
+    drawer.render(sim.state, 0);
+
+    expect(calls.filter((call) => call[0] === 'rect')).toEqual([]);
   });
 });

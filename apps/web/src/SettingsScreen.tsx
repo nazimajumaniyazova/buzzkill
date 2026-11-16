@@ -19,12 +19,14 @@ const LANGUAGES = ['en', 'ru'] as const satisfies readonly Language[];
 const MOTIONS = ['system', 'reduced', 'full'] as const satisfies readonly MotionChoice[];
 
 /**
- * The `settings` panel of the menu, one tab per kind: sound, display, gameplay and controls.
- * Every change goes to the settings store at once, which saves it; the mixer, the theme and the
- * language follow while the player is still here, and the keys apply to the next run.
+ * The `settings` panel of the menu, one tab per kind: sound, display, gameplay, effects and
+ * controls. Every change goes to the settings store at once, which saves it; the mixer, the theme
+ * and the language follow while the player is still here, the effects apply to the run on screen,
+ * and the keys to the next run. The effects of stage 7 join the particles in their tab (#156).
  */
 export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenProps): JSX.Element {
   const titleId = useId();
+  const particlesHintId = useId();
   const { t, format } = useI18n();
 
   return (
@@ -141,6 +143,23 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
                     />
                     <p>{t.settings.gameSpeedHint}</p>
                   </Stack>
+                </Stack>
+              ),
+            },
+            {
+              value: 'effects',
+              label: t.settings.tabs.effects,
+              panel: (
+                <Stack gap="sm">
+                  <Switch
+                    label={t.settings.particles}
+                    aria-describedby={particlesHintId}
+                    checked={settings.particles}
+                    onCheckedChange={(particles) => {
+                      onChange({ particles });
+                    }}
+                  />
+                  <p id={particlesHintId}>{t.settings.particlesHint}</p>
                 </Stack>
               ),
             },

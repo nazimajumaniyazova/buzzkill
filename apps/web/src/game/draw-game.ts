@@ -9,6 +9,7 @@ import {
 } from '@buzzkill/game';
 import { tokens } from '@buzzkill/ui';
 
+import { createParticleEffects } from './particles';
 import type { CityLayerName, GameSprites } from './sprites';
 
 const { palette } = tokens.primitives;
@@ -46,7 +47,17 @@ const REDUCED_PARALLAX = 0.25;
 export interface GameDrawerOptions {
   /** Read every frame, so a change applies to the run on screen. Defaults to full motion. */
   readonly reducedMotion?: () => boolean;
+  /** The particles setting (#156), read every frame and at every burst. Defaults to on. */
+  readonly particles?: () => boolean;
+  /** Seeds the particles' own randomness, never the simulation's. Defaults to 1. */
+  readonly seed?: number;
 }
+
+/**
+ * A shot sheds its trail for at most this many ticks in one frame, the most a frame moves the
+ * particles: after a stall the trail goes on instead of piling up.
+ */
+const MAX_TRAIL_TICKS = 4;
 
 /** The health bar of the 2023 game: 50 px wide, 10 px below the enemy's top edge. */
 const HEALTH_BAR = { width: 50, height: 10, offsetY: 10 } as const;
@@ -62,6 +73,9 @@ const SHOT_TRAIL = { size: { width: 30, height: 6 }, headX: 20, headY: 1.5 } as 
  * world and never writes to it. The city of the run's time of day comes first, its layers
  * scrolling at their own pace (parallax). Positions are interpolated between the previous and the
  * current tick, so motion is smooth at any refresh rate; animation frames follow from the tick.
+ *
+ * The particles (#156) follow the run's events through `listen`: dust and trails are drawn behind
+ * the hero and the insects, sparks and debris in front of them.
  */
 export function createGameDrawer<TImage>(
   renderer: Renderer<TImage>,
@@ -73,13 +87,27 @@ export function createGameDrawer<TImage>(
   const reducedMotion = options.reducedMotion ?? (() => false);
   // The layers are drawn at the world's size; one object for every frame.
   const worldSize = { width: renderer.width, height: renderer.height };
+  const effects = createParticleEffects({
+    enabled: options.particles ?? (() => true),
+    reducedMotion,
+    seed: options.seed ?? 1,
+  });
+  let lastTick: number | undefined;
 
   return {
+    listen(events) {
+      effects.listen(events);
+    },
     render(view, alpha) {
       const { world, tick } = view;
       renderer.beginFrame();
 
       const time = tick + alpha;
+      // Ticks simulated since the last frame: a shot sheds its trail once for each.
+      const newTicks =
+        lastTick === undefined ? 0 : Math.min(Math.max(tick - lastTick, 0), MAX_TRAIL_TICKS);
+      lastTick = tick;
+      effects.advance(time);
       const pace = reducedMotion() ? REDUCED_PARALLAX : 1;
       for (const { layer, atlas } of sprites.backgrounds[view.mode]) {
         const speed = PARALLAX[layer] * pace;
@@ -92,6 +120,7 @@ export function createGameDrawer<TImage>(
         renderer.drawSprite(atlas, 0, x, 0, worldSize);
         renderer.drawSprite(atlas, 0, x + worldSize.width, 0, worldSize);
       }
+      effects.drawBack(renderer);
 
       for (let index = 0; index < world.count; index += 1) {
         const id = world.at(index);
@@ -131,6 +160,8 @@ export function createGameDrawer<TImage>(
           case Kind.projectile: {
             const { headX, headY } = SHOT_TRAIL;
             renderer.drawSprite(sprites.projectile, 0, x - headX, y - headY, SHOT_TRAIL.size);
+            // From the back of the hitbox, so the specks fall behind the drawn tail.
+            effects.trail(x, y + height * 0.5, newTicks);
             break;
           }
           case Kind.powerUp: {
@@ -187,6 +218,7 @@ export function createGameDrawer<TImage>(
           // No other kinds exist; an unknown one would draw nothing.
         }
       }
+      effects.drawFront(renderer);
       renderer.endFrame();
     },
   };

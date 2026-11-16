@@ -48,6 +48,8 @@ interface GameViewProps {
    * A change applies to the run on screen.
    */
   readonly reducedMotion: boolean;
+  /** The particles setting (#156); a change applies to the run on screen. */
+  readonly particles: boolean;
   /**
    * The machine shows the screen between levels. The game holds itself on a cleared level; when
    * this turns false again, the next level starts (ADR-0017).
@@ -76,6 +78,7 @@ export function GameView({
   paused,
   keyBindings,
   reducedMotion,
+  particles,
   betweenLevels,
   onEvent,
 }: GameViewProps): JSX.Element {
@@ -90,8 +93,9 @@ export function GameView({
   // they are not a dependency of the run, so new keys never restart it.
   const bindingsRef = useRef(keyBindings);
   const keyboardRef = useRef<KeyboardSource<GameAction> | null>(null);
-  // Read by the drawer every frame, so it is not a dependency of the run either.
+  // Read by the drawer every frame, so they are not dependencies of the run either.
   const reducedMotionRef = useRef(reducedMotion);
+  const particlesRef = useRef(particles);
   const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
@@ -171,6 +175,8 @@ export function GameView({
         host,
         renderer: createGameDrawer(renderer, assets.sprites, {
           reducedMotion: () => reducedMotionRef.current,
+          particles: () => particlesRef.current,
+          seed: run.seed,
         }),
         audio: assets.audio,
       });
@@ -191,6 +197,10 @@ export function GameView({
   useEffect(() => {
     reducedMotionRef.current = reducedMotion;
   }, [reducedMotion]);
+
+  useEffect(() => {
+    particlesRef.current = particles;
+  }, [particles]);
 
   useEffect(() => {
     if (bindingsRef.current === keyBindings) {

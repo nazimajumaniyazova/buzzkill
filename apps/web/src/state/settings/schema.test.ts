@@ -28,6 +28,7 @@ describe('DEFAULT_SETTINGS', () => {
       language: 'en',
       motion: 'system',
       gameSpeed: 1,
+      particles: true,
       keyBindings: DEFAULT_KEY_BINDINGS,
     });
   });
@@ -48,6 +49,7 @@ describe('parseSettings', () => {
       language: 'ru',
       motion: 'reduced',
       gameSpeed: 0.5,
+      particles: false,
       keyBindings: {
         moveUp: ['KeyW', 'ArrowUp'],
         moveDown: ['KeyS', 'ArrowDown'],
@@ -68,6 +70,17 @@ describe('parseSettings', () => {
     );
 
     expect(parseSettings(saved)).toEqual({ ...DEFAULT_SETTINGS, theme: 'night' });
+  });
+
+  it('reads settings saved before the particles could be turned off, with them on', () => {
+    // What 0.24.0 saved: the same version, without the field (#156).
+    const saved = Object.fromEntries(
+      Object.entries(stored({ ...DEFAULT_SETTINGS, muted: true })).filter(
+        ([key]) => key !== 'particles',
+      ),
+    );
+
+    expect(parseSettings(saved)).toEqual({ ...DEFAULT_SETTINGS, muted: true, particles: true });
   });
 
   it('takes only the paces it offers and the three motion choices', () => {
@@ -91,6 +104,7 @@ describe('parseSettings', () => {
       musicVolume: Number.NaN,
       difficulty: 'nightmare',
       language: 42,
+      particles: 'off',
     });
 
     expect(parsed).toEqual(DEFAULT_SETTINGS);
