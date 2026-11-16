@@ -10,6 +10,14 @@ import { Kind } from '../world/world';
 import { createSimulation, type Simulation } from './simulation';
 import type { BossState } from './state';
 
+/**
+ * Each property here plays up to 60 holds of up to 120 ticks a run, 60 or 100 runs, so it cannot
+ * hang; it is only long. Alone with coverage each took about 2 s on a laptop, but CI runs them with
+ * coverage beside every other project on two cores, where long random runs passed Vitest's 5 s
+ * default (#185), and so did a loaded laptop. This leaves them room; a hang would still fail.
+ */
+const PROPERTY_TIMEOUT = 30_000;
+
 /** Puts a power-up on the hero, as if one had dropped there; skipped when the world is full. */
 function gift(sim: Simulation, variant: number): void {
   const { world, player, tick } = sim.state;
@@ -117,6 +125,7 @@ describe('simulation invariants', () => {
         }
       }
     },
+    PROPERTY_TIMEOUT,
   );
 });
 
@@ -259,5 +268,6 @@ describe('boss fight invariants', () => {
 
       expect(broken).toBeUndefined();
     },
+    PROPERTY_TIMEOUT,
   );
 });
