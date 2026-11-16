@@ -15,7 +15,7 @@ import { type RunResult, runResultOf } from '../replay/result';
 import { isBossEnraged, secondsLeft } from '../simulation/presentation';
 import { type GameStatus, isRunOver } from '../simulation/rules';
 import { createSimulation } from '../simulation/simulation';
-import type { GameState } from '../simulation/state';
+import type { GameEvents, GameState } from '../simulation/state';
 
 /** The choices a run starts with. Volume and key bindings belong to the audio and input adapters. */
 export interface GameSettings {
@@ -35,6 +35,15 @@ export type GameView = Pick<
   'world' | 'tick' | 'status' | 'mode' | 'heroId' | 'hero' | 'enemies' | 'player' | 'boss'
 >;
 
+/**
+ * The run's events, to follow but not to emit: a renderer's effects react to them (#156). Its
+ * listeners go with the run when it is disposed.
+ */
+export interface GameEventSource {
+  /** Registers a listener and returns the function that removes it. */
+  on<K extends keyof GameEvents>(type: K, listener: (payload: GameEvents[K]) => void): () => void;
+}
+
 /** Draws the run. The Canvas 2D implementation arrives with #35. */
 export interface GameRenderer {
   /**
@@ -42,6 +51,11 @@ export interface GameRenderer {
    * interpolating between `prevX`/`prevY` and `x`/`y`.
    */
   render(view: GameView, alpha: number): void;
+  /**
+   * Called once, when the run is created, for effects that only draw: sparks where a shot hits,
+   * debris and dust (#156). They see what happened without being able to change it.
+   */
+  listen?(events: GameEventSource): void;
 }
 
 /**
@@ -183,6 +197,7 @@ export function createGame(options: CreateGameOptions): Game {
   state.events.on('bossEnraged', () => {
     audio.play('bossPhase');
   });
+  renderer.listen?.({ on: (type, listener) => state.events.on(type, listener) });
 
   const hudBus = createEventBus<{ change: GameHud }>();
   let paused = false;

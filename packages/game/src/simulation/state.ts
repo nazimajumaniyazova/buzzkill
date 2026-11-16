@@ -13,9 +13,17 @@ import type { GameStatus } from './rules';
 export interface GameEvents {
   /** The hero fired a projectile from this point. */
   shot: { readonly x: number; readonly y: number };
-  /** A projectile hit an enemy that survived. */
-  enemyHit: { readonly id: EntityId; readonly healthLeft: number };
-  /** An enemy was destroyed by a projectile and scored `value`. */
+  /**
+   * A projectile hit an enemy that survived. (`x`, `y`) is where it struck: the projectile's head,
+   * for the sparks of the renderer (#156).
+   */
+  enemyHit: {
+    readonly id: EntityId;
+    readonly healthLeft: number;
+    readonly x: number;
+    readonly y: number;
+  };
+  /** An enemy was destroyed by a projectile, centered on this point, and scored `value`. */
   enemyDestroyed: { readonly x: number; readonly y: number; readonly value: number };
   /**
    * An enemy flew into the hero, or a sting or the boss's charge struck the hero, and took a life;
@@ -26,8 +34,8 @@ export interface GameEvents {
   powerUpCollected: { readonly kind: PowerUpKind; readonly x: number; readonly y: number };
   /** The boss arrived at the right edge with this much health (#152). */
   bossEntered: { readonly maxHealth: number };
-  /** A projectile hit the boss. */
-  bossHit: { readonly healthLeft: number };
+  /** A projectile hit the boss, striking at this point: the projectile's head (#156). */
+  bossHit: { readonly healthLeft: number; readonly x: number; readonly y: number };
   /** The boss's health fell to a third: she is enraged for the rest of her fight. */
   bossEnraged: { readonly healthLeft: number };
   /** The boss was defeated, centered on this point, and scored `value`; she falls for a while. */
