@@ -113,6 +113,9 @@ function english(format: Format) {
       particles: 'Particles',
       particlesHint:
         'Sparks where shots hit, debris and dust where insects break, and trails behind shots. With reduced motion, fewer and shorter.',
+      screenShake: 'Screen shake',
+      screenShakeHint:
+        'The screen shakes when the hero is hit, when insects explode, and when the queen arrives, rages and falls. Never while motion is reduced.',
     },
     keyEditor: {
       caption: 'Keyboard',

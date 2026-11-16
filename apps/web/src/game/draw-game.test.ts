@@ -1,4 +1,11 @@
-import { createEventBus, createGridAtlas, type Renderer, type SpriteAtlas } from '@buzzkill/engine';
+import {
+  type Camera,
+  createEventBus,
+  createGridAtlas,
+  IDENTITY_CAMERA,
+  type Renderer,
+  type SpriteAtlas,
+} from '@buzzkill/engine';
 import {
   createSimulation,
   type EntityId,
@@ -18,11 +25,16 @@ type Call = readonly unknown[];
 
 function createFakeRenderer() {
   const calls: Call[] = [];
+  /** The camera of each frame, copied: the drawer may hand out the same object every frame. */
+  const cameras: Camera[] = [];
   const renderer: Renderer<string> = {
     width: 1280,
     height: 720,
     setScale: () => undefined,
-    beginFrame: () => calls.push(['beginFrame']),
+    beginFrame: (camera) => {
+      cameras.push({ ...(camera ?? IDENTITY_CAMERA) });
+      calls.push(['beginFrame']);
+    },
     drawSprite: (atlas: SpriteAtlas<string>, frame, x, y, options) =>
       calls.push(['sprite', atlas.image, frame, x, y, options]),
     fillRect: (x, y, width, height, color) => calls.push(['rect', x, y, width, height, color]),
@@ -32,7 +44,7 @@ function createFakeRenderer() {
       return { sprites: 0, culled: 0 };
     },
   };
-  return { renderer, calls };
+  return { renderer, calls, cameras };
 }
 
 const atlas = (image: string, frames: number) =>
@@ -412,5 +424,42 @@ describe('the particles of the run', () => {
     drawer.render(sim.state, 0);
 
     expect(calls.filter((call) => call[0] === 'rect')).toEqual([]);
+  });
+});
+
+describe('the screen shake of the run', () => {
+  let sim: Simulation;
+
+  beforeEach(() => {
+    sim = createSimulation({ seed: 1, heroId: 'female', mode: 'day' });
+    emptyWorld(sim);
+  });
+
+  it('looks through a still camera until something shakes it', () => {
+    const { renderer, cameras } = createFakeRenderer();
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES);
+    drawer.listen?.(events);
+
+    drawer.render(sim.state, 0);
+    events.emit('playerHit', { livesLeft: 2 });
+    drawer.render(sim.state, 0.5);
+
+    expect(cameras[0]).toEqual(IDENTITY_CAMERA);
+    expect(cameras[1]).not.toEqual(IDENTITY_CAMERA);
+  });
+
+  it('keeps the camera still while the shake is off or motion is reduced', () => {
+    for (const options of [{ screenShake: () => false }, { reducedMotion: () => true }]) {
+      const { renderer, cameras } = createFakeRenderer();
+      const events = createEventBus<GameEvents>();
+      const drawer = createGameDrawer(renderer, SPRITES, options);
+      drawer.listen?.(events);
+
+      events.emit('bossDefeated', { x: 640, y: 360, value: 60 });
+      drawer.render(sim.state, 0);
+
+      expect(cameras).toEqual([IDENTITY_CAMERA]);
+    }
   });
 });

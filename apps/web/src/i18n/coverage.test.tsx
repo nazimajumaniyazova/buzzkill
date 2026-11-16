@@ -267,6 +267,7 @@ describe('every text on screen comes from the dictionary', () => {
         keyBindings={DEFAULT_KEY_BINDINGS}
         reducedMotion={false}
         particles
+        screenShake
         betweenLevels={false}
         onEvent={vi.fn()}
       />,

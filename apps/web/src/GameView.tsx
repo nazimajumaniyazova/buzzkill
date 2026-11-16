@@ -50,6 +50,8 @@ interface GameViewProps {
   readonly reducedMotion: boolean;
   /** The particles setting (#156); a change applies to the run on screen. */
   readonly particles: boolean;
+  /** The screen shake setting (#157); a change applies to the run on screen. */
+  readonly screenShake: boolean;
   /**
    * The machine shows the screen between levels. The game holds itself on a cleared level; when
    * this turns false again, the next level starts (ADR-0017).
@@ -79,6 +81,7 @@ export function GameView({
   keyBindings,
   reducedMotion,
   particles,
+  screenShake,
   betweenLevels,
   onEvent,
 }: GameViewProps): JSX.Element {
@@ -96,6 +99,7 @@ export function GameView({
   // Read by the drawer every frame, so they are not dependencies of the run either.
   const reducedMotionRef = useRef(reducedMotion);
   const particlesRef = useRef(particles);
+  const screenShakeRef = useRef(screenShake);
   const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
@@ -176,6 +180,7 @@ export function GameView({
         renderer: createGameDrawer(renderer, assets.sprites, {
           reducedMotion: () => reducedMotionRef.current,
           particles: () => particlesRef.current,
+          screenShake: () => screenShakeRef.current,
           seed: run.seed,
         }),
         audio: assets.audio,
@@ -201,6 +206,10 @@ export function GameView({
   useEffect(() => {
     particlesRef.current = particles;
   }, [particles]);
+
+  useEffect(() => {
+    screenShakeRef.current = screenShake;
+  }, [screenShake]);
 
   useEffect(() => {
     if (bindingsRef.current === keyBindings) {

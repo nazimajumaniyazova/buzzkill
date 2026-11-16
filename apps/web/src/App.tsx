@@ -309,6 +309,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 keyBindings={settings.keyBindings}
                 reducedMotion={reducedMotion}
                 particles={settings.particles}
+                screenShake={settings.screenShake}
                 onEvent={send}
               />
             </Suspense>
