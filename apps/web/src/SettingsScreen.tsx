@@ -26,8 +26,6 @@ const MOTIONS = ['system', 'reduced', 'full'] as const satisfies readonly Motion
  */
 export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenProps): JSX.Element {
   const titleId = useId();
-  const particlesHintId = useId();
-  const screenShakeHintId = useId();
   const { t, format } = useI18n();
 
   return (
@@ -152,28 +150,38 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
               label: t.settings.tabs.effects,
               panel: (
                 <Stack gap="lg">
-                  <Stack gap="sm">
-                    <Switch
-                      label={t.settings.particles}
-                      aria-describedby={particlesHintId}
-                      checked={settings.particles}
-                      onCheckedChange={(particles) => {
-                        onChange({ particles });
-                      }}
-                    />
-                    <p id={particlesHintId}>{t.settings.particlesHint}</p>
-                  </Stack>
-                  <Stack gap="sm">
-                    <Switch
-                      label={t.settings.screenShake}
-                      aria-describedby={screenShakeHintId}
-                      checked={settings.screenShake}
-                      onCheckedChange={(screenShake) => {
-                        onChange({ screenShake });
-                      }}
-                    />
-                    <p id={screenShakeHintId}>{t.settings.screenShakeHint}</p>
-                  </Stack>
+                  <EffectSwitch
+                    label={t.settings.particles}
+                    hint={t.settings.particlesHint}
+                    checked={settings.particles}
+                    onCheckedChange={(particles) => {
+                      onChange({ particles });
+                    }}
+                  />
+                  <EffectSwitch
+                    label={t.settings.screenShake}
+                    hint={t.settings.screenShakeHint}
+                    checked={settings.screenShake}
+                    onCheckedChange={(screenShake) => {
+                      onChange({ screenShake });
+                    }}
+                  />
+                  <EffectSwitch
+                    label={t.settings.hitFlash}
+                    hint={t.settings.hitFlashHint}
+                    checked={settings.hitFlash}
+                    onCheckedChange={(hitFlash) => {
+                      onChange({ hitFlash });
+                    }}
+                  />
+                  <EffectSwitch
+                    label={t.settings.squashStretch}
+                    hint={t.settings.squashStretchHint}
+                    checked={settings.squashStretch}
+                    onCheckedChange={(squashStretch) => {
+                      onChange({ squashStretch });
+                    }}
+                  />
                 </Stack>
               ),
             },
@@ -198,5 +206,29 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
         </Inline>
       </Stack>
     </section>
+  );
+}
+
+interface EffectSwitchProps {
+  readonly label: string;
+  /** What the effect does, read out as the switch's description. */
+  readonly hint: string;
+  readonly checked: boolean;
+  readonly onCheckedChange: (checked: boolean) => void;
+}
+
+/** One effect of the Effects tab: its switch, and below it what it does. */
+function EffectSwitch({ label, hint, checked, onCheckedChange }: EffectSwitchProps): JSX.Element {
+  const hintId = useId();
+  return (
+    <Stack gap="sm">
+      <Switch
+        label={label}
+        aria-describedby={hintId}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+      />
+      <p id={hintId}>{hint}</p>
+    </Stack>
   );
 }

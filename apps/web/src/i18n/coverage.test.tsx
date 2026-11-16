@@ -268,6 +268,8 @@ describe('every text on screen comes from the dictionary', () => {
         reducedMotion={false}
         particles
         screenShake
+        hitFlash
+        squashStretch
         betweenLevels={false}
         onEvent={vi.fn()}
       />,

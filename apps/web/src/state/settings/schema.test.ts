@@ -30,6 +30,8 @@ describe('DEFAULT_SETTINGS', () => {
       gameSpeed: 1,
       particles: true,
       screenShake: true,
+      hitFlash: true,
+      squashStretch: true,
       keyBindings: DEFAULT_KEY_BINDINGS,
     });
   });
@@ -52,6 +54,8 @@ describe('parseSettings', () => {
       gameSpeed: 0.5,
       particles: false,
       screenShake: false,
+      hitFlash: false,
+      squashStretch: false,
       keyBindings: {
         moveUp: ['KeyW', 'ArrowUp'],
         moveDown: ['KeyS', 'ArrowDown'],
@@ -85,11 +89,11 @@ describe('parseSettings', () => {
     expect(parseSettings(saved)).toEqual({ ...DEFAULT_SETTINGS, muted: true, particles: true });
   });
 
-  it('reads settings saved before the screen shake could be turned off, with it on', () => {
-    // The same version, without the field (#157).
+  it('reads settings saved before the later effects could be turned off, with them on', () => {
+    // The same version, without the fields of the effects that came later (#157, #159).
     const saved = Object.fromEntries(
       Object.entries(stored({ ...DEFAULT_SETTINGS, particles: false })).filter(
-        ([key]) => key !== 'screenShake',
+        ([key]) => key !== 'screenShake' && key !== 'hitFlash' && key !== 'squashStretch',
       ),
     );
 
@@ -97,6 +101,8 @@ describe('parseSettings', () => {
       ...DEFAULT_SETTINGS,
       particles: false,
       screenShake: true,
+      hitFlash: true,
+      squashStretch: true,
     });
   });
 
@@ -123,6 +129,8 @@ describe('parseSettings', () => {
       language: 42,
       particles: 'off',
       screenShake: 0,
+      hitFlash: 'no',
+      squashStretch: null,
     });
 
     expect(parsed).toEqual(DEFAULT_SETTINGS);

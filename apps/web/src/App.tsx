@@ -310,6 +310,8 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 reducedMotion={reducedMotion}
                 particles={settings.particles}
                 screenShake={settings.screenShake}
+                hitFlash={settings.hitFlash}
+                squashStretch={settings.squashStretch}
                 onEvent={send}
               />
             </Suspense>

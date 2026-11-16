@@ -160,7 +160,7 @@ describe('SettingsScreen', () => {
       within(screen.getByRole('tabpanel'))
         .getAllByRole('switch')
         .map((item) => item.textContent),
-    ).toEqual(['Particles', 'Screen shake']);
+    ).toEqual(['Particles', 'Screen shake', 'Hit flash', 'Squash and stretch']);
     const shake = screen.getByRole('switch', { name: 'Screen shake' });
     expect(shake).toBeChecked();
     expect(shake).toHaveAccessibleDescription(/Never while motion is reduced\.$/);
@@ -177,6 +177,26 @@ describe('SettingsScreen', () => {
     );
     fireEvent.click(screen.getByRole('switch', { name: 'Screen shake' }));
     expect(onChange).toHaveBeenLastCalledWith({ screenShake: true });
+  });
+
+  it('turns the hit flash and the squash and stretch off in the effects tab', async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+    const flash = screen.getByRole('switch', { name: 'Hit flash' });
+    const squash = screen.getByRole('switch', { name: 'Squash and stretch' });
+    expect(flash).toBeChecked();
+    expect(squash).toBeChecked();
+    expect(flash).toHaveAccessibleDescription(/never more than three times a second\.$/);
+    expect(squash).toHaveAccessibleDescription(/Never while motion is reduced\.$/);
+    fireEvent.click(flash);
+    fireEvent.click(squash);
+
+    expect(onChange.mock.calls).toEqual([[{ hitFlash: false }], [{ squashStretch: false }]]);
+    expect(await axe(container)).toHaveNoViolations();
   });
 
   it('offers the game speed on the gameplay tab, with what a slower game means', () => {
