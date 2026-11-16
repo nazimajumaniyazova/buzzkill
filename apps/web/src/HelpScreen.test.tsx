@@ -45,6 +45,12 @@ describe('HelpScreen', () => {
       'Shoot: A',
       'Pause: Start',
     ]);
+    expect(rows('Touch screen')).toEqual([
+      'Move up: Push the stick at the bottom left up',
+      'Move down: Push the stick at the bottom left down',
+      'Shoot: Hold the button at the bottom right',
+      'Pause: Tap the button at the top right',
+    ]);
     expect(rows('In the menus')).toEqual([
       'Move: Tab or ↑↓←→Arrow keys or D-pad or Left stick',
       'Select: Enter or A',
@@ -70,6 +76,7 @@ describe('HelpScreen', () => {
       'Пауза: EscEscape или P',
     ]);
     expect(rows('Геймпад')[0]).toBe('Вверх: Крестовина вверх или Левый стик');
+    expect(rows('Сенсорный экран')[2]).toBe('Стрелять: Удерживайте кнопку справа внизу');
     expect(screen.getByRole('button', { name: 'Назад' })).toBeInTheDocument();
   });
 

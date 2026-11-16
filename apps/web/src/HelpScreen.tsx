@@ -49,8 +49,8 @@ function alternatives(caps: readonly JSX.Element[], or: string): JSX.Element[] {
 
 /**
  * The `help` panel of the menu: the keyboard controls from the player's own bindings and the
- * gamepad controls from the game's, so the page cannot drift from either, and the controls of
- * the menus.
+ * gamepad controls from the game's, so the page cannot drift from either, where each action is on
+ * a touch screen (#153), and the controls of the menus.
  */
 export function HelpScreen({ keyBindings, lives, onBack }: HelpScreenProps): JSX.Element {
   const titleId = useId();
@@ -102,6 +102,17 @@ export function HelpScreen({ keyBindings, lives, onBack }: HelpScreenProps): JSX
                   </div>
                 );
               })}
+            </dl>
+          </section>
+          <section aria-labelledby={`${titleId}-touch`}>
+            <h2 id={`${titleId}-touch`}>{t.help.touch}</h2>
+            <dl className="controls">
+              {GAME_ACTIONS.map((action) => (
+                <div key={action}>
+                  <dt>{t.actions[action]}</dt>
+                  <dd>{t.help.touchControls[action]}</dd>
+                </div>
+              ))}
             </dl>
           </section>
           <section aria-labelledby={`${titleId}-menus`}>

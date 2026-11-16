@@ -27,12 +27,14 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 import { useAnnounce } from './announcer';
 import { announceRun } from './game/announce-run';
 import { createGameDrawer } from './game/draw-game';
+import { suggestsLandscape } from './game/landscape';
 import { pacedHost } from './game/paced-host';
 import { GAME_VERSION } from './game/run-options';
 import { GameHud } from './GameHud';
 import { useI18n } from './i18n/i18n';
 import { connectGame, type GameEvent } from './state/bridge';
 import type { GameAssets, Run } from './state/machine';
+import { TouchControls } from './TouchControls';
 
 interface GameViewProps {
   readonly run: Run;
@@ -59,7 +61,7 @@ interface GameViewProps {
  * The canvas and one run of the game on it. The effect that the run keys creates everything the
  * run needs and passes it to `createGame`: the input with its keyboard and gamepad sources, the
  * frame host, the Canvas 2D renderer with the game's drawing code, and the shared mixer, whose
- * volumes the settings set. The machine then drives the game through `paused`, and the game
+ * volumes the settings set. The touch controls attach to the same input once it exists (#153). The machine then drives the game through `paused`, and the game
  * drives the machine through the bridge, so each side learns of the other's pause without a
  * loop: `pause` and `resume` do nothing when the game is there already.
  *
@@ -80,6 +82,8 @@ export function GameView({
   const announce = useAnnounce();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [game, setGame] = useState<Game | null>(null);
+  const [input, setInput] = useState<ActionInput<GameAction> | null>(null);
+  const [suggestLandscape, setSuggestLandscape] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
   // The keys are read when a run starts and pushed to its keyboard source when they change;
   // they are not a dependency of the run, so new keys never restart it.
@@ -108,13 +112,15 @@ export function GameView({
     try {
       const renderer = createCanvas2DRenderer(context, WORLD);
       const fit = (): void => {
+        const viewport = { width: window.innerWidth, height: window.innerHeight };
         const result = computeCanvasFit({
           logical: WORLD,
-          viewport: { width: window.innerWidth, height: window.innerHeight },
+          viewport,
           devicePixelRatio: window.devicePixelRatio,
         });
         applyCanvasFit(canvas, result);
         renderer.setScale(result.scale);
+        setSuggestLandscape(suggestsLandscape(WORLD, viewport));
       };
       fit();
       window.addEventListener('resize', fit);
@@ -171,6 +177,7 @@ export function GameView({
         created.dispose();
       });
       setGame(created);
+      setInput(input);
       created.start();
     } catch (error) {
       release();
@@ -225,14 +232,25 @@ export function GameView({
   }
 
   return (
-    <main aria-label={t.game.label}>
+    // `game` is fixed over the whole window, so on a touch screen every finger lands in it, where
+    // the browser's own gestures are off (#153).
+    <main aria-label={t.game.label} className="game">
       <canvas ref={canvasRef} className="game-canvas">
         {t.game.canvas}
       </canvas>
       {unsupported ? (
         <p role="alert">{t.game.unsupported}</p>
       ) : (
-        game !== null && <GameHud game={game} maxLives={DIFFICULTIES[run.difficulty].lives} />
+        <>
+          {game !== null && <GameHud game={game} maxLives={DIFFICULTIES[run.difficulty].lives} />}
+          <TouchControls
+            input={input}
+            onPause={() => {
+              game?.pause();
+            }}
+            suggestLandscape={suggestLandscape}
+          />
+        </>
       )}
     </main>
   );

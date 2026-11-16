@@ -69,6 +69,25 @@ body {
   font-weight: normal;
 }
 
+/*
+ * The game view, fixed over the whole window (#153): every finger on a touch screen lands in it,
+ * where the browser's panning, pinch and double-tap zoom, text selection and long-press menu are
+ * off. The dialogs over a run are outside it, in the top layer, and keep them.
+ */
+.game {
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* No pull-to-refresh and no bounce while a run is on screen; the menus scroll as before. */
+html:has(.game) {
+  overscroll-behavior: none;
+}
+
 .game-canvas {
   /* The engine sets the size; auto margins center the letterboxed canvas in the window. */
   position: fixed;
@@ -87,7 +106,8 @@ body {
 
 .hud dl {
   display: flex;
-  gap: var(--space-inline-xl);
+  flex-wrap: wrap;
+  gap: var(--space-stack-sm) var(--space-inline-xl);
   margin: 0;
 }
 
@@ -141,4 +161,107 @@ body {
   inset-block: 0;
   width: 2px;
   background: var(--color-on-overlay);
+}
+
+/*
+ * The touch controls (#153), only where the primary pointer is a finger. Each is at least 48 px
+ * across, above the 44 px a finger needs. The HUD keeps to the top and the controls to the corners
+ * below it, so they never cover it.
+ */
+.touch-controls {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .touch-controls {
+    display: block;
+  }
+
+  /* The HUD leaves the top right corner to the pause button. */
+  .hud {
+    inset-inline-end: calc(var(--space-inset-md) * 2 + var(--spacing-12));
+  }
+
+  /*
+   * Upright, the values sit above the world on the page's own background, pale by day: a backdrop
+   * like the controls' keeps the white text readable on it and on the sky alike.
+   */
+  .hud dl,
+  .boss-bar-name {
+    padding: var(--space-inset-xs) var(--space-inset-sm);
+    border-radius: var(--radius-md);
+    background: var(--color-overlay);
+  }
+
+  .hud dl {
+    width: fit-content;
+  }
+}
+
+.touch-pause {
+  position: fixed;
+  inset: var(--space-inset-md) var(--space-inset-md) auto auto;
+  display: grid;
+  place-items: center;
+  width: var(--spacing-12);
+  height: var(--spacing-12);
+  padding: 0;
+  border: 2px solid var(--color-on-overlay);
+  border-radius: var(--radius-full);
+  color: var(--color-on-overlay);
+  background: var(--color-overlay);
+}
+
+.touch-pause:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* The stick and the fire button let the world show through: insects fly under the bottom corners. */
+.touch-stick,
+.touch-fire {
+  opacity: 0.7;
+}
+
+/* An upright pill: the hero moves only up and down. The knob follows the finger along it. */
+.touch-stick {
+  position: fixed;
+  inset: auto auto var(--space-inset-md) var(--space-inset-md);
+  display: grid;
+  place-items: center;
+  width: calc(var(--spacing-12) * 1.5);
+  height: calc(var(--spacing-12) * 3);
+  border: 2px solid var(--color-on-overlay);
+  border-radius: var(--radius-pill);
+  background: var(--color-overlay);
+}
+
+.touch-stick-knob {
+  height: 50%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-full);
+  background: var(--color-on-overlay);
+  pointer-events: none;
+}
+
+.touch-fire {
+  position: fixed;
+  inset: auto var(--space-inset-md) var(--space-inset-md) auto;
+  display: grid;
+  place-items: center;
+  width: calc(var(--spacing-12) * 1.75);
+  height: calc(var(--spacing-12) * 1.75);
+  border: 2px solid var(--color-on-overlay);
+  border-radius: var(--radius-full);
+  color: var(--color-on-overlay);
+  background: var(--color-overlay);
+}
+
+/* Above the stick, in the band a phone held upright leaves under the world. */
+.touch-hint {
+  position: fixed;
+  inset: auto 0 calc(var(--spacing-12) * 3 + var(--space-inset-md) * 2);
+  margin: 0;
+  padding-inline: var(--space-inset-md);
+  text-align: center;
 }

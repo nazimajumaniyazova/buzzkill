@@ -96,6 +96,8 @@ diagrams and the runtime data flow.
 - `pnpm test` runs every Vitest project once; `pnpm test:watch` watches; `pnpm test:coverage` adds
   v8 coverage with 80% thresholds for `engine` and `game`.
 - `pnpm bench` runs the Vitest benchmarks (`*.bench.ts`) once; each prints a comparison table.
+- `pnpm test:e2e` builds the web app and runs the Playwright tests in `apps/web/e2e` against
+  `vite preview`, in Chromium on an emulated Pixel 7 and a desktop.
 - `pnpm assets` regenerates the game's atlases, the WAV fallbacks and the asset manifest after a
   change to `packages/art`, a sound or a pipeline setting (ADR-0016); a test fails until then.
 

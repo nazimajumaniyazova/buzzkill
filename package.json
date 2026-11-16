@@ -20,6 +20,7 @@
     "storybook": "pnpm --filter @buzzkill/ui storybook",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "pnpm --filter @buzzkill/web test:e2e",
     "test:storybook": "pnpm --filter @buzzkill/ui test:storybook",
     "test:watch": "vitest",
     "typecheck": "turbo run typecheck typecheck:root",

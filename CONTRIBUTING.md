@@ -19,6 +19,7 @@ pnpm typecheck      # tsc --noEmit in every package; in ui, cmk first writes the
 pnpm lint           # ESLint, Stylelint, Sherif, Knip, dependency-cruiser, CSpell
 pnpm test           # Vitest, all projects; pnpm test:coverage adds coverage
 pnpm test:storybook # every story in Chromium; once: pnpm --filter @buzzkill/ui exec playwright install chromium
+pnpm test:e2e       # the built app in Chromium, on a Pixel 7 and a desktop; the same browser
 pnpm storybook      # Storybook of the design system on http://localhost:6006
 pnpm bench          # benchmarks of the engine and the game
 pnpm assets         # regenerate the atlases, WAVs and asset manifest after changing art or a sound
@@ -30,6 +31,9 @@ applies the autofixes. `pnpm test` runs every Vitest project; `pnpm test:coverag
 80% thresholds of `engine` and `game`. `pnpm test:storybook` renders every story of `packages/ui`
 in Playwright's Chromium, runs its play function and fails on an accessibility violation; it
 needs the browser installed once (the command above) and runs in CI on every pull request. The
+same Chromium runs `pnpm test:e2e`: Playwright builds the web app, serves it with `vite preview`
+and plays it on an emulated Pixel 7, with touch gestures, and on a desktop with a mouse (#153).
+It runs in CI on every pull request as the **E2E** check. The
 **Accessibility** page of that Storybook names the WAI-ARIA pattern of every component and walks
 through each with the keyboard; a new component gets its pattern as the `docs.subtitle` of its
 stories, a row on that page and an axe assertion in its test. `pnpm bench` runs the `*.bench.ts` files; in CI, CodSpeed
