@@ -18,7 +18,7 @@ pnpm workspaces + Turborepo (ADR-0001). Shared dependency versions live in the `
   May depend on `game`, `engine` and `ui`. Its asset pipeline (`scripts/assets`) also uses `art`;
   the game loads the art only as the generated atlases (ADR-0016).
 - `packages/engine` (`@buzzkill/engine`): reusable 2D engine: loop, input, assets, audio,
-  collisions, object pools. Depends on nothing in the repository and never on React.
+  collisions, object pools, particles. Depends on nothing in the repository and never on React.
 - `packages/game` (`@buzzkill/game`): the game domain: entities, systems, rules, levels as data.
   Depends only on `engine`. No DOM: its `tsconfig.json` has no DOM lib, so it stays headless.
 - `packages/ui` (`@buzzkill/ui`): design system: tokens, themes, accessible components. Knows
