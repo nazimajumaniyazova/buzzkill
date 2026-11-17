@@ -16,6 +16,7 @@ import {
   createGame,
   type Game,
   type GameAudio,
+  type GameHaptics,
   type GameHud,
   type GameRenderer,
   type GameView,
@@ -56,15 +57,18 @@ interface Setup {
   input: ActionInput<GameAction>;
   fake: ReturnType<typeof createFakeHost>;
   play: ReturnType<typeof vi.fn<GameAudio['play']>>;
+  /** The haptics of the run; without them when `setup` was asked for none. */
+  feel: ReturnType<typeof vi.fn<GameHaptics['play']>>;
   render: ReturnType<typeof vi.fn<GameRenderer['render']>>;
   /** The view of the last rendered frame. */
   view(): GameView;
 }
 
-function setup(seed = 1, listen?: GameRenderer['listen']): Setup {
+function setup(seed = 1, listen?: GameRenderer['listen'], haptics = true): Setup {
   const fake = createFakeHost();
   const input = createActionInput(GAME_ACTIONS);
   const play = vi.fn<GameAudio['play']>();
+  const feel = vi.fn<GameHaptics['play']>();
   const render = vi.fn<GameRenderer['render']>();
   const game = createGame({
     settings: { heroId: 'male', mode: 'day', difficulty: 'normal' },
@@ -74,12 +78,14 @@ function setup(seed = 1, listen?: GameRenderer['listen']): Setup {
     host: fake.host,
     renderer: listen === undefined ? { render } : { render, listen },
     audio: { play },
+    ...(haptics ? { haptics: { play: feel } } : {}),
   });
   return {
     game,
     input,
     fake,
     play,
+    feel,
     render,
     view() {
       const call = render.mock.lastCall;
@@ -253,6 +259,31 @@ describe('createGame', () => {
     expect(s.play).toHaveBeenCalledWith('hit');
     expect(s.play).toHaveBeenCalledWith('explosion');
     expect(s.play).not.toHaveBeenCalledWith('shot');
+  });
+
+  it('gives one haptic pulse for each hit on the hero, and nothing else', () => {
+    const s = setup();
+    s.game.start();
+
+    runUntilTick(s, 3600);
+
+    const lost = RULES.lives - s.game.getHud().lives;
+    expect(lost).toBeGreaterThan(0);
+    expect(s.feel).toHaveBeenCalledTimes(lost);
+    expect(new Set(s.feel.mock.calls.map(([haptic]) => haptic))).toEqual(new Set(['hit']));
+  });
+
+  it('runs the same without haptics, which a device may lack', () => {
+    const felt = setup();
+    const without = setup(1, undefined, false);
+    felt.game.start();
+    without.game.start();
+
+    runUntilTick(felt, 3600);
+    runUntilTick(without, 3600);
+
+    expect(without.game.getHud()).toEqual(felt.game.getHud());
+    expect(without.feel).not.toHaveBeenCalled();
   });
 
   it('plays the pickup sound and shows the whole seconds left of a shield and rapid fire', () => {
