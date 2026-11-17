@@ -311,6 +311,12 @@ more time (#114).
   under reduced motion, or under the system's preference unless the player chose full. The
   parallax background of stage 6 slows down and the screen shake of stage 7 stays off under the
   same setting; both are acceptance criteria of those stages.
+- **Interface motion.** The score bounces when it rises, a lost life blinks, the screens and the
+  dialogs fade in (#160). These animations live in CSS on the motion tokens, so the same setting
+  stops them; Stylelint rejects a duration or an easing curve of a file's own. A blink lasts the
+  slow duration, 400 ms, so a lost life flashes 2.5 times a second, under the three of WCAG 2.3.1,
+  and a test keeps it so. The HUD restarts an animation through the key of the value's element,
+  counted in the render, so it still commits once per changed value (#109).
 - **Pace.** The game speed is 100 %, 75 % or 50 %. `pacedHost` gives the loop a frame clock that
   runs at that speed, so the same ticks with the same `dt` come further apart; the simulation, the
   replay and its hash are those of normal speed. The run carries its speed, and only runs at 100 %

@@ -30,11 +30,28 @@ export default {
     ],
     // A var() must name a token of the generated stylesheet or a property declared in the file.
     'csstools/value-no-unknown-custom-properties': [true, { importFrom: [tokensCss] }],
+    // Durations and easing curves only from the motion tokens (#160), which reduced motion
+    // shortens to nothing: no time units, no curve of a file's own. The keyword `linear`, a
+    // constant speed such as a spinner's, is no curve and stays allowed.
+    'unit-disallowed-list': [['s', 'ms']],
+    'function-disallowed-list': [['cubic-bezier', 'steps', 'linear']],
+    'declaration-property-value-disallowed-list': [
+      {
+        '/^(animation|transition)/': [
+          '/(^|[\\s,])(ease(-in|-out|-in-out)?|step-start|step-end)([\\s,]|$)/',
+        ],
+      },
+    ],
   },
   overrides: [
     {
       files: ['packages/ui/src/tokens/**/*.css'],
-      rules: { 'color-no-hex': null, 'scale-unlimited/declaration-strict-value': null },
+      rules: {
+        'color-no-hex': null,
+        'scale-unlimited/declaration-strict-value': null,
+        'unit-disallowed-list': null,
+        'function-disallowed-list': null,
+      },
     },
     {
       // A CSS Modules class is the key TypeScript uses (`styles.keyHint`), with no case

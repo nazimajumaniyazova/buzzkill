@@ -195,6 +195,42 @@ describe('GameHud', () => {
     expect(updates()).toBe(2);
   });
 
+  it('bounces the score each time it rises, and not when the run begins', () => {
+    const { update } = setup();
+    const score = () => screen.getAllByRole('definition')[0];
+    const first = score();
+    expect(first).not.toHaveClass('hud-bounce');
+
+    update({ score: 10 });
+    const bounced = score();
+    expect(bounced).toHaveClass('hud-bounce');
+    expect(bounced).not.toBe(first);
+
+    update({ ammo: 19 });
+    expect(score()).toBe(bounced);
+
+    update({ score: 20 });
+    expect(score()).toHaveClass('hud-bounce');
+    expect(score()).not.toBe(bounced);
+  });
+
+  it('blinks the lives when one is lost, and not when one comes back', () => {
+    const { update } = setup();
+    const lives = () => screen.getByText(/ of 5$/);
+    expect(lives()).not.toHaveClass('hud-blink');
+
+    update({ lives: 4 });
+    const blinked = lives();
+    expect(blinked).toHaveClass('hud-blink');
+
+    update({ lives: 5 });
+    expect(lives()).toBe(blinked);
+
+    update({ lives: 3 });
+    expect(lives()).toHaveClass('hud-blink');
+    expect(lives()).not.toBe(blinked);
+  });
+
   it('leaves the pause and the end of the run to the machine: no dialog of its own', () => {
     const { update } = setup();
 
