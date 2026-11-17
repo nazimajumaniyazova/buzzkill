@@ -19,6 +19,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createGameDrawer } from './draw-game';
 import { PARTICLE_BURSTS } from './particles';
+import { FLASH, SQUASH, STRETCH } from './sprite-effects';
 import type { GameSprites } from './sprites';
 
 type Call = readonly unknown[];
@@ -461,5 +462,106 @@ describe('the screen shake of the run', () => {
 
       expect(cameras).toEqual([IDENTITY_CAMERA]);
     }
+  });
+});
+
+describe('the flash of a hit, and squash and stretch', () => {
+  let sim: Simulation;
+
+  beforeEach(() => {
+    sim = createSimulation({ seed: 1, heroId: 'female', mode: 'day' });
+  });
+
+  /** A wasp of two lives that keeps still, alone in the world but for the hero. */
+  function wasp(): EntityId {
+    const id = add(sim, Kind.enemy, 300, 400);
+    sim.state.world.variant[id] = 1;
+    sim.state.world.health[id] = 1;
+    sim.state.world.value[id] = 2;
+    return id;
+  }
+
+  const spriteOf = (calls: readonly Call[], image: string): Call | undefined =>
+    calls.find((call) => call[0] === 'sprite' && call[1] === image);
+
+  it('flashes an insect that a shot hit, drawing its own sprite tinted white', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const insect = wasp();
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES);
+    drawer.listen?.(events);
+
+    events.emit('enemyHit', { id: insect, healthLeft: 1, x: 300, y: 420 });
+    drawer.render(sim.state, 0);
+
+    expect(spriteOf(calls, 'wasp')?.[5]).toEqual({
+      width: 50,
+      height: 50,
+      tint: FLASH.color,
+      tintAmount: FLASH.amount,
+    });
+    // The hero was not hit: drawn as it is.
+    expect(spriteOf(calls, 'julie')?.[5]).not.toHaveProperty('tint');
+  });
+
+  it('squashes the hero about the middle of its base when it fires', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES);
+    drawer.listen?.(events);
+    const { width, height } = sim.state.hero;
+
+    events.emit('shot', { x: 180, y: 120 });
+    drawer.render(sim.state, 0);
+
+    const wide = width * (1 + SQUASH.amount);
+    const low = height * (1 - SQUASH.amount);
+    const hero = spriteOf(calls, 'julie');
+    expect(hero?.[3]).toBeCloseTo(20 + (width - wide) / 2);
+    expect(hero?.[4]).toBeCloseTo(100 + (height - low));
+    expect(hero?.[5]).toEqual({ width: wide, height: low });
+  });
+
+  it('stretches a bobbing insect upright about the middle of its base', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const insect = wasp();
+    // It rose a pixel in its last tick, and is drawn where it is now.
+    sim.state.world.prevY[insect] = 401;
+
+    createGameDrawer(renderer, SPRITES).render(sim.state, 1);
+
+    const tall = 50 * (1 + STRETCH.perPixel);
+    const narrow = 50 / (1 + STRETCH.perPixel);
+    const drawn = spriteOf(calls, 'wasp');
+    expect(drawn?.[3]).toBeCloseTo(300 + (50 - narrow) / 2);
+    expect(drawn?.[4]).toBeCloseTo(400 + (50 - tall));
+    // The matchers are typed `any`; as numbers, they keep the lint's checks on the object.
+    expect(drawn?.[5]).toEqual({
+      width: expect.closeTo(narrow, 9) as number,
+      height: expect.closeTo(tall, 9) as number,
+    });
+  });
+
+  it('neither flashes nor squashes nor stretches while they are off', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const insect = wasp();
+    sim.state.world.prevY[insect] = 401;
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES, {
+      hitFlash: () => false,
+      squashStretch: () => false,
+    });
+    drawer.listen?.(events);
+
+    events.emit('enemyHit', { id: insect, healthLeft: 1, x: 300, y: 420 });
+    events.emit('shot', { x: 180, y: 120 });
+    drawer.render(sim.state, 1);
+
+    expect(spriteOf(calls, 'wasp')?.slice(3)).toEqual([300, 400, { width: 50, height: 50 }]);
+    expect(spriteOf(calls, 'julie')?.slice(3)).toEqual([
+      20,
+      100,
+      { width: sim.state.hero.width, height: sim.state.hero.height },
+    ]);
   });
 });

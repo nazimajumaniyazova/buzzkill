@@ -116,6 +116,12 @@ function english(format: Format) {
       screenShake: 'Screen shake',
       screenShakeHint:
         'The screen shakes when the hero is hit, when insects explode, and when the queen arrives, rages and falls. Never while motion is reduced.',
+      hitFlash: 'Hit flash',
+      hitFlashHint:
+        'An insect, the queen or the hero flashes white when hit: softer while motion is reduced, and never more than three times a second.',
+      squashStretch: 'Squash and stretch',
+      squashStretchHint:
+        'The hero squashes a little when firing, and insects stretch as they bob. Never while motion is reduced.',
     },
     keyEditor: {
       caption: 'Keyboard',

@@ -1,12 +1,5 @@
 # Changelog
 
-## [0.25.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.24.0...v0.25.0) (2026-11-16)
-
-
-### Features
-
-* **web:** play on touch screens with a stick and a fire button ([#187](https://github.com/nazimajumaniyazova/buzzkill/issues/187)) ([c7bc3cb](https://github.com/nazimajumaniyazova/buzzkill/commit/c7bc3cb427f3f6bf4ab671943a4be2010b378500))
-
 ## [0.24.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.23.0...v0.24.0) (2026-11-16)
 
 

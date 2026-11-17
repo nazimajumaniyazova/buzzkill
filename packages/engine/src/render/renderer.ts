@@ -51,6 +51,14 @@ export interface SpriteOptions {
   readonly height?: number;
   /** Opacity from 0 to 1. */
   readonly alpha?: number;
+  /**
+   * A color to mix into the sprite's own pixels, such as white for a flash on a hit (#159). The
+   * renderer tints the same frame on its tint buffer, so no second sprite is needed; without a
+   * buffer the sprite is drawn as it is.
+   */
+  readonly tint?: string;
+  /** How much of `tint`, from 0, none, to 1, the color alone. 1 by default. */
+  readonly tintAmount?: number;
 }
 
 export interface TextStyle {
@@ -96,14 +104,29 @@ export interface Context2DLike<TImage> {
   font: string;
   textAlign: string;
   textBaseline: string;
+  globalCompositeOperation: string;
 }
 
-export interface Canvas2DRendererOptions {
+/**
+ * A scratch canvas the renderer tints a sprite on before it draws it (#159): `source-atop` paints
+ * the color over the sprite's own pixels only, which the main canvas cannot do over the scene.
+ */
+export interface TintBuffer<TImage> {
+  readonly context: Context2DLike<TImage>;
+  /** The scratch canvas itself, which the main context draws from. */
+  readonly image: TImage;
+  /** Makes the canvas at least this many pixels wide and high; it never shrinks. */
+  ensureSize(width: number, height: number): void;
+}
+
+export interface Canvas2DRendererOptions<TImage = unknown> {
   /** Logical size of the play area. */
   readonly width: number;
   readonly height: number;
   /** Initial device pixels per logical pixel. Default 1. */
   readonly scale?: number;
+  /** Where tinted sprites are made; without one, a tint is ignored. */
+  readonly tintBuffer?: TintBuffer<TImage>;
 }
 
 /**
@@ -112,9 +135,9 @@ export interface Canvas2DRendererOptions {
  */
 export function createCanvas2DRenderer<TImage>(
   context: Context2DLike<TImage>,
-  options: Canvas2DRendererOptions,
+  options: Canvas2DRendererOptions<TImage>,
 ): Renderer<TImage> {
-  const { width, height } = options;
+  const { width, height, tintBuffer } = options;
   let scale = options.scale ?? 1;
   const stats = { sprites: 0, culled: 0 };
 
@@ -180,17 +203,59 @@ export function createCanvas2DRenderer<TImage>(
       if (alpha !== 1) {
         context.globalAlpha = alpha;
       }
-      context.drawImage(
-        atlas.image,
-        rect.x,
-        rect.y,
-        rect.width,
-        rect.height,
-        snap(x),
-        snap(y),
-        drawWidth,
-        drawHeight,
-      );
+      const tint = spriteOptions?.tint;
+      const tintAmount = spriteOptions?.tintAmount ?? 1;
+      if (tint !== undefined && tintAmount > 0 && tintBuffer !== undefined) {
+        // The frame at its size on screen in device pixels, its own pixels then painted over.
+        const bufferWidth = Math.ceil(drawWidth * scale);
+        const bufferHeight = Math.ceil(drawHeight * scale);
+        tintBuffer.ensureSize(bufferWidth, bufferHeight);
+        const buffer = tintBuffer.context;
+        buffer.setTransform(1, 0, 0, 1, 0, 0);
+        buffer.globalCompositeOperation = 'source-over';
+        buffer.globalAlpha = 1;
+        buffer.clearRect(0, 0, bufferWidth, bufferHeight);
+        buffer.drawImage(
+          atlas.image,
+          rect.x,
+          rect.y,
+          rect.width,
+          rect.height,
+          0,
+          0,
+          bufferWidth,
+          bufferHeight,
+        );
+        buffer.globalCompositeOperation = 'source-atop';
+        buffer.globalAlpha = tintAmount;
+        buffer.fillStyle = tint;
+        buffer.fillRect(0, 0, bufferWidth, bufferHeight);
+        buffer.globalCompositeOperation = 'source-over';
+        buffer.globalAlpha = 1;
+        context.drawImage(
+          tintBuffer.image,
+          0,
+          0,
+          bufferWidth,
+          bufferHeight,
+          snap(x),
+          snap(y),
+          drawWidth,
+          drawHeight,
+        );
+      } else {
+        context.drawImage(
+          atlas.image,
+          rect.x,
+          rect.y,
+          rect.width,
+          rect.height,
+          snap(x),
+          snap(y),
+          drawWidth,
+          drawHeight,
+        );
+      }
       if (alpha !== 1) {
         context.globalAlpha = 1;
       }

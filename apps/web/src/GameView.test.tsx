@@ -118,6 +118,8 @@ describe('GameView', () => {
     readonly reducedMotion: boolean;
     readonly particles: boolean;
     readonly screenShake: boolean;
+    readonly hitFlash: boolean;
+    readonly squashStretch: boolean;
     readonly betweenLevels: boolean;
   }
 
@@ -131,6 +133,8 @@ describe('GameView', () => {
         reducedMotion={props.reducedMotion ?? false}
         particles={props.particles ?? true}
         screenShake={props.screenShake ?? true}
+        hitFlash={props.hitFlash ?? true}
+        squashStretch={props.squashStretch ?? true}
         betweenLevels={props.betweenLevels ?? false}
         onEvent={onEvent}
       />,
@@ -147,6 +151,8 @@ describe('GameView', () => {
             reducedMotion={next.reducedMotion ?? props.reducedMotion ?? false}
             particles={next.particles ?? props.particles ?? true}
             screenShake={next.screenShake ?? props.screenShake ?? true}
+            hitFlash={next.hitFlash ?? props.hitFlash ?? true}
+            squashStretch={next.squashStretch ?? props.squashStretch ?? true}
             betweenLevels={next.betweenLevels ?? props.betweenLevels ?? false}
             onEvent={onEvent}
           />,
@@ -262,6 +268,19 @@ describe('GameView', () => {
 
     expect(options?.screenShake?.()).toBe(false);
     expect(vi.mocked(createGameDrawer).mock.calls).toHaveLength(drawers);
+  });
+
+  it('applies a change of the flash and the squash settings to the run on screen', () => {
+    const frames = installFrames();
+    const view = renderView();
+    frames.run(1);
+    const options = vi.mocked(createGameDrawer).mock.lastCall?.[2];
+    expect([options?.hitFlash?.(), options?.squashStretch?.()]).toEqual([true, true]);
+
+    view.rerender({ hitFlash: false, squashStretch: false });
+    frames.run(1);
+
+    expect([options?.hitFlash?.(), options?.squashStretch?.()]).toEqual([false, false]);
   });
 
   it('starts the next level when the machine leaves the screen between levels', () => {
@@ -380,6 +399,8 @@ describe('GameView', () => {
           reducedMotion={false}
           particles
           screenShake
+          hitFlash
+          squashStretch
           betweenLevels={false}
           onEvent={onEvent}
         />
@@ -469,6 +490,8 @@ describe('GameView', () => {
           reducedMotion={false}
           particles
           screenShake
+          hitFlash
+          squashStretch
           betweenLevels={false}
           onEvent={onEvent}
         />

@@ -4,6 +4,7 @@ import {
   computeCanvasFit,
   createActionInput,
   createCanvas2DRenderer,
+  createCanvasTintBuffer,
   type GameLoopHost,
   type KeyBindings,
 } from '@buzzkill/engine';
@@ -52,6 +53,10 @@ interface GameViewProps {
   readonly particles: boolean;
   /** The screen shake setting (#157); a change applies to the run on screen. */
   readonly screenShake: boolean;
+  /** The hit flash setting (#159); a change applies to the run on screen. */
+  readonly hitFlash: boolean;
+  /** The squash and stretch setting (#159); a change applies to the run on screen. */
+  readonly squashStretch: boolean;
   /**
    * The machine shows the screen between levels. The game holds itself on a cleared level; when
    * this turns false again, the next level starts (ADR-0017).
@@ -82,6 +87,8 @@ export function GameView({
   reducedMotion,
   particles,
   screenShake,
+  hitFlash,
+  squashStretch,
   betweenLevels,
   onEvent,
 }: GameViewProps): JSX.Element {
@@ -100,6 +107,8 @@ export function GameView({
   const reducedMotionRef = useRef(reducedMotion);
   const particlesRef = useRef(particles);
   const screenShakeRef = useRef(screenShake);
+  const hitFlashRef = useRef(hitFlash);
+  const squashStretchRef = useRef(squashStretch);
   const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
@@ -119,7 +128,14 @@ export function GameView({
     };
 
     try {
-      const renderer = createCanvas2DRenderer(context, WORLD);
+      // A spare canvas where the renderer tints the sprite of a hit (#159).
+      const tintBuffer = createCanvasTintBuffer<CanvasImageSource>(
+        document.createElement('canvas'),
+      );
+      const renderer = createCanvas2DRenderer(
+        context,
+        tintBuffer === null ? WORLD : { ...WORLD, tintBuffer },
+      );
       const fit = (): void => {
         const viewport = { width: window.innerWidth, height: window.innerHeight };
         const result = computeCanvasFit({
@@ -181,6 +197,8 @@ export function GameView({
           reducedMotion: () => reducedMotionRef.current,
           particles: () => particlesRef.current,
           screenShake: () => screenShakeRef.current,
+          hitFlash: () => hitFlashRef.current,
+          squashStretch: () => squashStretchRef.current,
           seed: run.seed,
         }),
         audio: assets.audio,
@@ -210,6 +228,11 @@ export function GameView({
   useEffect(() => {
     screenShakeRef.current = screenShake;
   }, [screenShake]);
+
+  useEffect(() => {
+    hitFlashRef.current = hitFlash;
+    squashStretchRef.current = squashStretch;
+  }, [hitFlash, squashStretch]);
 
   useEffect(() => {
     if (bindingsRef.current === keyBindings) {

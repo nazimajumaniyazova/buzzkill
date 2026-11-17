@@ -98,6 +98,7 @@ export {
   type RenderStats,
   type SpriteOptions,
   type TextStyle,
+  type TintBuffer,
 } from './render/renderer';
 export {
   type Camera,
@@ -107,3 +108,4 @@ export {
   type ScreenShake,
   type ScreenShakeOptions,
 } from './render/screen-shake';
+export { createCanvasTintBuffer, type TintCanvas } from './render/tint-buffer';

@@ -1,4 +1,4 @@
-import type { Renderer } from '@buzzkill/engine';
+import type { Renderer, SpriteAtlas } from '@buzzkill/engine';
 import {
   animationFrame,
   type GameRenderer,
@@ -11,6 +11,7 @@ import { tokens } from '@buzzkill/ui';
 
 import { createParticleEffects } from './particles';
 import { createShakeEffects } from './screen-shake';
+import { createSpriteEffects, FLASH, NO_SCALE, type SpriteScale } from './sprite-effects';
 import type { CityLayerName, GameSprites } from './sprites';
 
 const { palette } = tokens.primitives;
@@ -52,6 +53,10 @@ export interface GameDrawerOptions {
   readonly particles?: () => boolean;
   /** The screen shake setting (#157), read every frame and at every event. Defaults to on. */
   readonly screenShake?: () => boolean;
+  /** The hit flash setting (#159), read every frame. Defaults to on. */
+  readonly hitFlash?: () => boolean;
+  /** The squash and stretch setting (#159), read every frame. Defaults to on. */
+  readonly squashStretch?: () => boolean;
   /** Seeds the particles' and the shake's own randomness, never the simulation's. Defaults to 1. */
   readonly seed?: number;
 }
@@ -79,7 +84,9 @@ const SHOT_TRAIL = { size: { width: 30, height: 6 }, headX: 20, headY: 1.5 } as 
  *
  * The particles (#156) follow the run's events through `listen`: dust and trails are drawn behind
  * the hero and the insects, sparks and debris in front of them. So does the screen shake (#157),
- * which moves the camera of the whole frame.
+ * which moves the camera of the whole frame, and so do the flashes of hits (#159), which tint a
+ * sprite white for a moment. The hero squashes when it fires and insects stretch as they bob, both
+ * about the middle of their base.
  */
 export function createGameDrawer<TImage>(
   renderer: Renderer<TImage>,
@@ -101,12 +108,45 @@ export function createGameDrawer<TImage>(
     reducedMotion,
     seed: options.seed ?? 1,
   });
+  const spriteEffects = createSpriteEffects({
+    hitFlash: options.hitFlash ?? (() => true),
+    squashStretch: options.squashStretch ?? (() => true),
+    reducedMotion,
+  });
   let lastTick: number | undefined;
+
+  /**
+   * Draws a frame of `atlas` in the box at (`x`, `y`), scaled about the middle of the box's base,
+   * and tinted white by `flash` when it is above 0.
+   */
+  const drawSprite = (
+    atlas: SpriteAtlas<TImage>,
+    frame: number,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    scale: SpriteScale,
+    flash: number,
+  ): void => {
+    const scaledWidth = width * scale.x;
+    const scaledHeight = height * scale.y;
+    renderer.drawSprite(
+      atlas,
+      frame,
+      x + (width - scaledWidth) / 2,
+      y + (height - scaledHeight),
+      flash > 0
+        ? { width: scaledWidth, height: scaledHeight, tint: FLASH.color, tintAmount: flash }
+        : { width: scaledWidth, height: scaledHeight },
+    );
+  };
 
   return {
     listen(events) {
       effects.listen(events);
       shake.listen(events);
+      spriteEffects.listen(events);
     },
     render(view, alpha) {
       const { world, tick } = view;
@@ -118,6 +158,7 @@ export function createGameDrawer<TImage>(
         lastTick === undefined ? 0 : Math.min(Math.max(tick - lastTick, 0), MAX_TRAIL_TICKS);
       lastTick = tick;
       effects.advance(time);
+      spriteEffects.begin(view);
       const pace = reducedMotion() ? REDUCED_PARALLAX : 1;
       for (const { layer, atlas } of sprites.backgrounds[view.mode]) {
         const speed = PARALLAX[layer] * pace;
@@ -147,7 +188,16 @@ export function createGameDrawer<TImage>(
           case Kind.player: {
             const { atlas, frameTicks } = sprites.heroes[view.heroId];
             const frame = animationFrame(tick, 0, atlas.frames.length, frameTicks);
-            renderer.drawSprite(atlas, frame, x, y, size);
+            drawSprite(
+              atlas,
+              frame,
+              x,
+              y,
+              width,
+              height,
+              spriteEffects.heroScale(time),
+              spriteEffects.flash(view, id, time),
+            );
             break;
           }
           case Kind.enemy: {
@@ -159,7 +209,17 @@ export function createGameDrawer<TImage>(
               const { atlas, frameTicks } = animation;
               const born = world.bornTick[id] as number;
               const frame = animationFrame(tick, born, atlas.frames.length, frameTicks);
-              renderer.drawSprite(atlas, frame, x, y, size);
+              const bob = (world.y[id] as number) - prevY;
+              drawSprite(
+                atlas,
+                frame,
+                x,
+                y,
+                width,
+                height,
+                spriteEffects.enemyScale(bob),
+                spriteEffects.flash(view, id, time),
+              );
             }
             const health = (world.health[id] as number) / Math.max(1, world.value[id] as number);
             const barY = y + HEALTH_BAR.offsetY;
@@ -203,9 +263,11 @@ export function createGameDrawer<TImage>(
                 shake = turn === 0 ? -CHARGE_WARNING.shake : CHARGE_WARNING.shake;
               }
             }
-            renderer.drawSprite(queen.atlas, frame, x + shake, y, size);
+            // Her rage is an overlay of the same frame, so it flashes with her.
+            const flash = spriteEffects.flash(view, id, time);
+            drawSprite(queen.atlas, frame, x + shake, y, width, height, NO_SCALE, flash);
             if (isBossEnraged(view.boss.phase)) {
-              renderer.drawSprite(rage.atlas, frame, x + shake, y, size);
+              drawSprite(rage.atlas, frame, x + shake, y, width, height, NO_SCALE, flash);
             }
             break;
           }

@@ -55,6 +55,10 @@ export interface Settings {
   readonly particles: boolean;
   /** The screen shake (#157), in the Effects group; never while motion is reduced. */
   readonly screenShake: boolean;
+  /** A sprite that is hit flashes white (#159), softer while motion is reduced. */
+  readonly hitFlash: boolean;
+  /** The hero squashes when firing and insects stretch as they bob (#159); never while reduced. */
+  readonly squashStretch: boolean;
   /** `KeyboardEvent.code` values, `KEYS_PER_ACTION` per action, no key bound twice. */
   readonly keyBindings: KeyBindings<GameAction>;
 }
@@ -70,6 +74,8 @@ export const DEFAULT_SETTINGS: Settings = {
   gameSpeed: 1,
   particles: true,
   screenShake: true,
+  hitFlash: true,
+  squashStretch: true,
   keyBindings: DEFAULT_KEY_BINDINGS,
 };
 
@@ -131,6 +137,8 @@ function storedSettingsSchema(defaults: Settings) {
     gameSpeed: z.catch(z.literal(GAME_SPEEDS), defaults.gameSpeed),
     particles: z.catch(z.boolean(), defaults.particles),
     screenShake: z.catch(z.boolean(), defaults.screenShake),
+    hitFlash: z.catch(z.boolean(), defaults.hitFlash),
+    squashStretch: z.catch(z.boolean(), defaults.squashStretch),
     // A fresh copy each time: the schema's output is mutable, the defaults are not.
     keyBindings: z.catch(keyBindingsSchema, () => ({
       moveUp: [...defaults.keyBindings.moveUp],
@@ -165,6 +173,8 @@ export function parseSettings(
     gameSpeed,
     particles,
     screenShake,
+    hitFlash,
+    squashStretch,
     keyBindings,
   } = result.data;
   return {
@@ -178,6 +188,8 @@ export function parseSettings(
     gameSpeed,
     particles,
     screenShake,
+    hitFlash,
+    squashStretch,
     keyBindings,
   };
 }

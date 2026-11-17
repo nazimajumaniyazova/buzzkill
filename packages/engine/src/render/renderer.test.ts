@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createGridAtlas } from './atlas';
-import { type Context2DLike, createCanvas2DRenderer } from './renderer';
+import { type Context2DLike, createCanvas2DRenderer, type TintBuffer } from './renderer';
 
 type Call = readonly [string, ...unknown[]];
 
@@ -31,8 +31,40 @@ function createFakeContext() {
     font: '',
     textAlign: '',
     textBaseline: '',
+    globalCompositeOperation: 'source-over',
   };
   return { context, calls };
+}
+
+/** A tint buffer whose context records what it drew with: the opacity and the compositing. */
+function createFakeTintBuffer() {
+  const calls: Call[] = [];
+  const sizes: (readonly [number, number])[] = [];
+  const drawnWith = () => ({
+    alpha: context.globalAlpha,
+    composite: context.globalCompositeOperation,
+  });
+  const context: Context2DLike<string> = {
+    setTransform: (...args: unknown[]) => calls.push(['setTransform', ...args]),
+    clearRect: (...args: unknown[]) => calls.push(['clearRect', ...args]),
+    fillRect: (...args: unknown[]) => calls.push(['fillRect', ...args, drawnWith()]),
+    fillText: () => undefined,
+    drawImage: (...args: unknown[]) => calls.push(['drawImage', ...args, drawnWith()]),
+    fillStyle: '',
+    globalAlpha: 1,
+    font: '',
+    textAlign: '',
+    textBaseline: '',
+    globalCompositeOperation: 'source-over',
+  };
+  const buffer: TintBuffer<string> = {
+    context,
+    image: 'buffer',
+    ensureSize(width, height) {
+      sizes.push([width, height]);
+    },
+  };
+  return { buffer, context, calls, sizes };
 }
 
 const ATLAS = createGridAtlas('sheet', { frameWidth: 50, frameHeight: 40, frames: 4 });
@@ -138,6 +170,73 @@ describe('createCanvas2DRenderer', () => {
 
     expect(calls.at(-1)?.at(-1)).toEqual({ alpha: 0.5 });
     expect(context.globalAlpha).toBe(1);
+  });
+
+  it('tints a sprite on the tint buffer, in device pixels, and draws the buffer in its place', () => {
+    const { context, calls } = createFakeContext();
+    const tint = createFakeTintBuffer();
+    const renderer = createCanvas2DRenderer(context, {
+      width: 1280,
+      height: 720,
+      scale: 2,
+      tintBuffer: tint.buffer,
+    });
+    renderer.beginFrame();
+
+    renderer.drawSprite(ATLAS, 1, 10, 20, {
+      width: 25,
+      height: 20,
+      tint: '#fff',
+      tintAmount: 0.75,
+    });
+
+    expect(tint.sizes).toEqual([[50, 40]]);
+    expect(tint.calls).toEqual([
+      ['setTransform', 1, 0, 0, 1, 0, 0],
+      ['clearRect', 0, 0, 50, 40],
+      ['drawImage', 'sheet', 50, 0, 50, 40, 0, 0, 50, 40, { alpha: 1, composite: 'source-over' }],
+      ['fillRect', 0, 0, 50, 40, { alpha: 0.75, composite: 'source-atop' }],
+    ]);
+    expect(tint.context).toMatchObject({
+      fillStyle: '#fff',
+      globalAlpha: 1,
+      globalCompositeOperation: 'source-over',
+    });
+    expect(calls.at(-1)).toEqual([
+      'drawImage',
+      'buffer',
+      0,
+      0,
+      50,
+      40,
+      10,
+      20,
+      25,
+      20,
+      { alpha: 1 },
+    ]);
+    expect(renderer.endFrame()).toEqual({ sprites: 1, culled: 0 });
+  });
+
+  it('draws a sprite as it is without a tint, a tint amount or a tint buffer', () => {
+    const tint = createFakeTintBuffer();
+    const withBuffer = createFakeContext();
+    const withoutBuffer = createFakeContext();
+    const buffered = createCanvas2DRenderer(withBuffer.context, {
+      width: 100,
+      height: 100,
+      tintBuffer: tint.buffer,
+    });
+    const plain = createCanvas2DRenderer(withoutBuffer.context, { width: 100, height: 100 });
+
+    buffered.drawSprite(ATLAS, 0, 0, 0);
+    buffered.drawSprite(ATLAS, 0, 0, 0, { tint: '#fff', tintAmount: 0 });
+    buffered.drawSprite(ATLAS, 0, 200, 0, { tint: '#fff' });
+    plain.drawSprite(ATLAS, 0, 0, 0, { tint: '#fff' });
+
+    expect(tint.calls).toEqual([]);
+    expect(withBuffer.calls.map((call) => call[1])).toEqual(['sheet', 'sheet']);
+    expect(withoutBuffer.calls.map((call) => call[1])).toEqual(['sheet']);
   });
 
   it('rejects a frame the atlas does not have', () => {
