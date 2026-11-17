@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.27.0...v0.28.0) (2026-11-17)
+
+
+### Features
+
+* **web:** vary the pitch of each sound and place it by its x ([#199](https://github.com/nazimajumaniyazova/buzzkill/issues/199)) ([cb2f838](https://github.com/nazimajumaniyazova/buzzkill/commit/cb2f838999d7caf540c4a69929fe03e3bd43e824))
+
 ## [0.27.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.26.0...v0.27.0) (2026-11-17)
 
 
