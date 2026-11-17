@@ -62,8 +62,9 @@ diagrams and the runtime data flow.
   `apps/web/src/errors`, the one place to log or send them (#113).
 - **Security.** No `innerHTML` or `insertAdjacentHTML` with data (ESLint bans them), JSX only;
   nicknames and anything from the server are untrusted; secrets only in git-ignored env files.
-- **CSS.** Colors and spacing only through design tokens (`var(--…)`); Stylelint enforces it outside
-  `packages/ui/src/tokens`.
+- **CSS.** Colors, spacing, durations and easing curves only through design tokens (`var(--…)`);
+  Stylelint enforces it outside `packages/ui/src/tokens`. An animation plays on the motion tokens,
+  which reduced motion shortens to nothing.
 - **Text.** Every string the player reads in `apps/web` comes from the dictionary in `src/i18n`
   through `useI18n()`, with numbers, plurals and dates through its `Intl` formatters; a new string
   goes into English and Russian together (ADR-0013). ESLint and a pseudo-language test enforce it.
