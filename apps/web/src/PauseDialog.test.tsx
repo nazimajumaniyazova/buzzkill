@@ -15,6 +15,18 @@ describe('PauseDialog', () => {
     expect(await axe(baseElement)).toHaveNoViolations();
   });
 
+  it('says when the gamepad went away, in its description, which a screen reader reads', async () => {
+    const { baseElement } = render(
+      <PauseDialog reason="gamepadLost" onResume={vi.fn()} onQuit={vi.fn()} />,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Paused' });
+    expect(dialog).toHaveAccessibleDescription(
+      'The gamepad was disconnected. Connect it again and resume, or play on with the keyboard.',
+    );
+    expect(await axe(baseElement)).toHaveNoViolations();
+  });
+
   it('resumes by the button, by Escape and by the close button', () => {
     const onResume = vi.fn();
     const onQuit = vi.fn();

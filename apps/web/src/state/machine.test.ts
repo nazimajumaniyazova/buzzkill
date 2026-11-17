@@ -40,7 +40,7 @@ const states = {
   heroSelect: { name: 'heroSelect' },
   loading: { name: 'loading', run },
   playing: { name: 'playing', assets, run, time: 'day' },
-  paused: { name: 'paused', assets, run, time: 'day' },
+  paused: { name: 'paused', assets, run, time: 'day', reason: 'player' },
   levelCleared: {
     name: 'levelCleared',
     assets,
@@ -72,6 +72,7 @@ const events = {
   resume: { type: 'resume' },
   gamePaused: { type: 'gamePaused' },
   gameResumed: { type: 'gameResumed' },
+  gamepadLost: { type: 'gamepadLost' },
   runEnded: { type: 'runEnded', result: resultWith('lost') },
   levelCleared: { type: 'levelCleared', level: 3, score: 120, nextTime: 'night' },
   nextLevel: { type: 'nextLevel' },
@@ -99,6 +100,7 @@ const TRANSITIONS: readonly Row[] = [
   { from: states.loading, event: events.back, to: 'heroSelect' },
   { from: states.playing, event: events.pause, to: 'paused' },
   { from: states.playing, event: events.gamePaused, to: 'paused' },
+  { from: states.playing, event: events.gamepadLost, to: 'paused' },
   { from: states.playing, event: events.levelCleared, to: 'levelCleared' },
   { from: states.levelCleared, event: events.nextLevel, to: 'playing' },
   { from: states.levelCleared, event: events.quit, to: 'menu' },
@@ -202,10 +204,19 @@ describe('transition', () => {
   it('keeps the same run object through pause and resume', () => {
     const paused = transition(states.playing, events.gamePaused);
 
-    expect(paused).toEqual({ name: 'paused', assets, run, time: 'day' });
+    expect(paused).toEqual({ name: 'paused', assets, run, time: 'day', reason: 'player' });
     expect(transition(paused, events.resume)).toEqual(states.playing);
     expect(transition(states.playing, events.pause)).toEqual(paused);
     expect(transition(paused, events.gameResumed)).toEqual(states.playing);
+  });
+
+  it('pauses a run whose gamepad disconnects, and keeps why until the run goes on', () => {
+    const lost = transition(states.playing, events.gamepadLost);
+
+    expect(lost).toEqual({ ...states.paused, reason: 'gamepadLost' });
+    // Already paused by the player, the run stays paused as it was.
+    expect(transition(states.paused, events.gamepadLost)).toBe(states.paused);
+    expect(transition(lost, events.resume)).toEqual(states.playing);
   });
 
   it('ends a won run as a victory and a lost run as game over, with the result and the time', () => {
@@ -301,6 +312,7 @@ describe('invariants of the flow', () => {
     fc.constant(events.resume),
     fc.constant(events.gamePaused),
     fc.constant(events.gameResumed),
+    fc.constant(events.gamepadLost),
     fc.record({
       type: fc.constant('runEnded' as const),
       result: fc.constantFrom('playing', 'levelCleared', 'won', 'lost').map(resultWith),

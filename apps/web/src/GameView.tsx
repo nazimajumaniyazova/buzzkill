@@ -28,7 +28,7 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 import { useAnnounce } from './announcer';
 import { announceRun } from './game/announce-run';
 import { createGameDrawer } from './game/draw-game';
-import { createHaptics, findVibrator } from './game/haptics';
+import { browserGamepads, canRumble, createHaptics, findVibrator } from './game/haptics';
 import { suggestsLandscape } from './game/landscape';
 import { pacedHost } from './game/paced-host';
 import { GAME_VERSION } from './game/run-options';
@@ -118,6 +118,7 @@ export function GameView({
   const squashStretchRef = useRef(squashStretch);
   const hitStopRef = useRef(hitStop);
   const vibrationRef = useRef(vibration);
+  const onEventRef = useRef(onEvent);
   const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
@@ -169,7 +170,13 @@ export function GameView({
         keyboard.dispose();
         keyboardRef.current = null;
       });
-      const gamepad = createGamepadSource(input, { bindings: DEFAULT_GAMEPAD_BINDINGS });
+      const gamepad = createGamepadSource(input, {
+        bindings: DEFAULT_GAMEPAD_BINDINGS,
+        // A gamepad gone in the middle of a run pauses it, and the pause says why (#154).
+        onDisconnect: () => {
+          onEventRef.current({ type: 'gamepadLost' });
+        },
+      });
       cleanups.push(() => {
         gamepad.dispose();
       });
@@ -196,8 +203,9 @@ export function GameView({
           }),
       };
 
-      // A device without the Vibration API gets no haptics at all (#162).
+      // A device that can neither vibrate nor rumble a gamepad gets no haptics at all (#162, #154).
       const vibrator = findVibrator(globalThis.navigator);
+      const feels = vibrator !== null || canRumble(globalThis);
       const created = createGame({
         settings: { heroId: run.heroId, mode: run.mode, difficulty: run.difficulty },
         seed: run.seed,
@@ -214,11 +222,15 @@ export function GameView({
           seed: run.seed,
         }),
         audio: assets.audio,
-        ...(vibrator === null
-          ? {}
-          : {
-              haptics: createHaptics({ enabled: () => vibrationRef.current, vibrator }),
-            }),
+        ...(feels
+          ? {
+              haptics: createHaptics({
+                enabled: () => vibrationRef.current,
+                vibrator,
+                gamepads: browserGamepads,
+              }),
+            }
+          : {}),
       });
       cleanups.push(() => {
         created.dispose();
@@ -266,6 +278,10 @@ export function GameView({
     () => (game === null ? undefined : announceRun(game, announce, t.announce)),
     [game, announce, t.announce],
   );
+
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
 
   // The bridge: what the game reports becomes events of the machine.
   useEffect(() => (game === null ? undefined : connectGame(game, onEvent)), [game, onEvent]);

@@ -126,7 +126,7 @@ function english(format: Format) {
       hitStopHint:
         'The picture holds for a moment when the hero is hit, when the queen rages and when she falls; the game itself goes on. Never while motion is reduced.',
       vibration: 'Vibration',
-      vibrationHint: 'The phone gives a short buzz when the hero is hit.',
+      vibrationHint: 'The phone buzzes and the gamepad rumbles briefly when the hero is hit.',
     },
     keyEditor: {
       caption: 'Keyboard',
@@ -223,6 +223,8 @@ function english(format: Format) {
     pause: {
       title: 'Paused',
       description: 'The run waits for you.',
+      gamepadLost:
+        'The gamepad was disconnected. Connect it again and resume, or play on with the keyboard.',
       resume: 'Resume',
       quit: 'Quit to menu',
     },

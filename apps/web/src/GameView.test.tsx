@@ -336,6 +336,80 @@ describe('GameView', () => {
     expect(vi.mocked(createGame).mock.lastCall?.[0]).not.toHaveProperty('haptics');
   });
 
+  describe('with a gamepad', () => {
+    /** A pad in the standard mapping, which the test changes in place. */
+    const pad = {
+      index: 0,
+      connected: true,
+      buttons: Array.from({ length: 17 }, () => ({ pressed: false })),
+      axes: [0, 0, 0, 0],
+    };
+    let pads: (typeof pad | null)[] = [];
+
+    beforeEach(() => {
+      pad.axes[1] = 0;
+      pads = [pad];
+      Object.defineProperty(navigator, 'getGamepads', { value: () => pads, configurable: true });
+    });
+
+    afterEach(() => {
+      Reflect.deleteProperty(navigator, 'getGamepads');
+      vi.unstubAllGlobals();
+    });
+
+    it('moves the hero with the left stick, past a dead zone', () => {
+      const frames = installFrames();
+      renderView();
+      frames.run(1);
+      const input = vi.mocked(createGame).mock.lastCall?.[0].input;
+
+      pad.axes[1] = -0.3;
+      input?.sample();
+      expect(input?.isHeld('moveUp')).toBe(false);
+
+      pad.axes[1] = -0.8;
+      input?.sample();
+      expect(input?.isHeld('moveUp')).toBe(true);
+
+      pad.axes[1] = 0.8;
+      input?.sample();
+      expect([input?.isHeld('moveUp'), input?.isHeld('moveDown')]).toEqual([false, true]);
+    });
+
+    it('rumbles the gamepad on a hit where the browser can, following the setting', () => {
+      const playEffect = vi.fn(() => Promise.resolve('complete'));
+      pads = [{ ...pad, vibrationActuator: { playEffect } } as typeof pad];
+      vi.stubGlobal('GamepadHapticActuator', vi.fn());
+      const frames = installFrames();
+      const view = renderView();
+      frames.run(1);
+      const haptics = vi.mocked(createGame).mock.lastCall?.[0].haptics;
+
+      haptics?.play('hit');
+      expect(playEffect).toHaveBeenCalledExactlyOnceWith(
+        'dual-rumble',
+        expect.objectContaining({ duration: HAPTIC_MS.hit }),
+      );
+
+      view.rerender({ vibration: false });
+      frames.run(1);
+      haptics?.play('hit');
+      expect(playEffect).toHaveBeenCalledOnce();
+    });
+
+    it('reports a gamepad that disconnects during the run, once', () => {
+      const frames = installFrames();
+      renderView();
+      frames.run(2);
+      expect(reported()).not.toContain('gamepadLost');
+
+      pads = [];
+      frames.run(3);
+
+      expect(reported().filter((type) => type === 'gamepadLost')).toHaveLength(1);
+    });
+  });
+
   it('starts the next level when the machine leaves the screen between levels', () => {
     const frames = installFrames();
     const view = renderView({ betweenLevels: true });

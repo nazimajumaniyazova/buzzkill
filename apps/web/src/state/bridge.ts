@@ -2,10 +2,10 @@ import { type Game, isRunOver, timeAfterLevel } from '@buzzkill/game';
 
 import type { AppEvent } from './machine';
 
-/** The events the game itself causes. */
+/** The events the game itself causes, and the loss of its gamepad, which the game view notices. */
 export type GameEvent = Extract<
   AppEvent,
-  { type: 'gamePaused' | 'gameResumed' | 'levelCleared' | 'runEnded' }
+  { type: 'gamePaused' | 'gameResumed' | 'gamepadLost' | 'levelCleared' | 'runEnded' }
 >;
 
 /**
