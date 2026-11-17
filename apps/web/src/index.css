@@ -22,6 +22,18 @@ body {
   min-height: 100%;
   padding: var(--space-inset-lg);
   text-align: center;
+  animation: screen-enter var(--motion-normal) var(--motion-easing);
+}
+
+/*
+ * A screen fades in as it enters (#160); the one before it leaves at once. It does not move: a
+ * screen is as tall as the window, and a shift would make the page scrollable while it lasts,
+ * which on a touch screen leaves the run scrolled. Reduced motion sets the duration to zero.
+ */
+@keyframes screen-enter {
+  from {
+    opacity: 0;
+  }
 }
 
 .screen h1,
@@ -120,6 +132,31 @@ html:has(.game) {
   margin: 0;
   font-weight: bold;
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The score bounces when it rises and the lives blink when one is lost (#160). Both play on the
+ * motion tokens, which reduced motion, from the setting or the system, shortens to nothing (#114).
+ * A blink lasts the slow duration, so a lost life flashes no more than three times a second.
+ */
+.hud-bounce {
+  animation: hud-bounce var(--motion-normal) var(--motion-easing);
+}
+
+.hud-blink {
+  animation: hud-blink var(--motion-slow) var(--motion-easing) 2;
+}
+
+@keyframes hud-bounce {
+  40% {
+    scale: 1.25;
+  }
+}
+
+@keyframes hud-blink {
+  50% {
+    opacity: 0.2;
+  }
 }
 
 /* The queen's health (#152): centered under the values, as wide as a third of the screen. */

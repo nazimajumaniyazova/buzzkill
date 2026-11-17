@@ -1,5 +1,5 @@
 import { type Game, type GameHud as Hud, LEVELS, QUEEN } from '@buzzkill/game';
-import type { JSX } from 'react';
+import { type JSX, useState } from 'react';
 
 import { useI18n } from './i18n/i18n';
 import { useGameHud } from './state/use-game-hud';
@@ -18,6 +18,39 @@ interface HudValueProps {
   readonly show: (value: number) => string;
 }
 
+/** A change of a value that plays its animation (#160), and the class that plays it. */
+const PULSES = {
+  /** The score bounces each time it rises. */
+  rise: 'hud-bounce',
+  /** The lives blink each time one is lost. */
+  fall: 'hud-blink',
+} as const;
+
+type Pulse = keyof typeof PULSES;
+
+interface HudPulseProps extends HudValueProps {
+  readonly pulse?: Pulse;
+}
+
+/**
+ * Counts the changes of `value` in the direction of `pulse` since the first render. The count
+ * keys the element that plays the animation, so each change starts it again on a new element, and
+ * the first render, before any change, plays nothing. The previous value is state, set during the
+ * render as React allows: the render runs again at once, and the HUD still commits once per
+ * changed value (#109).
+ */
+function usePulses(value: number, pulse: Pulse | undefined): number {
+  const [previous, setPrevious] = useState(value);
+  const [count, setCount] = useState(0);
+  if (value !== previous) {
+    setPrevious(value);
+    if (pulse === 'rise' ? value > previous : pulse === 'fall' && value < previous) {
+      setCount(count + 1);
+    }
+  }
+  return count;
+}
+
 const selectScore = (hud: Hud): number => hud.score;
 const selectLives = (hud: Hud): number => hud.lives;
 const selectAmmo = (hud: Hud): number => hud.ammo;
@@ -31,13 +64,20 @@ const selectBossEnraged = (hud: Hud): boolean => hud.bossEnraged;
 /** Where her rage begins along her bar, as a percentage of the most health she had. */
 const RAGE_MARK = `${String((QUEEN.rage.part / QUEEN.rage.of) * 100)}%`;
 
-/** One value of the HUD, subscribed on its own: it renders only when that value changes. */
-function HudValue({ game, term, select, show }: HudValueProps): JSX.Element {
+/**
+ * One value of the HUD, subscribed on its own: it renders only when that value changes. With a
+ * `pulse`, a change in that direction plays an animation of the stylesheet on the motion tokens,
+ * which reduced motion shortens to nothing.
+ */
+function HudValue({ game, term, select, show, pulse }: HudPulseProps): JSX.Element {
   const value = useGameHud(game, select);
+  const pulses = usePulses(value, pulse);
   return (
     <div>
       <dt>{term}</dt>
-      <dd>{show(value)}</dd>
+      <dd key={pulses} className={pulse === undefined || pulses === 0 ? undefined : PULSES[pulse]}>
+        {show(value)}
+      </dd>
     </div>
   );
 }
@@ -95,6 +135,7 @@ function BossBar({ game }: { readonly game: Game }): JSX.Element | null {
  * fire while they last, and the queen's health while she fights. The frame subscribes to nothing
  * but the language, so it renders once per run; each value subscribes through its own selector
  * (#109), so a shot renders the ammo and nothing else. The selectors pick numbers and the language writes them (ADR-0013).
+ * The score bounces when it rises and the lives blink when one is lost (#160).
  * The pause and the end of the run are the machine's business, through the bridge.
  */
 export function GameHud({ game, maxLives }: GameHudProps): JSX.Element {
@@ -102,11 +143,18 @@ export function GameHud({ game, maxLives }: GameHudProps): JSX.Element {
   return (
     <section className="hud" aria-label={t.hud.label}>
       <dl>
-        <HudValue game={game} term={t.hud.score} select={selectScore} show={format.number} />
+        <HudValue
+          game={game}
+          term={t.hud.score}
+          select={selectScore}
+          show={format.number}
+          pulse="rise"
+        />
         <HudValue
           game={game}
           term={t.hud.lives}
           select={selectLives}
+          pulse="fall"
           show={(lives) => t.hud.livesValue(lives, maxLives)}
         />
         <HudValue game={game} term={t.hud.ammo} select={selectAmmo} show={format.number} />
