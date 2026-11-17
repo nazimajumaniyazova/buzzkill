@@ -15,6 +15,11 @@ export interface GamepadSourceOptions<A extends string> {
   readonly getGamepads?: () => readonly (GamepadLike | null)[];
   /** How far a stick must move, in (0, 1], before its direction counts. Default 0.5. */
   readonly deadzone?: number;
+  /**
+   * Called from `poll` once for each pad that was connected at the previous poll and is not any
+   * more, gone from the list or marked disconnected (#154), with the pad's index.
+   */
+  readonly onDisconnect?: (index: number) => void;
 }
 
 export interface GamepadSource<A extends string> {
@@ -129,6 +134,7 @@ export function createGamepadSource<A extends string>(
       for (const index of known) {
         if (!seen.has(index)) {
           input.releaseSources(`${SOURCE_PREFIX}${String(index)}:`);
+          options.onDisconnect?.(index);
         }
       }
       const previous = known;
