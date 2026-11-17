@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.28.0...v0.29.0) (2026-11-17)
+
+
+### Features
+
+* **web:** give the music a budget of its own and duck it on explosions ([#201](https://github.com/nazimajumaniyazova/buzzkill/issues/201)) ([4d9dc18](https://github.com/nazimajumaniyazova/buzzkill/commit/4d9dc1848ca482c99d9bbabd7a3e38733e0c82aa))
+
 ## [0.28.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.27.0...v0.28.0) (2026-11-17)
 
 
