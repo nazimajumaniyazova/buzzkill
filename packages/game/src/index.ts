@@ -3,6 +3,7 @@
  * run headless in Node and in edge functions.
  */
 export {
+  ACHIEVEMENT_SCORE,
   type AchievementConfig,
   type AchievementCounts,
   type AchievementId,

@@ -32,6 +32,12 @@ export interface AchievementConfig<TId extends string = string> {
 
 const one = (): number => 1;
 
+/**
+ * The score of the high score achievement. A campaign won on the easy difficulty scores about 340
+ * (the golden replays).
+ */
+export const ACHIEVEMENT_SCORE = 250;
+
 /** Every achievement, in the order the shell lists them. */
 export const ACHIEVEMENTS = [
   { id: 'firstSwat', goal: 1, counts: { enemyDestroyed: one } },
@@ -56,8 +62,11 @@ export const ACHIEVEMENTS = [
       gameOver: ({ result }, run) => (result === 'won' && run.hitsThisRun === 0 ? 1 : 0),
     },
   },
-  // A campaign won on the easy difficulty scores about 340 (the golden replays).
-  { id: 'highScore', goal: 1, counts: { gameOver: ({ score }) => (score >= 250 ? 1 : 0) } },
+  {
+    id: 'highScore',
+    goal: 1,
+    counts: { gameOver: ({ score }) => (score >= ACHIEVEMENT_SCORE ? 1 : 0) },
+  },
 ] as const satisfies readonly AchievementConfig[];
 
 export type AchievementId = (typeof ACHIEVEMENTS)[number]['id'];

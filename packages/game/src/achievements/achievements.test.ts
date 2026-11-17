@@ -5,6 +5,7 @@ import type { GameMode } from '../config/enemies';
 import type { GameEvents } from '../simulation/state';
 import type { EntityId } from '../world/world';
 import {
+  ACHIEVEMENT_SCORE,
   type AchievementId,
   type AchievementProgress,
   ACHIEVEMENTS,
@@ -156,9 +157,9 @@ describe('followAchievements', () => {
 
   it('earns the high score for a run that ends at or above it, won or lost', () => {
     const short = run();
-    short.emit('gameOver', { result: 'lost', score: 249 });
+    short.emit('gameOver', { result: 'lost', score: ACHIEVEMENT_SCORE - 1 });
     const long = run();
-    long.emit('gameOver', { result: 'lost', score: 250 });
+    long.emit('gameOver', { result: 'lost', score: ACHIEVEMENT_SCORE });
 
     expect(short.earned).not.toContain('highScore');
     expect(long.earned).toContain('highScore');
