@@ -28,6 +28,7 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 import { useAnnounce } from './announcer';
 import { announceRun } from './game/announce-run';
 import { createGameDrawer } from './game/draw-game';
+import { createHaptics, findVibrator } from './game/haptics';
 import { suggestsLandscape } from './game/landscape';
 import { pacedHost } from './game/paced-host';
 import { GAME_VERSION } from './game/run-options';
@@ -59,6 +60,8 @@ interface GameViewProps {
   readonly squashStretch: boolean;
   /** The hit-stop setting (#158); a change applies to the run on screen. */
   readonly hitStop: boolean;
+  /** The vibration setting (#162); a change applies to the run on screen. */
+  readonly vibration: boolean;
   /**
    * The machine shows the screen between levels. The game holds itself on a cleared level; when
    * this turns false again, the next level starts (ADR-0017).
@@ -92,6 +95,7 @@ export function GameView({
   hitFlash,
   squashStretch,
   hitStop,
+  vibration,
   betweenLevels,
   onEvent,
 }: GameViewProps): JSX.Element {
@@ -113,6 +117,7 @@ export function GameView({
   const hitFlashRef = useRef(hitFlash);
   const squashStretchRef = useRef(squashStretch);
   const hitStopRef = useRef(hitStop);
+  const vibrationRef = useRef(vibration);
   const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
@@ -191,6 +196,8 @@ export function GameView({
           }),
       };
 
+      // A device without the Vibration API gets no haptics at all (#162).
+      const vibrator = findVibrator(globalThis.navigator);
       const created = createGame({
         settings: { heroId: run.heroId, mode: run.mode, difficulty: run.difficulty },
         seed: run.seed,
@@ -207,6 +214,11 @@ export function GameView({
           seed: run.seed,
         }),
         audio: assets.audio,
+        ...(vibrator === null
+          ? {}
+          : {
+              haptics: createHaptics({ enabled: () => vibrationRef.current, vibrator }),
+            }),
       });
       cleanups.push(() => {
         created.dispose();
@@ -238,7 +250,8 @@ export function GameView({
     hitFlashRef.current = hitFlash;
     squashStretchRef.current = squashStretch;
     hitStopRef.current = hitStop;
-  }, [hitFlash, squashStretch, hitStop]);
+    vibrationRef.current = vibration;
+  }, [hitFlash, squashStretch, hitStop, vibration]);
 
   useEffect(() => {
     if (bindingsRef.current === keyBindings) {

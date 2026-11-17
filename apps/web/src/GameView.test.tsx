@@ -16,6 +16,7 @@ import { reportError } from './errors/report-error';
 import { GAME_ASSETS } from './game/assets';
 import type * as DrawGameModule from './game/draw-game';
 import { createGameDrawer } from './game/draw-game';
+import { HAPTIC_MS } from './game/haptics';
 import { createGameSprites, type GameImages } from './game/sprites';
 import { GameView } from './GameView';
 import type { GameEvent } from './state/bridge';
@@ -121,6 +122,7 @@ describe('GameView', () => {
     readonly hitFlash: boolean;
     readonly squashStretch: boolean;
     readonly hitStop: boolean;
+    readonly vibration: boolean;
     readonly betweenLevels: boolean;
   }
 
@@ -137,6 +139,7 @@ describe('GameView', () => {
         hitFlash={props.hitFlash ?? true}
         squashStretch={props.squashStretch ?? true}
         hitStop={props.hitStop ?? true}
+        vibration={props.vibration ?? true}
         betweenLevels={props.betweenLevels ?? false}
         onEvent={onEvent}
       />,
@@ -156,6 +159,7 @@ describe('GameView', () => {
             hitFlash={next.hitFlash ?? props.hitFlash ?? true}
             squashStretch={next.squashStretch ?? props.squashStretch ?? true}
             hitStop={next.hitStop ?? props.hitStop ?? true}
+            vibration={next.vibration ?? props.vibration ?? true}
             betweenLevels={next.betweenLevels ?? props.betweenLevels ?? false}
             onEvent={onEvent}
           />,
@@ -299,6 +303,39 @@ describe('GameView', () => {
     expect(options?.hitStop?.()).toBe(false);
   });
 
+  it('vibrates on a hit where the device can, following the setting on screen', () => {
+    const vibrate = vi.fn(function (this: unknown) {
+      return this === navigator;
+    });
+    Object.defineProperty(navigator, 'vibrate', { value: vibrate, configurable: true });
+    try {
+      const frames = installFrames();
+      const view = renderView();
+      frames.run(1);
+      const haptics = vi.mocked(createGame).mock.lastCall?.[0].haptics;
+
+      haptics?.play('hit');
+      expect(vibrate).toHaveBeenCalledExactlyOnceWith(HAPTIC_MS.hit);
+      expect(vibrate).toHaveReturnedWith(true);
+
+      view.rerender({ vibration: false });
+      frames.run(1);
+      haptics?.play('hit');
+      expect(vibrate).toHaveBeenCalledOnce();
+    } finally {
+      Reflect.deleteProperty(navigator, 'vibrate');
+    }
+  });
+
+  it('gives the run no haptics where the device cannot vibrate', () => {
+    const frames = installFrames();
+    renderView();
+    frames.run(1);
+
+    expect('vibrate' in navigator).toBe(false);
+    expect(vi.mocked(createGame).mock.lastCall?.[0]).not.toHaveProperty('haptics');
+  });
+
   it('starts the next level when the machine leaves the screen between levels', () => {
     const frames = installFrames();
     const view = renderView({ betweenLevels: true });
@@ -418,6 +455,7 @@ describe('GameView', () => {
           hitFlash
           squashStretch
           hitStop
+          vibration
           betweenLevels={false}
           onEvent={onEvent}
         />
@@ -510,6 +548,7 @@ describe('GameView', () => {
           hitFlash
           squashStretch
           hitStop
+          vibration
           betweenLevels={false}
           onEvent={onEvent}
         />

@@ -357,6 +357,24 @@ describe('App', () => {
     expect(heading('Buzzkill')).toBeInTheDocument();
   });
 
+  it('offers the vibration in the settings only on a device that can vibrate', () => {
+    const { unmount } = render(<App />);
+    click('Settings');
+    fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+    expect(screen.queryByRole('switch', { name: 'Vibration' })).not.toBeInTheDocument();
+    unmount();
+
+    Object.defineProperty(navigator, 'vibrate', { value: vi.fn(() => true), configurable: true });
+    try {
+      render(<App />);
+      click('Settings');
+      fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+      expect(screen.getByRole('switch', { name: 'Vibration' })).toBeChecked();
+    } finally {
+      Reflect.deleteProperty(navigator, 'vibrate');
+    }
+  });
+
   it('sets the mixer from the settings when a run starts, with the settings of that moment', async () => {
     render(<App />);
     expect(setVolume).not.toHaveBeenCalled();
