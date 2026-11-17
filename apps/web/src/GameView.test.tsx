@@ -16,6 +16,7 @@ import { reportError } from './errors/report-error';
 import { GAME_ASSETS } from './game/assets';
 import type * as DrawGameModule from './game/draw-game';
 import { createGameDrawer } from './game/draw-game';
+import { PITCH_CENTS } from './game/game-audio';
 import { HAPTIC_MS } from './game/haptics';
 import { createGameSprites, type GameImages } from './game/sprites';
 import { GameView } from './GameView';
@@ -105,6 +106,8 @@ function hudValue(name: 'Score' | 'Lives' | 'Ammo'): string | null {
 
 describe('GameView', () => {
   let audio: AudioMixer<GameSound>;
+  /** The sounds played so far, in order. */
+  const sounds = (): GameSound[] => play.mock.calls.map(([sound]) => sound);
   let assets: GameAssets;
   let play: ReturnType<typeof vi.fn<AudioMixer<GameSound>['play']>>;
   let onEvent: ReturnType<typeof vi.fn<(event: GameEvent) => void>>;
@@ -205,12 +208,12 @@ describe('GameView', () => {
     fireEvent.keyDown(window, { code: 'Space' });
     frames.run(2);
     fireEvent.keyUp(window, { code: 'Space' });
-    expect(play).not.toHaveBeenCalledWith('shot');
+    expect(sounds()).not.toContain('shot');
 
     fireEvent.keyDown(window, { code: 'KeyF' });
     frames.run(2);
     fireEvent.keyUp(window, { code: 'KeyF' });
-    expect(play).toHaveBeenCalledWith('shot');
+    expect(sounds()).toContain('shot');
   });
 
   it('applies new keys to the run on screen', () => {
@@ -222,12 +225,12 @@ describe('GameView', () => {
     fireEvent.keyDown(window, { code: 'Space' });
     frames.run(2);
     fireEvent.keyUp(window, { code: 'Space' });
-    expect(play).not.toHaveBeenCalledWith('shot');
+    expect(sounds()).not.toContain('shot');
 
     fireEvent.keyDown(window, { code: 'KeyF' });
     frames.run(2);
     fireEvent.keyUp(window, { code: 'KeyF' });
-    expect(play).toHaveBeenCalledWith('shot');
+    expect(sounds()).toContain('shot');
   });
 
   it('applies a change of the motion setting to the run on screen without restarting it', () => {
@@ -334,6 +337,20 @@ describe('GameView', () => {
 
     expect('vibrate' in navigator).toBe(false);
     expect(vi.mocked(createGame).mock.lastCall?.[0]).not.toHaveProperty('haptics');
+  });
+
+  it('plays the shot a little off its pitch, from the left, where the hero stands (#161)', () => {
+    const frames = installFrames();
+    renderView();
+    frames.run(1);
+
+    fireEvent.keyDown(window, { code: 'Space' });
+    frames.run(2);
+
+    const options = play.mock.calls.find(([sound]) => sound === 'shot')?.[1];
+    const cents = Math.log2(options?.rate ?? Number.NaN) * 1200;
+    expect(Math.abs(cents)).toBeLessThanOrEqual(PITCH_CENTS);
+    expect(options?.pan).toBeLessThan(0);
   });
 
   describe('with a gamepad', () => {
@@ -444,7 +461,7 @@ describe('GameView', () => {
     frames.run(2);
     fireEvent.keyUp(window, { code: 'Space' });
 
-    expect(play).toHaveBeenCalledWith('shot');
+    expect(sounds()).toContain('shot');
     expect(hudValue('Ammo')).toBe('19');
   });
 
@@ -643,7 +660,7 @@ describe('GameView', () => {
     frames.run(2);
     fireEvent.pointerUp(fire, { pointerId: 1 });
 
-    expect(play).toHaveBeenCalledWith('shot');
+    expect(sounds()).toContain('shot');
     expect(hudValue('Ammo')).toBe('19');
   });
 

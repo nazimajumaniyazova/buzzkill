@@ -6,6 +6,7 @@ import {
   type AudioNodeLike,
   createAudioMixer,
   type GainNodeLike,
+  type StereoPannerLike,
 } from './mixer';
 
 type Sound = 'shot' | 'hit' | 'theme';
@@ -16,11 +17,15 @@ interface FakeSource extends AudioBufferSourceLike<string> {
   readonly stopped: boolean;
 }
 
-/** A context that starts suspended and records the sources it creates. */
-function createFakeContext(options: { refuseResume?: boolean } = {}) {
+/**
+ * A context that starts suspended and records the nodes it creates; with `panner: false`, it has
+ * no stereo panner, as some older browsers.
+ */
+function createFakeContext(options: { refuseResume?: boolean; panner?: boolean } = {}) {
   const destination: AudioNodeLike = { connect: () => undefined };
   const gains: (GainNodeLike & { target: AudioNodeLike | null })[] = [];
   const sources: FakeSource[] = [];
+  const panners: (StereoPannerLike & { target: AudioNodeLike | null })[] = [];
   let state = 'suspended';
   const context: AudioContextLike<string> = {
     get state() {
@@ -42,6 +47,7 @@ function createFakeContext(options: { refuseResume?: boolean } = {}) {
       const source = {
         buffer: null as string | null,
         loop: false,
+        playbackRate: { value: 1 },
         target: null as AudioNodeLike | null,
         started: false,
         stopped: false,
@@ -58,6 +64,21 @@ function createFakeContext(options: { refuseResume?: boolean } = {}) {
       sources.push(source);
       return source;
     },
+    ...(options.panner === false
+      ? {}
+      : {
+          createStereoPanner() {
+            const panner = {
+              pan: { value: 0 },
+              target: null as AudioNodeLike | null,
+              connect(node: AudioNodeLike) {
+                panner.target = node;
+              },
+            };
+            panners.push(panner);
+            return panner;
+          },
+        }),
     resume() {
       if (options.refuseResume === true) {
         return Promise.reject(new Error('NotAllowedError'));
@@ -70,12 +91,55 @@ function createFakeContext(options: { refuseResume?: boolean } = {}) {
       return Promise.resolve();
     },
   };
-  return { context, destination, gains, sources };
+  return { context, destination, gains, sources, panners };
 }
 
 const BUFFERS = { shot: 'shot-buffer', theme: 'theme-buffer' };
 
 describe('createAudioMixer', () => {
+  it('plays an effect at a rate and through a pan to the effects group (#161)', async () => {
+    const fake = createFakeContext();
+    const mixer = createAudioMixer<Sound, string>({ context: fake.context, buffers: BUFFERS });
+    await mixer.unlock();
+
+    mixer.play('shot', { rate: 1.05, pan: -0.5 });
+
+    const [source] = fake.sources;
+    const [panner] = fake.panners;
+    expect(source?.playbackRate.value).toBe(1.05);
+    expect(source?.target).toBe(panner);
+    expect(panner?.pan.value).toBe(-0.5);
+    expect(panner?.target).toBe(fake.gains[1]);
+  });
+
+  it('plays straight to the group at the natural rate without a pan, or without a panner', async () => {
+    const plain = createFakeContext();
+    const old = createFakeContext({ panner: false });
+    const mixers = [plain, old].map((fake) =>
+      createAudioMixer<Sound, string>({ context: fake.context, buffers: BUFFERS }),
+    );
+    await Promise.all(mixers.map((mixer) => mixer.unlock()));
+
+    mixers[0]?.play('shot');
+    mixers[1]?.play('shot', { pan: 0.7 });
+
+    expect(plain.panners).toEqual([]);
+    expect(plain.sources[0]?.playbackRate.value).toBe(1);
+    expect(plain.sources[0]?.target).toBe(plain.gains[1]);
+    expect(old.sources[0]?.target).toBe(old.gains[1]);
+  });
+
+  it('keeps a pan within the speakers', async () => {
+    const fake = createFakeContext();
+    const mixer = createAudioMixer<Sound, string>({ context: fake.context, buffers: BUFFERS });
+    await mixer.unlock();
+
+    mixer.play('shot', { pan: -3 });
+    mixer.play('shot', { pan: 2 });
+
+    expect(fake.panners.map((panner) => panner.pan.value)).toEqual([-1, 1]);
+  });
+
   it('routes two volume groups to the speakers with their initial volumes', () => {
     const fake = createFakeContext();
     const mixer = createAudioMixer<Sound, string>({

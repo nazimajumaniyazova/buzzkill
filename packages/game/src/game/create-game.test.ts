@@ -222,7 +222,12 @@ describe('createGame', () => {
     s.input.press('fire', 'key:Space');
     runUntilTick(s, s.view().tick + 1);
 
-    expect(s.play).toHaveBeenCalledExactlyOnceWith('shot');
+    // At the x of the muzzle, for the pan of the sound (#161).
+    const { world, player, hero } = s.view();
+    expect(s.play).toHaveBeenCalledExactlyOnceWith(
+      'shot',
+      (world.x[player] as number) + hero.muzzle.x,
+    );
     expect(s.game.getHud().ammo).toBe(RULES.ammo.start - 1);
   });
 
@@ -256,9 +261,12 @@ describe('createGame', () => {
     runUntilTick(s, 3600);
 
     expect(s.game.getHud().lives).toBeLessThan(RULES.lives);
-    expect(s.play).toHaveBeenCalledWith('hit');
-    expect(s.play).toHaveBeenCalledWith('explosion');
-    expect(s.play).not.toHaveBeenCalledWith('shot');
+    // The hit sounds where the hero is, who stands still; the explosion where it starts.
+    const { world, player } = s.view();
+    const heroX = (world.x[player] as number) + (world.width[player] as number) / 2;
+    expect(s.play).toHaveBeenCalledWith('hit', heroX);
+    expect(s.play).toHaveBeenCalledWith('explosion', expect.any(Number));
+    expect(s.play.mock.calls.map(([sound]) => sound)).not.toContain('shot');
   });
 
   it('gives one haptic pulse for each hit on the hero, and nothing else', () => {
@@ -295,7 +303,11 @@ describe('createGame', () => {
     const start = s.view().tick;
 
     runUntilTick(s, start + 1);
-    expect(s.play.mock.calls).toEqual([['pickup'], ['pickup']]);
+    const center = 60 + POWER_UP_RULES.size / 2;
+    expect(s.play.mock.calls).toEqual([
+      ['pickup', center],
+      ['pickup', center],
+    ]);
     expect(s.game.getHud()).toMatchObject({ shield: 10, rapidFire: 8 });
 
     runUntilTick(s, start + 61);

@@ -66,7 +66,11 @@ export type GameSound = 'shot' | 'explosion' | 'hit' | 'pickup' | 'bossPhase';
 
 /** Plays sound effects. The Web Audio implementation arrives with #36. */
 export interface GameAudio {
-  play(sound: GameSound): void;
+  /**
+   * Plays `sound`, which happened at `x` in world units, for its place between the speakers
+   * (#161); without `x`, it sounds from the middle.
+   */
+  play(sound: GameSound, x?: number): void;
 }
 
 /** What a run makes the player feel on a device that can: a hit on the hero (#162). */
@@ -193,18 +197,20 @@ export function createGame(options: CreateGameOptions): Game {
   const { state } = simulation;
 
   // The bus belongs to this run, so `dispose` clears these with everything else on it.
-  state.events.on('shot', () => {
-    audio.play('shot');
+  state.events.on('shot', ({ x }) => {
+    audio.play('shot', x);
   });
-  state.events.on('explosion', () => {
-    audio.play('explosion');
+  state.events.on('explosion', ({ x }) => {
+    audio.play('explosion', x);
   });
   state.events.on('playerHit', () => {
-    audio.play('hit');
+    // The blow lands on the hero, wherever it came from: the sound is where the hero is.
+    const { world, player } = state;
+    audio.play('hit', (world.x[player] ?? 0) + (world.width[player] ?? 0) / 2);
     haptics?.play('hit');
   });
-  state.events.on('powerUpCollected', () => {
-    audio.play('pickup');
+  state.events.on('powerUpCollected', ({ x }) => {
+    audio.play('pickup', x);
   });
   state.events.on('bossEntered', () => {
     audio.play('bossPhase');
