@@ -26,13 +26,13 @@ body {
 }
 
 /*
- * A screen fades in and rises a little as it enters (#160); the one before it leaves at once.
- * Reduced motion sets the duration to zero, so the screen simply appears.
+ * A screen fades in as it enters (#160); the one before it leaves at once. It does not move: a
+ * screen is as tall as the window, and a shift would make the page scrollable while it lasts,
+ * which on a touch screen leaves the run scrolled. Reduced motion sets the duration to zero.
  */
 @keyframes screen-enter {
   from {
     opacity: 0;
-    translate: 0 var(--space-stack-md);
   }
 }
 
