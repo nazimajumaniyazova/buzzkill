@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.29.0...v0.30.0) (2026-11-17)
+
+
+### Features
+
+* **web:** keep the achievements, toast each one earned and list them ([#203](https://github.com/nazimajumaniyazova/buzzkill/issues/203)) ([73ef981](https://github.com/nazimajumaniyazova/buzzkill/commit/73ef981fe7f2ef19445ade9ec60b82f6b48fc4f2)), closes [#163](https://github.com/nazimajumaniyazova/buzzkill/issues/163)
+
 ## [0.29.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.28.0...v0.29.0) (2026-11-17)
 
 
