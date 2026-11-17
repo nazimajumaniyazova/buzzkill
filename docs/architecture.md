@@ -190,7 +190,9 @@ flowchart TB
 - Sounds and haptics are ports the run calls on its events, `GameAudio` and the optional
   `GameHaptics`: a hit on the hero plays the hit sound and, on a phone that can, a short vibration
   through the Vibration API (#162), and a rumble of every gamepad that can (#154). Without the port,
-  where nothing can vibrate, the run is the same.
+  where nothing can vibrate, the run is the same. A sound carries the x of its event; the shell
+  places it between the speakers by that x and moves its pitch a little each time, on random
+  numbers of its own, so the replay does not change (#161).
 
 ## Runtime data flow
 

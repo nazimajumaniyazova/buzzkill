@@ -5,6 +5,7 @@ import {
   createActionInput,
   createCanvas2DRenderer,
   createCanvasTintBuffer,
+  createRng,
   type GameLoopHost,
   type KeyBindings,
 } from '@buzzkill/engine';
@@ -28,6 +29,7 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 import { useAnnounce } from './announcer';
 import { announceRun } from './game/announce-run';
 import { createGameDrawer } from './game/draw-game';
+import { createGameAudio } from './game/game-audio';
 import { browserGamepads, canRumble, createHaptics, findVibrator } from './game/haptics';
 import { suggestsLandscape } from './game/landscape';
 import { pacedHost } from './game/paced-host';
@@ -37,6 +39,9 @@ import { useI18n } from './i18n/i18n';
 import { connectGame, type GameEvent } from './state/bridge';
 import type { GameAssets, Run } from './state/machine';
 import { TouchControls } from './TouchControls';
+
+/** Mixed into the run's seed for the sounds' own random numbers, apart from the particles'. */
+const SOUND_SEED = 0x85ebca6b;
 
 interface GameViewProps {
   readonly run: Run;
@@ -206,6 +211,7 @@ export function GameView({
       // A device that can neither vibrate nor rumble a gamepad gets no haptics at all (#162, #154).
       const vibrator = findVibrator(globalThis.navigator);
       const feels = vibrator !== null || canRumble(globalThis);
+      const soundRng = createRng((run.seed ^ SOUND_SEED) >>> 0);
       const created = createGame({
         settings: { heroId: run.heroId, mode: run.mode, difficulty: run.difficulty },
         seed: run.seed,
@@ -221,7 +227,11 @@ export function GameView({
           hitStop: () => hitStopRef.current,
           seed: run.seed,
         }),
-        audio: assets.audio,
+        // The sounds' variety draws on numbers of its own, apart from the simulation's (#161).
+        audio: createGameAudio(assets.audio, {
+          random: () => soundRng.nextFloat(),
+          width: WORLD.width,
+        }),
         ...(feels
           ? {
               haptics: createHaptics({

@@ -1,0 +1,41 @@
+import type { PlayOptions } from '@buzzkill/engine';
+import type { GameAudio, GameSound } from '@buzzkill/game';
+
+/**
+ * The game's sounds on the mixer (#161): each a little higher or lower than the last, so a burst
+ * of shots does not sound like one sample on repeat, and placed between the speakers by where it
+ * happened. The variety draws on random numbers of its own, never the simulation's, so the run and
+ * its replay are the same with or without sound.
+ */
+
+/** How far the pitch of a sound may wander either way, in cents (a hundredth of a semitone). */
+export const PITCH_CENTS = 60;
+
+/** How far toward a speaker a sound at the edge of the world is placed: not quite in it. */
+export const PAN_WIDTH = 0.8;
+
+export interface GameAudioOptions {
+  /** A number in [0, 1) for each sound: the renderer's own random numbers. */
+  readonly random: () => number;
+  /** The width of the world, whose left edge is the left speaker. */
+  readonly width: number;
+}
+
+/** The part of the mixer the game's sounds use. */
+export interface EffectsMixer {
+  play(sound: GameSound, options?: PlayOptions): void;
+}
+
+/** The game's audio port on `mixer`. */
+export function createGameAudio(mixer: EffectsMixer, options: GameAudioOptions): GameAudio {
+  const { random, width } = options;
+  return {
+    play(sound, x) {
+      const cents = (random() * 2 - 1) * PITCH_CENTS;
+      mixer.play(sound, {
+        rate: 2 ** (cents / 1200),
+        pan: x === undefined ? 0 : ((x / width) * 2 - 1) * PAN_WIDTH,
+      });
+    },
+  };
+}
