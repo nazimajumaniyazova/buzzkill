@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.26.0...v0.27.0) (2026-11-17)
+
+
+### Features
+
+* **web:** pause a run when its gamepad goes away, and rumble on a hit ([#197](https://github.com/nazimajumaniyazova/buzzkill/issues/197)) ([1c08a7c](https://github.com/nazimajumaniyazova/buzzkill/commit/1c08a7c1ad91c858a66159e502869786204d60fb)), closes [#154](https://github.com/nazimajumaniyazova/buzzkill/issues/154)
+
 ## [0.26.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.25.0...v0.26.0) (2026-11-17)
 
 
