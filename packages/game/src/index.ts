@@ -3,6 +3,19 @@
  * run headless in Node and in edge functions.
  */
 export {
+  ACHIEVEMENT_SCORE,
+  type AchievementConfig,
+  type AchievementCounts,
+  type AchievementId,
+  type AchievementProgress,
+  ACHIEVEMENTS,
+  followAchievements,
+  type FollowOptions,
+  noProgress,
+  type RunContext,
+  unlocked,
+} from './achievements/achievements';
+export {
   DEFAULT_GAMEPAD_BINDINGS,
   DEFAULT_KEY_BINDINGS,
   GAME_ACTIONS,

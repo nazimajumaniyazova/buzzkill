@@ -1,3 +1,5 @@
+import { ACHIEVEMENT_SCORE } from '@buzzkill/game';
+
 import type { Dictionary, Messages } from './en';
 
 /**
@@ -8,6 +10,7 @@ export const ru: Dictionary = (format): Messages => ({
   common: {
     back: 'Назад',
     close: 'Закрыть',
+    notifications: 'Уведомления',
   },
   actions: {
     moveUp: 'Вверх',
@@ -54,6 +57,46 @@ export const ru: Dictionary = (format): Messages => ({
     play: 'Играть',
     settings: 'Настройки',
     help: 'Справка',
+    achievements: 'Достижения',
+  },
+  achievements: {
+    title: 'Достижения',
+    intro: 'Хранятся на этом устройстве. Каждая игра приближает к ним.',
+    progress: (count, goal) => `${format.number(count)} из ${format.number(goal)}`,
+    earned: 'Получено',
+    unlocked: 'Новое достижение',
+    items: {
+      firstSwat: { name: 'Первый удар', description: () => 'Уничтожьте насекомое.' },
+      swatter: {
+        name: 'Мухобойка',
+        description: (goal) =>
+          `Уничтожьте ${format.number(goal)} ${format.plural(goal, { one: 'насекомое', few: 'насекомых', many: 'насекомых', other: 'насекомого' })}.`,
+      },
+      nightShift: {
+        name: 'Ночная смена',
+        description: (goal) =>
+          `Уничтожьте ${format.number(goal)} ${format.plural(goal, { one: 'насекомое', few: 'насекомых', many: 'насекомых', other: 'насекомого' })} ночью.`,
+      },
+      untouched: {
+        name: 'Без единой царапины',
+        description: () => 'Пройдите уровень, не потеряв ни одной жизни.',
+      },
+      collector: {
+        name: 'Коллекционер',
+        description: (goal) =>
+          `Соберите ${format.number(goal)} ${format.plural(goal, { one: 'бонус', few: 'бонуса', many: 'бонусов', other: 'бонуса' })}.`,
+      },
+      regicide: { name: 'Цареубийца', description: () => 'Победите королеву.' },
+      champion: { name: 'Чемпион', description: () => 'Пройдите всю кампанию.' },
+      flawless: {
+        name: 'Безупречно',
+        description: () => 'Пройдите всю кампанию, не потеряв ни одной жизни.',
+      },
+      highScore: {
+        name: 'Рекордсмен',
+        description: () => `Наберите ${format.number(ACHIEVEMENT_SCORE)} очков за одну игру.`,
+      },
+    },
   },
   heroSelect: {
     title: 'Выберите героя',

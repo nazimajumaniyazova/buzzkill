@@ -1,5 +1,12 @@
 import type { AssetFailure } from '@buzzkill/engine';
-import type { Difficulty, GameAction, GameMode, HeroId } from '@buzzkill/game';
+import {
+  ACHIEVEMENT_SCORE,
+  type AchievementId,
+  type Difficulty,
+  type GameAction,
+  type GameMode,
+  type HeroId,
+} from '@buzzkill/game';
 
 import type { ErrorArea } from '../errors/report-error';
 import type { MotionChoice } from '../motion';
@@ -19,6 +26,7 @@ function english(format: Format) {
     common: {
       back: 'Back',
       close: 'Close',
+      notifications: 'Notifications',
     },
     actions: {
       moveUp: 'Move up',
@@ -67,6 +75,45 @@ function english(format: Format) {
       play: 'Play',
       settings: 'Settings',
       help: 'Help',
+      achievements: 'Achievements',
+    },
+    /** The achievements (#163): their list in the menu and the toast that says one was earned. */
+    achievements: {
+      title: 'Achievements',
+      intro: 'Kept on this device. Each run counts toward them.',
+      progress: (count: number, goal: number) =>
+        `${format.number(count)} of ${format.number(goal)}`,
+      earned: 'Earned',
+      unlocked: 'Achievement unlocked',
+      items: {
+        firstSwat: { name: 'First swat', description: () => 'Destroy an insect.' },
+        swatter: {
+          name: 'Swatter',
+          description: (goal: number) => `Destroy ${format.number(goal)} insects.`,
+        },
+        nightShift: {
+          name: 'Night shift',
+          description: (goal: number) => `Destroy ${format.number(goal)} insects at night.`,
+        },
+        untouched: { name: 'Untouched', description: () => 'Clear a level without losing a life.' },
+        collector: {
+          name: 'Collector',
+          description: (goal: number) => `Collect ${format.number(goal)} power-ups.`,
+        },
+        regicide: { name: 'Regicide', description: () => 'Defeat the queen.' },
+        champion: { name: 'Champion', description: () => 'Win the campaign.' },
+        flawless: {
+          name: 'Flawless',
+          description: () => 'Win the campaign without losing a life.',
+        },
+        highScore: {
+          name: 'High scorer',
+          description: () => `Score ${format.number(ACHIEVEMENT_SCORE)} in one run.`,
+        },
+      } satisfies Record<
+        AchievementId,
+        { readonly name: string; readonly description: (goal: number) => string }
+      >,
     },
     heroSelect: {
       title: 'Choose your hero',

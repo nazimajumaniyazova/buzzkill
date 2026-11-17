@@ -11,6 +11,8 @@ interface MenuScreenProps {
    */
   readonly onPreload: () => void;
   readonly onSettings: () => void;
+  /** Opens the list of achievements (#163). */
+  readonly onAchievements: () => void;
   readonly onHelp: () => void;
 }
 
@@ -19,6 +21,7 @@ export function MenuScreen({
   onPlay,
   onPreload,
   onSettings,
+  onAchievements,
   onHelp,
 }: MenuScreenProps): JSX.Element {
   const titleId = useId();
@@ -38,6 +41,9 @@ export function MenuScreen({
             </Button>
             <Button variant="secondary" onClick={onSettings}>
               {t.menu.settings}
+            </Button>
+            <Button variant="secondary" onClick={onAchievements}>
+              {t.menu.achievements}
             </Button>
             <Button variant="secondary" onClick={onHelp}>
               {t.menu.help}

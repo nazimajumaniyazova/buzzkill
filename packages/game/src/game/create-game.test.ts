@@ -16,6 +16,7 @@ import {
   createGame,
   type Game,
   type GameAudio,
+  type GameEventSource,
   type GameHaptics,
   type GameHud,
   type GameRenderer,
@@ -251,6 +252,35 @@ describe('createGame', () => {
       x: (world.x[player] as number) + hero.muzzle.x,
       y: (world.y[player] as number) + hero.muzzle.y,
     });
+  });
+
+  it('lets followers follow the events of the run, such as the achievements (#163)', () => {
+    const fake = createFakeHost();
+    const input = createActionInput(GAME_ACTIONS);
+    const shots = vi.fn<(event: GameEvents['shot']) => void>();
+    const follower = vi.fn((events: GameEventSource) => {
+      events.on('shot', shots);
+    });
+    const game = createGame({
+      settings: { heroId: 'male', mode: 'day', difficulty: 'normal' },
+      seed: 1,
+      gameVersion: 'test',
+      input,
+      host: fake.host,
+      renderer: { render: vi.fn() },
+      audio: { play: vi.fn() },
+      followers: [follower],
+    });
+
+    expect(follower).toHaveBeenCalledOnce();
+    expect(Object.keys(follower.mock.calls[0]?.[0] ?? {})).toEqual(['on']);
+    game.start();
+    fake.frame();
+    input.press('fire', 'key:Space');
+    fake.frame();
+    fake.frame();
+
+    expect(shots).toHaveBeenCalledOnce();
   });
 
   it('plays the hit and explosion sounds when an enemy reaches the hero', () => {

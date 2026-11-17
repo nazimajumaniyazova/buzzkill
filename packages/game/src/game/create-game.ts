@@ -36,8 +36,8 @@ export type GameView = Pick<
 >;
 
 /**
- * The run's events, to follow but not to emit: a renderer's effects react to them (#156). Its
- * listeners go with the run when it is disposed.
+ * The run's events, to follow but not to emit: a renderer's effects react to them (#156), and so
+ * do the achievements (#163). Its listeners go with the run when it is disposed.
  */
 export interface GameEventSource {
   /** Registers a listener and returns the function that removes it. */
@@ -126,6 +126,11 @@ export interface CreateGameOptions {
   readonly audio: GameAudio;
   /** Haptic feedback where the device has it (#162). */
   readonly haptics?: GameHaptics;
+  /**
+   * Called once each, when the run is created, to follow its events without emitting them: the
+   * achievements (#163). They see what happened and cannot change it.
+   */
+  readonly followers?: readonly ((events: GameEventSource) => void)[];
 }
 
 export interface Game {
@@ -218,7 +223,11 @@ export function createGame(options: CreateGameOptions): Game {
   state.events.on('bossEnraged', () => {
     audio.play('bossPhase');
   });
-  renderer.listen?.({ on: (type, listener) => state.events.on(type, listener) });
+  const source: GameEventSource = { on: (type, listener) => state.events.on(type, listener) };
+  renderer.listen?.(source);
+  for (const follow of options.followers ?? []) {
+    follow(source);
+  }
 
   const hudBus = createEventBus<{ change: GameHud }>();
   let paused = false;

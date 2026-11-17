@@ -16,9 +16,12 @@ import {
   type KeyboardSource,
 } from '@buzzkill/engine/browser';
 import {
+  type AchievementId,
+  type AchievementProgress,
   createGame,
   DEFAULT_GAMEPAD_BINDINGS,
   DIFFICULTIES,
+  followAchievements,
   type Game,
   GAME_ACTIONS,
   type GameAction,
@@ -67,6 +70,13 @@ interface GameViewProps {
   readonly hitStop: boolean;
   /** The vibration setting (#162); a change applies to the run on screen. */
   readonly vibration: boolean;
+  /** The progress of the achievements before the run (#163). */
+  readonly achievements: AchievementProgress;
+  /** Called with the new progress after each event that moved it, and what it earned. */
+  readonly onAchievements: (
+    progress: AchievementProgress,
+    earned: readonly AchievementId[],
+  ) => void;
   /**
    * The machine shows the screen between levels. The game holds itself on a cleared level; when
    * this turns false again, the next level starts (ADR-0017).
@@ -101,6 +111,8 @@ export function GameView({
   squashStretch,
   hitStop,
   vibration,
+  achievements,
+  onAchievements,
   betweenLevels,
   onEvent,
 }: GameViewProps): JSX.Element {
@@ -124,6 +136,8 @@ export function GameView({
   const hitStopRef = useRef(hitStop);
   const vibrationRef = useRef(vibration);
   const onEventRef = useRef(onEvent);
+  const achievementsRef = useRef(achievements);
+  const onAchievementsRef = useRef(onAchievements);
   const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
@@ -228,6 +242,18 @@ export function GameView({
           seed: run.seed,
         }),
         // The sounds' variety draws on numbers of its own, apart from the simulation's (#161).
+        // The run counts toward the achievements from the progress at its start (#163).
+        followers: [
+          (events) => {
+            followAchievements(events, {
+              mode: run.mode,
+              progress: achievementsRef.current,
+              onChange: (progress, earned) => {
+                onAchievementsRef.current(progress, earned);
+              },
+            });
+          },
+        ],
         audio: createGameAudio(assets.audio, {
           random: () => soundRng.nextFloat(),
           width: WORLD.width,
@@ -292,6 +318,11 @@ export function GameView({
   useEffect(() => {
     onEventRef.current = onEvent;
   }, [onEvent]);
+
+  useEffect(() => {
+    achievementsRef.current = achievements;
+    onAchievementsRef.current = onAchievements;
+  }, [achievements, onAchievements]);
 
   // The bridge: what the game reports becomes events of the machine.
   useEffect(() => (game === null ? undefined : connectGame(game, onEvent)), [game, onEvent]);
