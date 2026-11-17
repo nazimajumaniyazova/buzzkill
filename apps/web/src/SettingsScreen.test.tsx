@@ -149,6 +149,36 @@ describe('SettingsScreen', () => {
     expect(onChange).toHaveBeenLastCalledWith({ particles: true });
   });
 
+  it('turns the screen shake off and on in the effects tab, below the particles', async () => {
+    const onChange = vi.fn();
+    const { container, rerender } = render(
+      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+    expect(
+      within(screen.getByRole('tabpanel'))
+        .getAllByRole('switch')
+        .map((item) => item.textContent),
+    ).toEqual(['Particles', 'Screen shake']);
+    const shake = screen.getByRole('switch', { name: 'Screen shake' });
+    expect(shake).toBeChecked();
+    expect(shake).toHaveAccessibleDescription(/Never while motion is reduced\.$/);
+    fireEvent.click(shake);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ screenShake: false });
+    expect(await axe(container)).toHaveNoViolations();
+
+    rerender(
+      <SettingsScreen
+        settings={{ ...DEFAULT_SETTINGS, screenShake: false }}
+        onChange={onChange}
+        onBack={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Screen shake' }));
+    expect(onChange).toHaveBeenLastCalledWith({ screenShake: true });
+  });
+
   it('offers the game speed on the gameplay tab, with what a slower game means', () => {
     const onChange = vi.fn();
     render(

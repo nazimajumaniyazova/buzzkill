@@ -99,3 +99,11 @@ export {
   type SpriteOptions,
   type TextStyle,
 } from './render/renderer';
+export {
+  type Camera,
+  coverZoom,
+  createScreenShake,
+  IDENTITY_CAMERA,
+  type ScreenShake,
+  type ScreenShakeOptions,
+} from './render/screen-shake';

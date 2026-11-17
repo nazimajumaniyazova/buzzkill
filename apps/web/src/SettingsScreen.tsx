@@ -27,6 +27,7 @@ const MOTIONS = ['system', 'reduced', 'full'] as const satisfies readonly Motion
 export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenProps): JSX.Element {
   const titleId = useId();
   const particlesHintId = useId();
+  const screenShakeHintId = useId();
   const { t, format } = useI18n();
 
   return (
@@ -150,16 +151,29 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
               value: 'effects',
               label: t.settings.tabs.effects,
               panel: (
-                <Stack gap="sm">
-                  <Switch
-                    label={t.settings.particles}
-                    aria-describedby={particlesHintId}
-                    checked={settings.particles}
-                    onCheckedChange={(particles) => {
-                      onChange({ particles });
-                    }}
-                  />
-                  <p id={particlesHintId}>{t.settings.particlesHint}</p>
+                <Stack gap="lg">
+                  <Stack gap="sm">
+                    <Switch
+                      label={t.settings.particles}
+                      aria-describedby={particlesHintId}
+                      checked={settings.particles}
+                      onCheckedChange={(particles) => {
+                        onChange({ particles });
+                      }}
+                    />
+                    <p id={particlesHintId}>{t.settings.particlesHint}</p>
+                  </Stack>
+                  <Stack gap="sm">
+                    <Switch
+                      label={t.settings.screenShake}
+                      aria-describedby={screenShakeHintId}
+                      checked={settings.screenShake}
+                      onCheckedChange={(screenShake) => {
+                        onChange({ screenShake });
+                      }}
+                    />
+                    <p id={screenShakeHintId}>{t.settings.screenShakeHint}</p>
+                  </Stack>
                 </Stack>
               ),
             },

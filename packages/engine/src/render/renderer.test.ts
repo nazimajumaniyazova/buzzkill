@@ -51,6 +51,41 @@ describe('createCanvas2DRenderer', () => {
     expect([renderer.width, renderer.height]).toEqual([1280, 720]);
   });
 
+  it('clears the whole play area, then looks through the camera of the frame', () => {
+    const { context, calls } = createFakeContext();
+    const renderer = createCanvas2DRenderer(context, { width: 100, height: 100, scale: 2 });
+
+    renderer.beginFrame({ x: 10, y: -5, angle: 0, zoom: 1 });
+    // A quarter turn about the center at (50, 50): the top-left corner goes to the top right.
+    renderer.beginFrame({ x: 0, y: 0, angle: Math.PI / 2, zoom: 1 });
+    // Twice the size about the center: the top-left corner goes to (-50, -50).
+    renderer.beginFrame({ x: 0, y: 0, angle: 0, zoom: 2 });
+
+    const transforms = calls
+      .filter(([name]) => name === 'setTransform')
+      .map((call) => call.slice(1).map((value) => Math.round(Number(value) * 1e9) / 1e9 + 0));
+    expect(transforms).toEqual([
+      [2, 0, 0, 2, 0, 0],
+      [2, 0, 0, 2, 20, -10],
+      [2, 0, 0, 2, 0, 0],
+      [0, 2, -2, 0, 200, 0],
+      [2, 0, 0, 2, 0, 0],
+      [4, 0, 0, 4, -100, -100],
+    ]);
+    expect(calls.filter(([name]) => name === 'clearRect')).toHaveLength(3);
+  });
+
+  it('keeps the plain transform for a still camera', () => {
+    const { context, calls } = createFakeContext();
+    const renderer = createCanvas2DRenderer(context, { width: 100, height: 100 });
+
+    renderer.beginFrame({ x: 0, y: 0, angle: 0, zoom: 1 });
+
+    expect(calls.filter(([name]) => name === 'setTransform')).toEqual([
+      ['setTransform', 1, 0, 0, 1, 0, 0],
+    ]);
+  });
+
   it('draws a frame of an atlas at its own size or at the given size', () => {
     const { context, calls } = createFakeContext();
     const renderer = createCanvas2DRenderer(context, { width: 1280, height: 720 });

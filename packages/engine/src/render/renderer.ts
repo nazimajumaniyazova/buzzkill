@@ -1,4 +1,5 @@
 import type { SpriteAtlas } from './atlas';
+import type { Camera } from './screen-shake';
 
 /**
  * The drawing interface of the engine (ADR-0004). Game code draws through it and never calls
@@ -11,8 +12,12 @@ export interface Renderer<TImage> {
   readonly height: number;
   /** Device pixels per logical pixel, from `computeCanvasFit`. Takes effect at the next frame. */
   setScale(scale: number): void;
-  /** Clears the canvas and starts counting the frame's draws. */
-  beginFrame(): void;
+  /**
+   * Clears the canvas and starts counting the frame's draws. The frame is drawn through `camera`,
+   * moved, turned and zoomed about the center of the play area, such as by a screen shake (#157);
+   * without one, as it is.
+   */
+  beginFrame(camera?: Camera): void;
   /**
    * Draws frame `frame` of `atlas` with its top-left corner at (`x`, `y`). Size defaults to the
    * frame's size. A sprite entirely outside the play area is skipped.
@@ -132,9 +137,28 @@ export function createCanvas2DRenderer<TImage>(
       assertScale(value);
       scale = value;
     },
-    beginFrame() {
+    beginFrame(camera) {
       context.setTransform(scale, 0, 0, scale, 0, 0);
       context.clearRect(0, 0, width, height);
+      if (
+        camera !== undefined &&
+        (camera.x !== 0 || camera.y !== 0 || camera.angle !== 0 || camera.zoom !== 1)
+      ) {
+        // A point p of the scene goes to center + zoom × rotate(p - center) + offset, in device
+        // pixels.
+        const cos = Math.cos(camera.angle) * camera.zoom;
+        const sin = Math.sin(camera.angle) * camera.zoom;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        context.setTransform(
+          scale * cos,
+          scale * sin,
+          -scale * sin,
+          scale * cos,
+          scale * (centerX + camera.x - (cos * centerX - sin * centerY)),
+          scale * (centerY + camera.y - (sin * centerX + cos * centerY)),
+        );
+      }
       context.globalAlpha = 1;
       stats.sprites = 0;
       stats.culled = 0;

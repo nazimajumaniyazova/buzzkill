@@ -117,6 +117,7 @@ describe('GameView', () => {
     readonly keyBindings: KeyBindings<GameAction>;
     readonly reducedMotion: boolean;
     readonly particles: boolean;
+    readonly screenShake: boolean;
     readonly betweenLevels: boolean;
   }
 
@@ -129,6 +130,7 @@ describe('GameView', () => {
         keyBindings={props.keyBindings ?? DEFAULT_KEY_BINDINGS}
         reducedMotion={props.reducedMotion ?? false}
         particles={props.particles ?? true}
+        screenShake={props.screenShake ?? true}
         betweenLevels={props.betweenLevels ?? false}
         onEvent={onEvent}
       />,
@@ -144,6 +146,7 @@ describe('GameView', () => {
             keyBindings={next.keyBindings ?? props.keyBindings ?? DEFAULT_KEY_BINDINGS}
             reducedMotion={next.reducedMotion ?? props.reducedMotion ?? false}
             particles={next.particles ?? props.particles ?? true}
+            screenShake={next.screenShake ?? props.screenShake ?? true}
             betweenLevels={next.betweenLevels ?? props.betweenLevels ?? false}
             onEvent={onEvent}
           />,
@@ -243,6 +246,21 @@ describe('GameView', () => {
     frames.run(1);
 
     expect(options?.particles?.()).toBe(false);
+    expect(vi.mocked(createGameDrawer).mock.calls).toHaveLength(drawers);
+  });
+
+  it('applies a change of the screen shake setting to the run on screen', () => {
+    const frames = installFrames();
+    const view = renderView();
+    frames.run(1);
+    const drawers = vi.mocked(createGameDrawer).mock.calls.length;
+    const options = vi.mocked(createGameDrawer).mock.lastCall?.[2];
+    expect(options?.screenShake?.()).toBe(true);
+
+    view.rerender({ screenShake: false });
+    frames.run(1);
+
+    expect(options?.screenShake?.()).toBe(false);
     expect(vi.mocked(createGameDrawer).mock.calls).toHaveLength(drawers);
   });
 
@@ -361,6 +379,7 @@ describe('GameView', () => {
           keyBindings={DEFAULT_KEY_BINDINGS}
           reducedMotion={false}
           particles
+          screenShake
           betweenLevels={false}
           onEvent={onEvent}
         />
@@ -449,6 +468,7 @@ describe('GameView', () => {
           keyBindings={DEFAULT_KEY_BINDINGS}
           reducedMotion={false}
           particles
+          screenShake
           betweenLevels={false}
           onEvent={onEvent}
         />

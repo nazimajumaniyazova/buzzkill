@@ -53,6 +53,8 @@ export interface Settings {
    * which the other effects join. Motion reduced by `motion` makes them fewer and shorter.
    */
   readonly particles: boolean;
+  /** The screen shake (#157), in the Effects group; never while motion is reduced. */
+  readonly screenShake: boolean;
   /** `KeyboardEvent.code` values, `KEYS_PER_ACTION` per action, no key bound twice. */
   readonly keyBindings: KeyBindings<GameAction>;
 }
@@ -67,6 +69,7 @@ export const DEFAULT_SETTINGS: Settings = {
   motion: 'system',
   gameSpeed: 1,
   particles: true,
+  screenShake: true,
   keyBindings: DEFAULT_KEY_BINDINGS,
 };
 
@@ -127,6 +130,7 @@ function storedSettingsSchema(defaults: Settings) {
     motion: z.catch(z.enum(MOTIONS), defaults.motion),
     gameSpeed: z.catch(z.literal(GAME_SPEEDS), defaults.gameSpeed),
     particles: z.catch(z.boolean(), defaults.particles),
+    screenShake: z.catch(z.boolean(), defaults.screenShake),
     // A fresh copy each time: the schema's output is mutable, the defaults are not.
     keyBindings: z.catch(keyBindingsSchema, () => ({
       moveUp: [...defaults.keyBindings.moveUp],
@@ -160,6 +164,7 @@ export function parseSettings(
     motion,
     gameSpeed,
     particles,
+    screenShake,
     keyBindings,
   } = result.data;
   return {
@@ -172,6 +177,7 @@ export function parseSettings(
     motion,
     gameSpeed,
     particles,
+    screenShake,
     keyBindings,
   };
 }

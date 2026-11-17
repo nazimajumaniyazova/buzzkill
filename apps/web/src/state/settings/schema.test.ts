@@ -29,6 +29,7 @@ describe('DEFAULT_SETTINGS', () => {
       motion: 'system',
       gameSpeed: 1,
       particles: true,
+      screenShake: true,
       keyBindings: DEFAULT_KEY_BINDINGS,
     });
   });
@@ -50,6 +51,7 @@ describe('parseSettings', () => {
       motion: 'reduced',
       gameSpeed: 0.5,
       particles: false,
+      screenShake: false,
       keyBindings: {
         moveUp: ['KeyW', 'ArrowUp'],
         moveDown: ['KeyS', 'ArrowDown'],
@@ -83,6 +85,21 @@ describe('parseSettings', () => {
     expect(parseSettings(saved)).toEqual({ ...DEFAULT_SETTINGS, muted: true, particles: true });
   });
 
+  it('reads settings saved before the screen shake could be turned off, with it on', () => {
+    // The same version, without the field (#157).
+    const saved = Object.fromEntries(
+      Object.entries(stored({ ...DEFAULT_SETTINGS, particles: false })).filter(
+        ([key]) => key !== 'screenShake',
+      ),
+    );
+
+    expect(parseSettings(saved)).toEqual({
+      ...DEFAULT_SETTINGS,
+      particles: false,
+      screenShake: true,
+    });
+  });
+
   it('takes only the paces it offers and the three motion choices', () => {
     expect(parseSettings({ ...stored(), gameSpeed: 0.75, motion: 'full' })).toMatchObject({
       gameSpeed: 0.75,
@@ -105,6 +122,7 @@ describe('parseSettings', () => {
       difficulty: 'nightmare',
       language: 42,
       particles: 'off',
+      screenShake: 0,
     });
 
     expect(parsed).toEqual(DEFAULT_SETTINGS);

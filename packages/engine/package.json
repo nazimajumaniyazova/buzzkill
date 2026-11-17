@@ -2,7 +2,7 @@
   "name": "@buzzkill/engine",
   "version": "0.0.0",
   "private": true,
-  "description": "Reusable 2D game engine: loop, input, collisions, object pools, particles, RNG. Headless main entry plus a browser entry for DOM adapters. Knows nothing about the game or React.",
+  "description": "Reusable 2D game engine: loop, input, collisions, object pools, particles, screen shake, RNG. Headless main entry plus a browser entry for DOM adapters. Knows nothing about the game or React.",
   "sideEffects": false,
   "type": "module",
   "exports": {

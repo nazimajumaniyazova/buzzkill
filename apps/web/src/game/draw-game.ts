@@ -10,6 +10,7 @@ import {
 import { tokens } from '@buzzkill/ui';
 
 import { createParticleEffects } from './particles';
+import { createShakeEffects } from './screen-shake';
 import type { CityLayerName, GameSprites } from './sprites';
 
 const { palette } = tokens.primitives;
@@ -49,7 +50,9 @@ export interface GameDrawerOptions {
   readonly reducedMotion?: () => boolean;
   /** The particles setting (#156), read every frame and at every burst. Defaults to on. */
   readonly particles?: () => boolean;
-  /** Seeds the particles' own randomness, never the simulation's. Defaults to 1. */
+  /** The screen shake setting (#157), read every frame and at every event. Defaults to on. */
+  readonly screenShake?: () => boolean;
+  /** Seeds the particles' and the shake's own randomness, never the simulation's. Defaults to 1. */
   readonly seed?: number;
 }
 
@@ -75,7 +78,8 @@ const SHOT_TRAIL = { size: { width: 30, height: 6 }, headX: 20, headY: 1.5 } as 
  * current tick, so motion is smooth at any refresh rate; animation frames follow from the tick.
  *
  * The particles (#156) follow the run's events through `listen`: dust and trails are drawn behind
- * the hero and the insects, sparks and debris in front of them.
+ * the hero and the insects, sparks and debris in front of them. So does the screen shake (#157),
+ * which moves the camera of the whole frame.
  */
 export function createGameDrawer<TImage>(
   renderer: Renderer<TImage>,
@@ -92,17 +96,23 @@ export function createGameDrawer<TImage>(
     reducedMotion,
     seed: options.seed ?? 1,
   });
+  const shake = createShakeEffects({
+    enabled: options.screenShake ?? (() => true),
+    reducedMotion,
+    seed: options.seed ?? 1,
+  });
   let lastTick: number | undefined;
 
   return {
     listen(events) {
       effects.listen(events);
+      shake.listen(events);
     },
     render(view, alpha) {
       const { world, tick } = view;
-      renderer.beginFrame();
-
       const time = tick + alpha;
+      renderer.beginFrame(shake.advance(time));
+
       // Ticks simulated since the last frame: a shot sheds its trail once for each.
       const newTicks =
         lastTick === undefined ? 0 : Math.min(Math.max(tick - lastTick, 0), MAX_TRAIL_TICKS);
