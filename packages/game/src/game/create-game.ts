@@ -69,6 +69,18 @@ export interface GameAudio {
   play(sound: GameSound): void;
 }
 
+/** What a run makes the player feel on a device that can: a hit on the hero (#162). */
+export type GameHaptic = 'hit';
+
+/**
+ * Plays haptic feedback, as `GameAudio` plays sounds: the run says what happened, the adapter
+ * decides whether and how the device answers. Optional, since many devices have nothing to answer
+ * with; the run is the same without it.
+ */
+export interface GameHaptics {
+  play(haptic: GameHaptic): void;
+}
+
 /** The values the HUD shows. A new object is published only when one of them changes. */
 export interface GameHud {
   readonly score: number;
@@ -108,6 +120,8 @@ export interface CreateGameOptions {
   readonly host: GameLoopHost;
   readonly renderer: GameRenderer;
   readonly audio: GameAudio;
+  /** Haptic feedback where the device has it (#162). */
+  readonly haptics?: GameHaptics;
 }
 
 export interface Game {
@@ -151,7 +165,7 @@ export interface Game {
  * a 60 Hz simulation must not cause 60 React renders per second (docs/architecture.md).
  */
 export function createGame(options: CreateGameOptions): Game {
-  const { settings, input, renderer, audio } = options;
+  const { settings, input, renderer, audio, haptics } = options;
   if (input.actions.join() !== GAME_ACTIONS.join()) {
     // The systems read the input masks by bit position, so the order of the actions matters.
     throw new Error(
@@ -187,6 +201,7 @@ export function createGame(options: CreateGameOptions): Game {
   });
   state.events.on('playerHit', () => {
     audio.play('hit');
+    haptics?.play('hit');
   });
   state.events.on('powerUpCollected', () => {
     audio.play('pickup');

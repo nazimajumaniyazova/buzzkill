@@ -61,6 +61,8 @@ export interface Settings {
   readonly squashStretch: boolean;
   /** The picture holds for a moment on a strong blow (#158); never while motion is reduced. */
   readonly hitStop: boolean;
+  /** A short vibration when the hero is hit (#162), where the device can vibrate. */
+  readonly vibration: boolean;
   /** `KeyboardEvent.code` values, `KEYS_PER_ACTION` per action, no key bound twice. */
   readonly keyBindings: KeyBindings<GameAction>;
 }
@@ -79,6 +81,7 @@ export const DEFAULT_SETTINGS: Settings = {
   hitFlash: true,
   squashStretch: true,
   hitStop: true,
+  vibration: true,
   keyBindings: DEFAULT_KEY_BINDINGS,
 };
 
@@ -143,6 +146,7 @@ function storedSettingsSchema(defaults: Settings) {
     hitFlash: z.catch(z.boolean(), defaults.hitFlash),
     squashStretch: z.catch(z.boolean(), defaults.squashStretch),
     hitStop: z.catch(z.boolean(), defaults.hitStop),
+    vibration: z.catch(z.boolean(), defaults.vibration),
     // A fresh copy each time: the schema's output is mutable, the defaults are not.
     keyBindings: z.catch(keyBindingsSchema, () => ({
       moveUp: [...defaults.keyBindings.moveUp],
@@ -180,6 +184,7 @@ export function parseSettings(
     hitFlash,
     squashStretch,
     hitStop,
+    vibration,
     keyBindings,
   } = result.data;
   return {
@@ -196,6 +201,7 @@ export function parseSettings(
     hitFlash,
     squashStretch,
     hitStop,
+    vibration,
     keyBindings,
   };
 }

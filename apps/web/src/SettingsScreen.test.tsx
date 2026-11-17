@@ -212,6 +212,30 @@ describe('SettingsScreen', () => {
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ hitStop: false });
   });
 
+  it('offers the vibration only where the device can vibrate, and turns it off', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+    expect(screen.queryByRole('switch', { name: 'Vibration' })).not.toBeInTheDocument();
+
+    rerender(
+      <SettingsScreen
+        settings={DEFAULT_SETTINGS}
+        onChange={onChange}
+        onBack={vi.fn()}
+        canVibrate
+      />,
+    );
+    const vibration = screen.getByRole('switch', { name: 'Vibration' });
+    expect(vibration).toBeChecked();
+    expect(vibration).toHaveAccessibleDescription(/when the hero is hit/);
+    fireEvent.click(vibration);
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ vibration: false });
+  });
+
   it('offers the game speed on the gameplay tab, with what a slower game means', () => {
     const onChange = vi.fn();
     render(

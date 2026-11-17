@@ -125,6 +125,8 @@ function english(format: Format) {
       hitStop: 'Hit-stop',
       hitStopHint:
         'The picture holds for a moment when the hero is hit, when the queen rages and when she falls; the game itself goes on. Never while motion is reduced.',
+      vibration: 'Vibration',
+      vibrationHint: 'The phone gives a short buzz when the hero is hit.',
     },
     keyEditor: {
       caption: 'Keyboard',

@@ -12,6 +12,8 @@ interface SettingsScreenProps {
   readonly settings: Settings;
   readonly onChange: (changes: Partial<Settings>) => void;
   readonly onBack: () => void;
+  /** Whether the device can vibrate (#162); the vibration switch is shown only then. */
+  readonly canVibrate?: boolean;
 }
 
 const THEMES = ['system', 'day', 'night'] as const satisfies readonly ThemeChoice[];
@@ -22,9 +24,15 @@ const MOTIONS = ['system', 'reduced', 'full'] as const satisfies readonly Motion
  * The `settings` panel of the menu, one tab per kind: sound, display, gameplay, effects and
  * controls. Every change goes to the settings store at once, which saves it; the mixer, the theme
  * and the language follow while the player is still here, the effects apply to the run on screen,
- * and the keys to the next run. The effects of stage 7 join the particles in their tab (#156).
+ * and the keys to the next run. The effects of stage 7 join the particles in their tab (#156); the
+ * vibration among them only where the device can vibrate (#162).
  */
-export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenProps): JSX.Element {
+export function SettingsScreen({
+  settings,
+  onChange,
+  onBack,
+  canVibrate = false,
+}: SettingsScreenProps): JSX.Element {
   const titleId = useId();
   const { t, format } = useI18n();
 
@@ -181,7 +189,7 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
                     onCheckedChange={(squashStretch) => {
                       onChange({ squashStretch });
                     }}
-                  />{' '}
+                  />
                   <EffectSwitch
                     label={t.settings.hitStop}
                     hint={t.settings.hitStopHint}
@@ -190,6 +198,16 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
                       onChange({ hitStop });
                     }}
                   />
+                  {canVibrate && (
+                    <EffectSwitch
+                      label={t.settings.vibration}
+                      hint={t.settings.vibrationHint}
+                      checked={settings.vibration}
+                      onCheckedChange={(vibration) => {
+                        onChange({ vibration });
+                      }}
+                    />
+                  )}
                 </Stack>
               ),
             },

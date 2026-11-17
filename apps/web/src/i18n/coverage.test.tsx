@@ -183,9 +183,9 @@ describe('every text on screen comes from the dictionary', () => {
     expect(foreignText()).toEqual([]);
   });
 
-  it('in every tab of the settings', () => {
+  it('in every tab of the settings, the vibration included', () => {
     renderMarked(
-      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={vi.fn()} onBack={vi.fn()} />,
+      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={vi.fn()} onBack={vi.fn()} canVibrate />,
     );
 
     for (const tab of screen.getAllByRole('tab')) {
@@ -271,6 +271,7 @@ describe('every text on screen comes from the dictionary', () => {
         hitFlash
         squashStretch
         hitStop
+        vibration
         betweenLevels={false}
         onEvent={vi.fn()}
       />,

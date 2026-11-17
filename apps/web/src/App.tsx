@@ -4,6 +4,7 @@ import { type JSX, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { AnnouncerProvider, createAnnouncer } from './announcer';
 import { ErrorBoundary } from './ErrorBoundary';
 import { ErrorScreen } from './ErrorScreen';
+import { findVibrator } from './game/haptics';
 import { importGameChunk } from './game/import-chunk';
 import { seedForRun } from './game/run-options';
 import { createGamepadNavigation } from './gamepad-navigation';
@@ -250,6 +251,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
               settingsStore.send({ type: 'change', changes });
             }}
             onBack={back}
+            canVibrate={findVibrator(globalThis.navigator) !== null}
           />
         );
       case 'help':
@@ -313,6 +315,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 hitFlash={settings.hitFlash}
                 squashStretch={settings.squashStretch}
                 hitStop={settings.hitStop}
+                vibration={settings.vibration}
                 onEvent={send}
               />
             </Suspense>

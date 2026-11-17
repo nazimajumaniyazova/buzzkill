@@ -38,6 +38,8 @@ export {
   type Game,
   type GameAudio,
   type GameEventSource,
+  type GameHaptic,
+  type GameHaptics,
   type GameHud,
   type GameRenderer,
   type GameSettings,
