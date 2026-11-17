@@ -26,6 +26,12 @@ export interface Run extends RunChoice {
   readonly difficulty: Difficulty;
 }
 
+/**
+ * Why a run is paused: the player asked, by the pause key, the button or the game's own pause, or
+ * the gamepad went away in the middle of it (#154), which the pause dialog says.
+ */
+export type PauseReason = 'player' | 'gamepadLost';
+
 /** The screens of the menu: the main menu and the two it opens. */
 export type MenuPanel = 'main' | 'settings' | 'help';
 
@@ -54,7 +60,7 @@ export type AppState =
   | { readonly name: 'heroSelect' }
   | { readonly name: 'loading'; readonly run: Run }
   | ({ readonly name: 'playing' } & OnScreen)
-  | ({ readonly name: 'paused' } & OnScreen)
+  | ({ readonly name: 'paused'; readonly reason: PauseReason } & OnScreen)
   | ({
       readonly name: 'levelCleared';
       /** The level just cleared, from 1. */
@@ -74,7 +80,8 @@ export type RunState = Extract<AppState, { readonly assets: GameAssets }>;
  * What moves the flow: the player's choices (`openSettings`, `openHelp`, `selectHero`, `back`,
  * `play`, `pause`, `resume`, `nextLevel`, `quit`, `restart`), the end of the game's loading
  * (`gameLoaded`), what the game reports through the bridge (`gamePaused`, `gameResumed`,
- * `levelCleared`, `runEnded`) and the error boundary around the run (`runFailed`). A command and the game's own report of the same
+ * `levelCleared`, `runEnded`), a gamepad lost during a run (`gamepadLost`, #154) and the error
+ * boundary around the run (`runFailed`). A command and the game's own report of the same
  * fact are separate events, so the table shows who may cause what.
  */
 export type AppEvent =
@@ -88,6 +95,7 @@ export type AppEvent =
   | { readonly type: 'resume' }
   | { readonly type: 'gamePaused' }
   | { readonly type: 'gameResumed' }
+  | { readonly type: 'gamepadLost' }
   | { readonly type: 'runEnded'; readonly result: RunResult }
   | {
       readonly type: 'levelCleared';
@@ -148,8 +156,15 @@ export function transition(state: AppState, event: AppEvent): AppState {
         : state;
     case 'pause':
     case 'gamePaused':
+    case 'gamepadLost':
       return state.name === 'playing'
-        ? { name: 'paused', assets: state.assets, run: state.run, time: state.time }
+        ? {
+            name: 'paused',
+            assets: state.assets,
+            run: state.run,
+            time: state.time,
+            reason: event.type === 'gamepadLost' ? 'gamepadLost' : 'player',
+          }
         : state;
     case 'resume':
     case 'gameResumed':

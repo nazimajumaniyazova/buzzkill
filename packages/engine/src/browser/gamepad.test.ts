@@ -123,6 +123,44 @@ describe('createGamepadSource', () => {
     expect(input.isHeld('pause')).toBe(false);
   });
 
+  it('tells once when a pad it saw goes away, gone from the list or marked disconnected', () => {
+    const first = createPad(0);
+    const second = createPad(1);
+    const pads: (GamepadLike | null)[] = [first.pad, second.pad];
+    const onDisconnect = vi.fn();
+    const input = createActionInput(ACTIONS);
+    const source = createGamepadSource(input, {
+      bindings: BINDINGS,
+      getGamepads: () => pads,
+      onDisconnect,
+    });
+    source.poll();
+    expect(onDisconnect).not.toHaveBeenCalled();
+
+    pads[0] = null;
+    second.pad.connected = false;
+    source.poll();
+    source.poll();
+
+    expect(onDisconnect.mock.calls).toEqual([[0], [1]]);
+  });
+
+  it('tells nothing of a pad it never saw connected', () => {
+    const first = createPad();
+    first.pad.connected = false;
+    const onDisconnect = vi.fn();
+    const source = createGamepadSource(createActionInput(ACTIONS), {
+      bindings: BINDINGS,
+      getGamepads: () => [first.pad],
+      onDisconnect,
+    });
+
+    source.poll();
+    source.poll();
+
+    expect(onDisconnect).not.toHaveBeenCalled();
+  });
+
   it('ignores a pad marked as disconnected', () => {
     const first = createPad();
     first.press(0);

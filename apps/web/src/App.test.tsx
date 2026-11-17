@@ -88,6 +88,14 @@ vi.mock('./GameView', async () => {
           <button
             type="button"
             onClick={() => {
+              onEvent({ type: 'gamepadLost' });
+            }}
+          >
+            Gamepad disconnects
+          </button>
+          <button
+            type="button"
+            onClick={() => {
               onEvent({ type: 'runEnded', result: resultWith('lost') });
             }}
           >
@@ -321,6 +329,23 @@ describe('App', () => {
     expect(heading('Choose your hero')).toBeInTheDocument();
   });
 
+  it('pauses a run whose gamepad disconnects and says why, then plays on', async () => {
+    render(<App />);
+    await startRun();
+
+    click('Gamepad disconnects');
+    const dialog = screen.getByRole('dialog', { name: 'Paused' });
+    expect(dialog).toHaveAccessibleDescription(/^The gamepad was disconnected\./);
+    expect(screen.getByText(/^Game view:.*, held/)).toBeInTheDocument();
+
+    click('Resume');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    click('Game pauses itself');
+    expect(screen.getByRole('dialog', { name: 'Paused' })).toHaveAccessibleDescription(
+      'The run waits for you.',
+    );
+  });
+
   it('starts a run at once, in the Start click, when the game has loaded already', async () => {
     render(<App />);
     await startRun();
@@ -372,6 +397,18 @@ describe('App', () => {
       expect(screen.getByRole('switch', { name: 'Vibration' })).toBeChecked();
     } finally {
       Reflect.deleteProperty(navigator, 'vibrate');
+    }
+  });
+
+  it('offers the vibration too where the browser can rumble a gamepad', () => {
+    vi.stubGlobal('GamepadHapticActuator', vi.fn());
+    try {
+      render(<App />);
+      click('Settings');
+      fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+      expect(screen.getByRole('switch', { name: 'Vibration' })).toBeChecked();
+    } finally {
+      vi.unstubAllGlobals();
     }
   });
 
@@ -583,7 +620,7 @@ describe('App', () => {
     const run: Run = { heroId: 'male', mode: 'day', seed: 3, speed: 1, difficulty: 'normal' };
     render(
       <App
-        store={createAppStore({ name: 'paused', assets, run, time: run.mode })}
+        store={createAppStore({ name: 'paused', assets, run, time: run.mode, reason: 'player' })}
         settings={createSettingsStore({
           ...DEFAULT_SETTINGS,
           keyBindings: { ...DEFAULT_SETTINGS.keyBindings, pause: ['KeyQ', 'KeyE'] },
@@ -657,7 +694,7 @@ describe('App', () => {
     const run: Run = { heroId: 'female', mode: 'night', seed: 3, speed: 1, difficulty: 'normal' };
     render(
       <App
-        store={createAppStore({ name: 'paused', assets, run, time: run.mode })}
+        store={createAppStore({ name: 'paused', assets, run, time: run.mode, reason: 'player' })}
         settings={createSettingsStore({ ...DEFAULT_SETTINGS, muted: true })}
       />,
     );

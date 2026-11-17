@@ -12,7 +12,7 @@ interface SettingsScreenProps {
   readonly settings: Settings;
   readonly onChange: (changes: Partial<Settings>) => void;
   readonly onBack: () => void;
-  /** Whether the device can vibrate (#162); the vibration switch is shown only then. */
+  /** Whether the phone can vibrate or a gamepad rumble (#162, #154); the switch shows only then. */
   readonly canVibrate?: boolean;
 }
 
