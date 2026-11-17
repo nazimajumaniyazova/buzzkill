@@ -70,6 +70,7 @@ export const ru: Dictionary = (format): Messages => ({
       sound: 'Звук',
       display: 'Экран',
       gameplay: 'Игра',
+      effects: 'Эффекты',
       controls: 'Управление',
     },
     sound: 'Звук',
@@ -96,6 +97,9 @@ export const ru: Dictionary = (format): Messages => ({
     },
     gameSpeed: 'Скорость игры',
     gameSpeedHint: `На меньшей скорости больше времени на реакцию. В таблицу рекордов попадают только игры на ${format.percent(1)}.`,
+    particles: 'Частицы',
+    particlesHint:
+      'Искры от попаданий, обломки и пыль от сбитых насекомых, следы за выстрелами. При уменьшенном движении их меньше и они короче.',
   },
   keyEditor: {
     caption: 'Клавиатура',

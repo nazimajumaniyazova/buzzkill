@@ -37,6 +37,7 @@ export {
   type CreateGameOptions,
   type Game,
   type GameAudio,
+  type GameEventSource,
   type GameHud,
   type GameRenderer,
   type GameSettings,

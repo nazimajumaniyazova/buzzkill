@@ -83,6 +83,7 @@ function english(format: Format) {
         sound: 'Sound',
         display: 'Display',
         gameplay: 'Gameplay',
+        effects: 'Effects',
         controls: 'Controls',
       },
       sound: 'Sound',
@@ -109,6 +110,9 @@ function english(format: Format) {
       } satisfies Record<Difficulty, string>,
       gameSpeed: 'Game speed',
       gameSpeedHint: `A slower game leaves more time to react. Only games at ${format.percent(1)} enter the leaderboard.`,
+      particles: 'Particles',
+      particlesHint:
+        'Sparks where shots hit, debris and dust where insects break, and trails behind shots. With reduced motion, fewer and shorter.',
     },
     keyEditor: {
       caption: 'Keyboard',

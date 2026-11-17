@@ -48,6 +48,11 @@ export interface Settings {
   readonly motion: MotionChoice;
   /** The pace of the next run, as a fraction of normal speed (#114, ADR-0014). */
   readonly gameSpeed: GameSpeed;
+  /**
+   * Sparks, debris, dust and trails in the game (#156): the first switch of the Effects group,
+   * which the other effects join. Motion reduced by `motion` makes them fewer and shorter.
+   */
+  readonly particles: boolean;
   /** `KeyboardEvent.code` values, `KEYS_PER_ACTION` per action, no key bound twice. */
   readonly keyBindings: KeyBindings<GameAction>;
 }
@@ -61,6 +66,7 @@ export const DEFAULT_SETTINGS: Settings = {
   language: 'en',
   motion: 'system',
   gameSpeed: 1,
+  particles: true,
   keyBindings: DEFAULT_KEY_BINDINGS,
 };
 
@@ -120,6 +126,7 @@ function storedSettingsSchema(defaults: Settings) {
     language: z.catch(z.enum(LANGUAGES), defaults.language),
     motion: z.catch(z.enum(MOTIONS), defaults.motion),
     gameSpeed: z.catch(z.literal(GAME_SPEEDS), defaults.gameSpeed),
+    particles: z.catch(z.boolean(), defaults.particles),
     // A fresh copy each time: the schema's output is mutable, the defaults are not.
     keyBindings: z.catch(keyBindingsSchema, () => ({
       moveUp: [...defaults.keyBindings.moveUp],
@@ -152,6 +159,7 @@ export function parseSettings(
     language,
     motion,
     gameSpeed,
+    particles,
     keyBindings,
   } = result.data;
   return {
@@ -163,6 +171,7 @@ export function parseSettings(
     language,
     motion,
     gameSpeed,
+    particles,
     keyBindings,
   };
 }

@@ -46,3 +46,15 @@ Make the files smaller first: the WebP quality, the frame count, the sample rate
 enough, raise the limit in a pull request that says why, here and in the constant:
 `LIMIT` in `scripts/check-file-sizes.mjs` or `ASSET_BUDGET` in `apps/web/scripts/asset-budget.ts`.
 Music, if stage 7 adds it, is better streamed than loaded before the first frame.
+
+## Particles
+
+The particles of #156 add nothing to the asset budget: they are rectangles in the colors of the
+design tokens. A run makes all of them when it starts, 384 behind the insects and 256 in front, and
+reuses them, so a frame allocates nothing. A full layer skips new particles instead of growing.
+
+The benchmark `update 640 particles and replace the dead`, in
+`packages/engine/src/particles/particles.bench.ts`, measures a frame with both layers full. CodSpeed
+runs it with the others (ADR-0012). Under Vitest on a laptop it took 9.6 µs a frame on 2026-11-16,
+under 0.1 % of a frame at 60 Hz. Drawing them is part of frame time, which gets its budget in
+stage 9.

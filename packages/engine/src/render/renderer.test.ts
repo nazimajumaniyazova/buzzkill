@@ -5,7 +5,10 @@ import { type Context2DLike, createCanvas2DRenderer } from './renderer';
 
 type Call = readonly [string, ...unknown[]];
 
-/** A context that records calls; `drawImage` also records the opacity it drew with. */
+/**
+ * A context that records calls; `drawImage` and `fillRect` also record the opacity they drew
+ * with.
+ */
 function createFakeContext() {
   const calls: Call[] = [];
   const record =
@@ -16,7 +19,9 @@ function createFakeContext() {
   const context: Context2DLike<string> = {
     setTransform: record('setTransform'),
     clearRect: record('clearRect'),
-    fillRect: record('fillRect'),
+    fillRect(...args) {
+      calls.push(['fillRect', ...args, { alpha: context.globalAlpha }]);
+    },
     fillText: record('fillText'),
     drawImage(...args) {
       calls.push(['drawImage', ...args, { alpha: context.globalAlpha }]);
@@ -132,11 +137,25 @@ describe('createCanvas2DRenderer', () => {
     });
 
     expect(calls).toEqual([
-      ['fillRect', 1, 2, 3, 4],
+      ['fillRect', 1, 2, 3, 4, { alpha: 1 }],
       ['fillText', 'Score 5', 20, 30],
       ['fillText', 'Paused', 640, 360],
     ]);
     expect([context.textAlign, context.textBaseline]).toEqual(['center', 'middle']);
+  });
+
+  it('fills a rectangle with the given opacity and restores full opacity afterwards', () => {
+    const { context, calls } = createFakeContext();
+    const renderer = createCanvas2DRenderer(context, { width: 1280, height: 720 });
+
+    renderer.fillRect(1, 2, 3, 4, '#fff', 0.25);
+    renderer.fillRect(1, 2, 3, 4, '#fff', 1);
+
+    expect(calls).toEqual([
+      ['fillRect', 1, 2, 3, 4, { alpha: 0.25 }],
+      ['fillRect', 1, 2, 3, 4, { alpha: 1 }],
+    ]);
+    expect(context.globalAlpha).toBe(1);
   });
 
   it('uses a new scale from the next frame and rejects invalid scales', () => {

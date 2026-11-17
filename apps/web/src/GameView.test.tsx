@@ -116,6 +116,7 @@ describe('GameView', () => {
     readonly paused: boolean;
     readonly keyBindings: KeyBindings<GameAction>;
     readonly reducedMotion: boolean;
+    readonly particles: boolean;
     readonly betweenLevels: boolean;
   }
 
@@ -127,6 +128,7 @@ describe('GameView', () => {
         paused={props.paused ?? false}
         keyBindings={props.keyBindings ?? DEFAULT_KEY_BINDINGS}
         reducedMotion={props.reducedMotion ?? false}
+        particles={props.particles ?? true}
         betweenLevels={props.betweenLevels ?? false}
         onEvent={onEvent}
       />,
@@ -141,6 +143,7 @@ describe('GameView', () => {
             paused={next.paused ?? false}
             keyBindings={next.keyBindings ?? props.keyBindings ?? DEFAULT_KEY_BINDINGS}
             reducedMotion={next.reducedMotion ?? props.reducedMotion ?? false}
+            particles={next.particles ?? props.particles ?? true}
             betweenLevels={next.betweenLevels ?? props.betweenLevels ?? false}
             onEvent={onEvent}
           />,
@@ -224,6 +227,22 @@ describe('GameView', () => {
 
     // The drawer reads the setting every frame, so the city slows down in the same run.
     expect(options?.reducedMotion?.()).toBe(true);
+    expect(vi.mocked(createGameDrawer).mock.calls).toHaveLength(drawers);
+  });
+
+  it('applies a change of the particles setting to the run on screen, and seeds them with the run', () => {
+    const frames = installFrames();
+    const view = renderView();
+    frames.run(1);
+    const drawers = vi.mocked(createGameDrawer).mock.calls.length;
+    const options = vi.mocked(createGameDrawer).mock.lastCall?.[2];
+    expect(options?.particles?.()).toBe(true);
+    expect(options?.seed).toBe(run.seed);
+
+    view.rerender({ particles: false });
+    frames.run(1);
+
+    expect(options?.particles?.()).toBe(false);
     expect(vi.mocked(createGameDrawer).mock.calls).toHaveLength(drawers);
   });
 
@@ -341,6 +360,7 @@ describe('GameView', () => {
           paused={false}
           keyBindings={DEFAULT_KEY_BINDINGS}
           reducedMotion={false}
+          particles
           betweenLevels={false}
           onEvent={onEvent}
         />
@@ -428,6 +448,7 @@ describe('GameView', () => {
           paused={false}
           keyBindings={DEFAULT_KEY_BINDINGS}
           reducedMotion={false}
+          particles
           betweenLevels={false}
           onEvent={onEvent}
         />

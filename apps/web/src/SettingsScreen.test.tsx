@@ -117,6 +117,38 @@ describe('SettingsScreen', () => {
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ motion: 'reduced' });
   });
 
+  it('turns the particles off and on in the effects tab, after the gameplay tab', async () => {
+    const onChange = vi.fn();
+    const { container, rerender } = render(
+      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />,
+    );
+
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+      'Sound',
+      'Display',
+      'Gameplay',
+      'Effects',
+      'Controls',
+    ]);
+    fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+    const particles = screen.getByRole('switch', { name: 'Particles' });
+    expect(particles).toBeChecked();
+    expect(particles).toHaveAccessibleDescription(/With reduced motion, fewer and shorter\.$/);
+    fireEvent.click(particles);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ particles: false });
+    expect(await axe(container)).toHaveNoViolations();
+
+    rerender(
+      <SettingsScreen
+        settings={{ ...DEFAULT_SETTINGS, particles: false }}
+        onChange={onChange}
+        onBack={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Particles' }));
+    expect(onChange).toHaveBeenLastCalledWith({ particles: true });
+  });
+
   it('offers the game speed on the gameplay tab, with what a slower game means', () => {
     const onChange = vi.fn();
     render(

@@ -10,7 +10,7 @@ import { deserializeReplay, type Replay, serializeReplay } from '../replay/forma
 import type { RunResult } from '../replay/result';
 import { simulate } from '../replay/simulate';
 import { createSimulation } from '../simulation/simulation';
-import type { GameState } from '../simulation/state';
+import type { GameEvents, GameState } from '../simulation/state';
 import { type EntityId, Kind } from '../world/world';
 import {
   createGame,
@@ -61,7 +61,7 @@ interface Setup {
   view(): GameView;
 }
 
-function setup(seed = 1): Setup {
+function setup(seed = 1, listen?: GameRenderer['listen']): Setup {
   const fake = createFakeHost();
   const input = createActionInput(GAME_ACTIONS);
   const play = vi.fn<GameAudio['play']>();
@@ -72,7 +72,7 @@ function setup(seed = 1): Setup {
     gameVersion: 'test',
     input,
     host: fake.host,
-    renderer: { render },
+    renderer: listen === undefined ? { render } : { render, listen },
     audio: { play },
   });
   return {
@@ -218,6 +218,28 @@ describe('createGame', () => {
 
     expect(s.play).toHaveBeenCalledExactlyOnceWith('shot');
     expect(s.game.getHud().ammo).toBe(RULES.ammo.start - 1);
+  });
+
+  it('lets the renderer follow the events of the run, but not emit them', () => {
+    const shots = vi.fn<(event: GameEvents['shot']) => void>();
+    const listen = vi.fn<NonNullable<GameRenderer['listen']>>((events) => {
+      events.on('shot', shots);
+    });
+    const s = setup(1, listen);
+
+    expect(listen).toHaveBeenCalledOnce();
+    expect(Object.keys(listen.mock.calls[0]?.[0] ?? {})).toEqual(['on']);
+    s.game.start();
+    s.fake.frame();
+    s.input.press('fire', 'key:Space');
+    runUntilTick(s, s.view().tick + 1);
+
+    // From the muzzle of the hero, who stands still.
+    const { world, player, hero } = s.view();
+    expect(shots).toHaveBeenCalledExactlyOnceWith({
+      x: (world.x[player] as number) + hero.muzzle.x,
+      y: (world.y[player] as number) + hero.muzzle.y,
+    });
   });
 
   it('plays the hit and explosion sounds when an enemy reaches the hero', () => {

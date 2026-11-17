@@ -24,8 +24,18 @@ export interface Renderer<TImage> {
     y: number,
     options?: SpriteOptions,
   ): void;
-  /** Fills a rectangle; also the stand-in for sprites whose art does not exist yet. */
-  fillRect(x: number, y: number, width: number, height: number, color: string): void;
+  /**
+   * Fills a rectangle, at an opacity from 0 to 1 (1 by default): health bars, warnings and
+   * particles (#156).
+   */
+  fillRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    color: string,
+    alpha?: number,
+  ): void;
   drawText(text: string, x: number, y: number, style: TextStyle): void;
   /** Ends the frame and returns its counts. The object is reused by the next frame. */
   endFrame(): RenderStats;
@@ -162,9 +172,15 @@ export function createCanvas2DRenderer<TImage>(
       }
       stats.sprites += 1;
     },
-    fillRect(x, y, rectWidth, rectHeight, color) {
+    fillRect(x, y, rectWidth, rectHeight, color, alpha = 1) {
       context.fillStyle = color;
+      if (alpha !== 1) {
+        context.globalAlpha = alpha;
+      }
       context.fillRect(snap(x), snap(y), rectWidth, rectHeight);
+      if (alpha !== 1) {
+        context.globalAlpha = 1;
+      }
     },
     drawText(text, x, y, style) {
       context.font = style.font;
