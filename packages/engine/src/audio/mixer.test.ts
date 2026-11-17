@@ -1,11 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   type AudioBufferSourceLike,
   type AudioContextLike,
   type AudioNodeLike,
+  type AutomatedParamLike,
   createAudioMixer,
   type GainNodeLike,
+  type MediaElementLike,
   type StereoPannerLike,
 } from './mixer';
 
@@ -23,18 +25,40 @@ interface FakeSource extends AudioBufferSourceLike<string> {
  */
 function createFakeContext(options: { refuseResume?: boolean; panner?: boolean } = {}) {
   const destination: AudioNodeLike = { connect: () => undefined };
-  const gains: (GainNodeLike & { target: AudioNodeLike | null })[] = [];
+  const gains: (GainNodeLike & {
+    readonly gain: AutomatedParamLike & { readonly schedule: readonly ScheduledChange[] };
+    target: AudioNodeLike | null;
+  })[] = [];
   const sources: FakeSource[] = [];
   const panners: (StereoPannerLike & { target: AudioNodeLike | null })[] = [];
+  /** Each media element's source, made once per element as the browser allows. */
+  const media = new Map<MediaElementLike, { target: AudioNodeLike | null }>();
   let state = 'suspended';
+  const clock = { now: 0 };
   const context: AudioContextLike<string> = {
     get state() {
       return state;
     },
+    get currentTime() {
+      return clock.now;
+    },
     destination,
     createGain() {
+      const schedule: ScheduledChange[] = [];
       const gain = {
-        gain: { value: 1 },
+        gain: {
+          value: 1,
+          schedule,
+          cancelScheduledValues(time: number) {
+            schedule.push(['cancel', time]);
+          },
+          setValueAtTime(value: number, time: number) {
+            schedule.push(['set', value, time]);
+          },
+          linearRampToValueAtTime(value: number, time: number) {
+            schedule.push(['ramp', value, time]);
+          },
+        },
         target: null as AudioNodeLike | null,
         connect(node: AudioNodeLike) {
           gain.target = node;
@@ -64,6 +88,19 @@ function createFakeContext(options: { refuseResume?: boolean; panner?: boolean }
       sources.push(source);
       return source;
     },
+    createMediaElementSource(element: MediaElementLike) {
+      if (media.has(element)) {
+        throw new Error('InvalidStateError: the element has a source already');
+      }
+      const source = {
+        target: null as AudioNodeLike | null,
+        connect(node: AudioNodeLike) {
+          source.target = node;
+        },
+      };
+      media.set(element, source);
+      return source;
+    },
     ...(options.panner === false
       ? {}
       : {
@@ -91,10 +128,35 @@ function createFakeContext(options: { refuseResume?: boolean; panner?: boolean }
       return Promise.resolve();
     },
   };
-  return { context, destination, gains, sources, panners };
+  return { context, destination, gains, sources, panners, media, clock };
 }
 
 const BUFFERS = { shot: 'shot-buffer', theme: 'theme-buffer' };
+
+/** A change a gain was told to make: what, to which value, and when. */
+type ScheduledChange = readonly [kind: string, value: number, time?: number];
+
+/**
+ * A media element that counts its starts and pauses; with `refuse`, its start is refused, as the
+ * autoplay policy does. A plain function, since a mock would handle the promise it returns.
+ */
+function fakeElement(options: { refuse?: boolean } = {}) {
+  let plays = 0;
+  let pauses = 0;
+  const element: MediaElementLike = {
+    loop: false,
+    play() {
+      plays += 1;
+      return options.refuse === true
+        ? Promise.reject(new Error('NotAllowedError'))
+        : Promise.resolve();
+    },
+    pause() {
+      pauses += 1;
+    },
+  };
+  return { element, plays: () => plays, pauses: () => pauses };
+}
 
 describe('createAudioMixer', () => {
   it('plays an effect at a rate and through a pan to the effects group (#161)', async () => {
@@ -200,6 +262,81 @@ describe('createAudioMixer', () => {
       [true, fake.gains[0], true],
       [true, fake.gains[0], true],
     ]);
+  });
+
+  it('streams music from a media element through the music group, looped, one at a time', async () => {
+    const fake = createFakeContext();
+    const mixer = createAudioMixer<Sound, string>({ context: fake.context, buffers: BUFFERS });
+    await mixer.unlock();
+    const first = fakeElement();
+    const second = fakeElement();
+
+    mixer.streamMusic(first.element);
+    mixer.streamMusic(second.element);
+    mixer.streamMusic(first.element);
+    mixer.stopMusic();
+
+    expect(fake.media.get(first.element)?.target).toBe(fake.gains[0]);
+    expect(fake.media.get(second.element)?.target).toBe(fake.gains[0]);
+    expect([first.element.loop, first.plays(), first.pauses()]).toEqual([true, 2, 2]);
+    expect([second.element.loop, second.plays(), second.pauses()]).toEqual([true, 1, 1]);
+  });
+
+  it('streams nothing while locked, and lets a refused start of the element be', async () => {
+    const fake = createFakeContext();
+    const mixer = createAudioMixer<Sound, string>({ context: fake.context, buffers: BUFFERS });
+    const locked = fakeElement();
+    mixer.streamMusic(locked.element);
+    expect(locked.plays()).toBe(0);
+
+    await mixer.unlock();
+    const refused = fakeElement({ refuse: true });
+    const unhandled = vi.fn();
+    process.on('unhandledRejection', unhandled);
+    try {
+      mixer.streamMusic(refused.element);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    } finally {
+      process.off('unhandledRejection', unhandled);
+    }
+
+    expect(refused.plays()).toBe(1);
+    expect(unhandled).not.toHaveBeenCalled();
+  });
+
+  it('ducks the music: down quickly to a part of its volume, held, then up slowly', async () => {
+    const fake = createFakeContext();
+    const mixer = createAudioMixer<Sound, string>({
+      context: fake.context,
+      buffers: BUFFERS,
+      volumes: { music: 0.5 },
+    });
+    await mixer.unlock();
+    fake.clock.now = 10;
+
+    mixer.duck({ depth: 0.4, attack: 0.05, hold: 0.3, release: 0.6 });
+
+    const schedule = fake.gains[0]?.gain.schedule ?? [];
+    expect(schedule.map(([kind, value, time]) => [kind, value, time ?? value])).toEqual([
+      ['cancel', 10, 10],
+      ['set', 0.5, 10],
+      ['ramp', expect.closeTo(0.2), expect.closeTo(10.05)],
+      ['set', expect.closeTo(0.2), expect.closeTo(10.35)],
+      ['ramp', 0.5, expect.closeTo(10.95)],
+    ]);
+  });
+
+  it('drops a duck when the music volume changes, so the new volume holds', async () => {
+    const fake = createFakeContext();
+    const mixer = createAudioMixer<Sound, string>({ context: fake.context, buffers: BUFFERS });
+    await mixer.unlock();
+    fake.clock.now = 3;
+    mixer.duck({ depth: 0.4, attack: 0.05, hold: 0.3, release: 0.6 });
+
+    mixer.setVolume('music', 0.8);
+
+    expect(fake.gains[0]?.gain.schedule.at(-1)).toEqual(['cancel', 3]);
+    expect(fake.gains[0]?.gain.value).toBe(0.8);
   });
 
   it('changes group volumes live, clamped to [0, 1]', () => {
