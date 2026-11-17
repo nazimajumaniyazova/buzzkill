@@ -26,6 +26,8 @@ export {
   type AudioParamLike,
   createAudioMixer,
   type GainNodeLike,
+  type PlayOptions,
+  type StereoPannerLike,
   type VolumeGroup,
 } from './audio/mixer';
 export {

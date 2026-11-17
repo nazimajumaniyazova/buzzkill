@@ -30,8 +30,23 @@ export interface GainNodeLike extends AudioNodeLike {
 export interface AudioBufferSourceLike<TBuffer> extends AudioNodeLike {
   buffer: TBuffer | null;
   loop: boolean;
+  /** The speed and pitch together: 1 is the sound as recorded. */
+  readonly playbackRate: AudioParamLike;
   start(): void;
   stop(): void;
+}
+
+/** Places a sound between the left speaker (-1) and the right one (1). */
+export interface StereoPannerLike extends AudioNodeLike {
+  readonly pan: AudioParamLike;
+}
+
+/** How an effect plays (#161): at another rate, and placed between the speakers. */
+export interface PlayOptions {
+  /** The playback rate, which raises or lowers the pitch with the speed. Default 1. */
+  readonly rate?: number;
+  /** From -1, the left speaker, to 1, the right one; clamped. Default 0, the middle. */
+  readonly pan?: number;
 }
 
 export interface AudioContextLike<TBuffer> {
@@ -40,6 +55,8 @@ export interface AudioContextLike<TBuffer> {
   readonly destination: AudioNodeLike;
   createGain(): GainNodeLike;
   createBufferSource(): AudioBufferSourceLike<TBuffer>;
+  /** Missing in some older browsers, where sounds play from the middle. */
+  createStereoPanner?(): StereoPannerLike;
   resume(): Promise<void>;
   close(): Promise<void>;
 }
@@ -64,8 +81,11 @@ export interface AudioMixer<TSound extends string> {
    * the next gesture can try again.
    */
   unlock(): Promise<void>;
-  /** Plays an effect once. Dropped while locked, after dispose, or when its buffer is missing. */
-  play(sound: TSound): void;
+  /**
+   * Plays an effect once, at the rate and the pan of `options`. Dropped while locked, after
+   * dispose, or when its buffer is missing.
+   */
+  play(sound: TSound, options?: PlayOptions): void;
   /** Loops a music track, replacing the current one. Same rules as `play`. */
   playMusic(sound: TSound): void;
   stopMusic(): void;
@@ -105,6 +125,7 @@ export function createAudioMixer<TSound extends string, TBuffer>(
     sound: TSound,
     group: VolumeGroup,
     loop: boolean,
+    options?: PlayOptions,
   ): AudioBufferSourceLike<TBuffer> | null => {
     const buffer = buffers[sound];
     if (disposed || context.state !== 'running' || buffer === undefined) {
@@ -113,7 +134,16 @@ export function createAudioMixer<TSound extends string, TBuffer>(
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.loop = loop;
-    source.connect(groups[group]);
+    source.playbackRate.value = options?.rate ?? 1;
+    const pan = options?.pan ?? 0;
+    if (pan !== 0 && context.createStereoPanner !== undefined) {
+      const panner = context.createStereoPanner();
+      panner.pan.value = Math.min(1, Math.max(-1, pan));
+      source.connect(panner);
+      panner.connect(groups[group]);
+    } else {
+      source.connect(groups[group]);
+    }
     source.start();
     return source;
   };
@@ -138,8 +168,8 @@ export function createAudioMixer<TSound extends string, TBuffer>(
         // The browser refused (no gesture yet); the next gesture can try again.
       }
     },
-    play(sound) {
-      start(sound, 'effects', false);
+    play(sound, options) {
+      start(sound, 'effects', false, options);
     },
     playMusic(sound) {
       stopMusic();
