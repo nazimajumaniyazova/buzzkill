@@ -1,9 +1,12 @@
-import { DEFAULT_KEY_BINDINGS, type Game, type GameHud as Hud } from '@buzzkill/game';
+import { DEFAULT_KEY_BINDINGS, type Game, type GameHud as Hud, noProgress } from '@buzzkill/game';
+import { ToastProvider } from '@buzzkill/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { JSX, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { AchievementsScreen } from '../AchievementsScreen';
 import { KEY_SYMBOLS } from '../controls';
+import { EarnedToasts } from '../EarnedToasts';
 import { ErrorScreen } from '../ErrorScreen';
 import { GameHud } from '../GameHud';
 import { GameView } from '../GameView';
@@ -14,6 +17,7 @@ import { MenuScreen } from '../MenuScreen';
 import { PauseDialog } from '../PauseDialog';
 import { RunOverDialog } from '../RunOverDialog';
 import { SettingsScreen } from '../SettingsScreen';
+import { createAchievementsStore } from '../state/achievements/store';
 import type { GameLoad } from '../state/game-loader';
 import type { GameAssets } from '../state/machine';
 import { DEFAULT_SETTINGS } from '../state/settings/schema';
@@ -163,9 +167,31 @@ describe('every text on screen comes from the dictionary', () => {
     expect(foreignText()).toEqual([]);
   });
 
+  it('in the achievements, earned and not, and the toast of one earned', () => {
+    const store = createAchievementsStore(noProgress());
+    renderMarked(
+      <ToastProvider label={marked.t.common.notifications}>
+        <AchievementsScreen progress={{ ...noProgress(), firstSwat: 1 }} onBack={vi.fn()} />
+        <EarnedToasts store={store} />
+      </ToastProvider>,
+    );
+    act(() => {
+      store.send({ type: 'counted', progress: noProgress(), earned: ['regicide'] });
+    });
+
+    expect(screen.getAllByText(/Achievement unlocked/)).not.toHaveLength(0);
+    expect(foreignText()).toEqual([]);
+  });
+
   it('in the menu', () => {
     renderMarked(
-      <MenuScreen onPlay={vi.fn()} onPreload={vi.fn()} onSettings={vi.fn()} onHelp={vi.fn()} />,
+      <MenuScreen
+        onPlay={vi.fn()}
+        onPreload={vi.fn()}
+        onSettings={vi.fn()}
+        onAchievements={vi.fn()}
+        onHelp={vi.fn()}
+      />,
     );
 
     expect(foreignText()).toEqual([]);
@@ -272,6 +298,8 @@ describe('every text on screen comes from the dictionary', () => {
         squashStretch
         hitStop
         vibration
+        achievements={noProgress()}
+        onAchievements={vi.fn()}
         betweenLevels={false}
         onEvent={vi.fn()}
       />,

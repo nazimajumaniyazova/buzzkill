@@ -32,8 +32,8 @@ export interface Run extends RunChoice {
  */
 export type PauseReason = 'player' | 'gamepadLost';
 
-/** The screens of the menu: the main menu and the two it opens. */
-export type MenuPanel = 'main' | 'settings' | 'help';
+/** The screens of the menu: the main menu and the three it opens. */
+export type MenuPanel = 'main' | 'settings' | 'help' | 'achievements';
 
 /** What every state of a run on screen holds. */
 interface OnScreen {
@@ -77,7 +77,8 @@ export type AppState =
 export type RunState = Extract<AppState, { readonly assets: GameAssets }>;
 
 /**
- * What moves the flow: the player's choices (`openSettings`, `openHelp`, `selectHero`, `back`,
+ * What moves the flow: the player's choices (`openSettings`, `openHelp`, `openAchievements`,
+ * `selectHero`, `back`,
  * `play`, `pause`, `resume`, `nextLevel`, `quit`, `restart`), the end of the game's loading
  * (`gameLoaded`), what the game reports through the bridge (`gamePaused`, `gameResumed`,
  * `levelCleared`, `runEnded`), a gamepad lost during a run (`gamepadLost`, #154) and the error
@@ -87,6 +88,7 @@ export type RunState = Extract<AppState, { readonly assets: GameAssets }>;
 export type AppEvent =
   | { readonly type: 'openSettings' }
   | { readonly type: 'openHelp' }
+  | { readonly type: 'openAchievements' }
   | { readonly type: 'selectHero' }
   | { readonly type: 'back' }
   | { readonly type: 'play'; readonly run: Run }
@@ -134,6 +136,10 @@ export function transition(state: AppState, event: AppEvent): AppState {
         : state;
     case 'openHelp':
       return state.name === 'menu' && state.panel === 'main' ? { ...state, panel: 'help' } : state;
+    case 'openAchievements':
+      return state.name === 'menu' && state.panel === 'main'
+        ? { ...state, panel: 'achievements' }
+        : state;
     case 'selectHero':
       return state.name === 'menu' && state.panel === 'main' ? { name: 'heroSelect' } : state;
     case 'back':

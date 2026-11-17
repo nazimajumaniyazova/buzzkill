@@ -1,7 +1,10 @@
-import { DIFFICULTIES } from '@buzzkill/game';
-import { type JSX, lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { type AchievementId, type AchievementProgress, DIFFICULTIES } from '@buzzkill/game';
+import { ToastProvider } from '@buzzkill/ui';
+import { type JSX, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
+import { AchievementsScreen } from './AchievementsScreen';
 import { AnnouncerProvider, createAnnouncer } from './announcer';
+import { EarnedToasts } from './EarnedToasts';
 import { ErrorBoundary } from './ErrorBoundary';
 import { ErrorScreen } from './ErrorScreen';
 import { canRumble, findVibrator } from './game/haptics';
@@ -18,6 +21,8 @@ import { applyMotion, reducesMotion, usePrefersReducedMotion } from './motion';
 import { PauseDialog } from './PauseDialog';
 import { RunOverDialog } from './RunOverDialog';
 import { SettingsScreen } from './SettingsScreen';
+import { loadProgress, saveProgress } from './state/achievements/progress';
+import { createAchievementsStore } from './state/achievements/store';
 import { createGameLoader } from './state/game-loader';
 import {
   type AppEvent,
@@ -105,6 +110,23 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
   const assets = isRunState(state) ? state.assets : null;
   const time = isRunState(state) ? state.time : null;
   const i18n = i18nFor(settings.language);
+
+  // The achievements of this device (#163), in a store the shell does not subscribe to: their
+  // progress changes with nearly every insect (#109). The menu reads it whenever it renders.
+  const [achievements] = useState(() => createAchievementsStore(loadProgress(browserStorage())));
+  const onAchievements = useCallback(
+    (progress: AchievementProgress, earned: readonly AchievementId[]) => {
+      achievements.send({ type: 'counted', progress, earned });
+    },
+    [achievements],
+  );
+  useEffect(
+    () =>
+      achievements.subscribe(() => {
+        saveProgress(achievements.getState().progress, browserStorage());
+      }),
+    [achievements],
+  );
 
   // The theme of the page (#75): the player's setting on the menus, the time of day on screen
   // while a run is there, so the HUD and the dialogs match the sky as the levels change it.
@@ -238,11 +260,16 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
             onSettings={() => {
               send({ type: 'openSettings' });
             }}
+            onAchievements={() => {
+              send({ type: 'openAchievements' });
+            }}
             onHelp={() => {
               send({ type: 'openHelp' });
             }}
           />
         );
+      case 'achievements':
+        return <AchievementsScreen progress={achievements.getState().progress} onBack={back} />;
       case 'settings':
         return (
           <SettingsScreen
@@ -316,6 +343,8 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 squashStretch={settings.squashStretch}
                 hitStop={settings.hitStop}
                 vibration={settings.vibration}
+                achievements={achievements.getState().progress}
+                onAchievements={onAchievements}
                 onEvent={send}
               />
             </Suspense>
@@ -367,6 +396,9 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
         <div ref={rootRef} className="shell">
           {screen()}
         </div>
+        <ToastProvider label={i18n.t.common.notifications}>
+          <EarnedToasts store={achievements} />
+        </ToastProvider>
       </AnnouncerProvider>
     </I18nProvider>
   );

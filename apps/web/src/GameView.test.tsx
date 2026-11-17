@@ -1,11 +1,20 @@
-import { type AudioMixer, createAudioMixer, type KeyBindings } from '@buzzkill/engine';
+import {
+  type AudioMixer,
+  createAudioMixer,
+  createEventBus,
+  type KeyBindings,
+} from '@buzzkill/engine';
 import type * as GameModule from '@buzzkill/game';
 import {
+  type AchievementId,
+  type AchievementProgress,
   createGame,
   DEFAULT_KEY_BINDINGS,
   type Game,
   type GameAction,
+  type GameEvents,
   type GameSound,
+  noProgress,
 } from '@buzzkill/game';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -111,6 +120,9 @@ describe('GameView', () => {
   let assets: GameAssets;
   let play: ReturnType<typeof vi.fn<AudioMixer<GameSound>['play']>>;
   let onEvent: ReturnType<typeof vi.fn<(event: GameEvent) => void>>;
+  let onAchievements: ReturnType<
+    typeof vi.fn<(progress: AchievementProgress, earned: readonly AchievementId[]) => void>
+  >;
 
   /** The events reported so far, by type. */
   const reported = (): GameEvent['type'][] => onEvent.mock.calls.map(([event]) => event.type);
@@ -126,6 +138,7 @@ describe('GameView', () => {
     readonly squashStretch: boolean;
     readonly hitStop: boolean;
     readonly vibration: boolean;
+    readonly achievements: AchievementProgress;
     readonly betweenLevels: boolean;
   }
 
@@ -143,6 +156,8 @@ describe('GameView', () => {
         squashStretch={props.squashStretch ?? true}
         hitStop={props.hitStop ?? true}
         vibration={props.vibration ?? true}
+        achievements={props.achievements ?? noProgress()}
+        onAchievements={onAchievements}
         betweenLevels={props.betweenLevels ?? false}
         onEvent={onEvent}
       />,
@@ -163,6 +178,8 @@ describe('GameView', () => {
             squashStretch={next.squashStretch ?? props.squashStretch ?? true}
             hitStop={next.hitStop ?? props.hitStop ?? true}
             vibration={next.vibration ?? props.vibration ?? true}
+            achievements={next.achievements ?? props.achievements ?? noProgress()}
+            onAchievements={onAchievements}
             betweenLevels={next.betweenLevels ?? props.betweenLevels ?? false}
             onEvent={onEvent}
           />,
@@ -179,6 +196,8 @@ describe('GameView', () => {
     audio = { ...createAudioMixer({ context: null, buffers: {} }), play };
     assets = { sprites, audio };
     onEvent = vi.fn<(event: GameEvent) => void>();
+    onAchievements =
+      vi.fn<(progress: AchievementProgress, earned: readonly AchievementId[]) => void>();
   });
 
   afterEach(() => {
@@ -337,6 +356,24 @@ describe('GameView', () => {
 
     expect('vibrate' in navigator).toBe(false);
     expect(vi.mocked(createGame).mock.lastCall?.[0]).not.toHaveProperty('haptics');
+  });
+
+  it('counts the run toward the achievements from the progress so far, and reports it (#163)', () => {
+    const frames = installFrames();
+    renderView({ achievements: { ...noProgress(), swatter: 7 } });
+    frames.run(1);
+    const followers = vi.mocked(createGame).mock.lastCall?.[0].followers ?? [];
+    const events = createEventBus<GameEvents>();
+
+    for (const follow of followers) {
+      follow(events);
+    }
+    events.emit('enemyDestroyed', { x: 0, y: 0, value: 1 });
+
+    expect(onAchievements).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ firstSwat: 1, swatter: 8 }),
+      ['firstSwat'],
+    );
   });
 
   it('plays the shot a little off its pitch, from the left, where the hero stands (#161)', () => {
@@ -547,6 +584,8 @@ describe('GameView', () => {
           squashStretch
           hitStop
           vibration
+          achievements={noProgress()}
+          onAchievements={vi.fn()}
           betweenLevels={false}
           onEvent={onEvent}
         />
@@ -640,6 +679,8 @@ describe('GameView', () => {
           squashStretch
           hitStop
           vibration
+          achievements={noProgress()}
+          onAchievements={vi.fn()}
           betweenLevels={false}
           onEvent={onEvent}
         />

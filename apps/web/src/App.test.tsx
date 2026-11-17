@@ -1,6 +1,6 @@
 import type { AssetFailure } from '@buzzkill/engine';
 import type { GamepadLike } from '@buzzkill/engine/browser';
-import type { RunResult } from '@buzzkill/game';
+import type { AchievementId, AchievementProgress, RunResult } from '@buzzkill/game';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -58,11 +58,15 @@ vi.mock('./GameView', async () => {
       paused,
       betweenLevels,
       onEvent,
+      achievements,
+      onAchievements,
     }: {
       run: Run;
       paused: boolean;
       betweenLevels: boolean;
       onEvent: (event: GameEvent) => void;
+      achievements: AchievementProgress;
+      onAchievements: (progress: AchievementProgress, earned: readonly AchievementId[]) => void;
     }) {
       const [broken, setBroken] = useState(false);
       if (broken) {
@@ -84,6 +88,16 @@ vi.mock('./GameView', async () => {
             }}
           >
             Game pauses itself
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onAchievements({ ...achievements, firstSwat: 1, swatter: achievements.swatter + 1 }, [
+                'firstSwat',
+              ]);
+            }}
+          >
+            Swat an insect
           </button>
           <button
             type="button"
@@ -172,6 +186,10 @@ const click = (name: string): void => {
 
 const heading = (name: string): HTMLElement => screen.getByRole('heading', { level: 1, name });
 
+/** The alert that says `text`: the toasts keep an empty alert region of their own in the page. */
+const alertSaying = (text: string): HTMLElement | undefined =>
+  screen.getAllByRole('alert').find((alert) => alert.textContent.includes(text));
+
 /** Waits for the game view: the chunk and the files load, and React renders the lazy view. */
 const gameView = (): Promise<HTMLElement> => screen.findByText(/^Game view:/);
 
@@ -246,6 +264,7 @@ describe('App', () => {
     expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
       'Play',
       'Settings',
+      'Achievements',
       'Help',
     ]);
     expect(await axe(container)).toHaveNoViolations();
@@ -306,7 +325,7 @@ describe('App', () => {
     });
 
     await files.finish({ ok: false, failures: [failure] });
-    expect(screen.getByRole('alert')).toHaveTextContent('projectile.png');
+    expect(alertSaying('projectile.png')).toBeDefined();
 
     click('Try again');
     expect(await gameView()).toBeInTheDocument();
@@ -327,6 +346,41 @@ describe('App', () => {
     expect(screen.getByRole('progressbar', { name: 'Loading' })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(heading('Choose your hero')).toBeInTheDocument();
+  });
+
+  it('lists the achievements in the menu with the progress kept on this device (#163)', () => {
+    localStorage.setItem(
+      'buzzkill.achievements',
+      JSON.stringify({ version: 1, progress: { swatter: 42 } }),
+    );
+    render(<App />);
+
+    click('Achievements');
+    expect(heading('Achievements')).toBeInTheDocument();
+    expect(screen.getByText('42 of 500')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(heading('Buzzkill')).toBeInTheDocument();
+  });
+
+  it('keeps what a run counts toward the achievements, and says what it earned (#163)', async () => {
+    render(<App />);
+    await startRun();
+
+    click('Swat an insect');
+
+    const toasts = screen.getByRole('list', { name: 'Notifications' });
+    expect(within(toasts).getByText('Achievement unlocked')).toBeInTheDocument();
+    expect(within(toasts).getByText('First swat')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('buzzkill.achievements') ?? '{}')).toMatchObject({
+      version: 1,
+      progress: { firstSwat: 1, swatter: 1 },
+    });
+
+    click('Game pauses itself');
+    click('Quit to menu');
+    click('Achievements');
+    expect(screen.getByText('1 of 500')).toBeInTheDocument();
   });
 
   it('pauses a run whose gamepad disconnects and says why, then plays on', async () => {
@@ -712,7 +766,7 @@ describe('App', () => {
     click('Break the run');
 
     expect(heading('Something went wrong')).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('The run stopped on an error');
+    expect(alertSaying('The run stopped on an error')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Restart' })).toHaveFocus();
     expect(screen.queryByRole('main', { name: 'Game' })).not.toBeInTheDocument();
     expect(reportError).toHaveBeenCalledExactlyOnceWith(

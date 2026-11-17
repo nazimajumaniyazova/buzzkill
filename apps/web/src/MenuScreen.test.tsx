@@ -5,19 +5,26 @@ import { axe } from 'vitest-axe';
 import { MenuScreen } from './MenuScreen';
 
 function setup() {
-  const handlers = { onPlay: vi.fn(), onPreload: vi.fn(), onSettings: vi.fn(), onHelp: vi.fn() };
+  const handlers = {
+    onPlay: vi.fn(),
+    onPreload: vi.fn(),
+    onSettings: vi.fn(),
+    onAchievements: vi.fn(),
+    onHelp: vi.fn(),
+  };
   const view = render(<MenuScreen {...handlers} />);
   return { ...handlers, ...view };
 }
 
 describe('MenuScreen', () => {
-  it('offers Play, Settings and Help under the title, and passes the accessibility check', async () => {
+  it('offers Play, Settings, Achievements and Help under the title, and passes axe', async () => {
     const { container } = setup();
 
     expect(screen.getByRole('heading', { level: 1, name: 'Buzzkill' })).toBeInTheDocument();
     expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
       'Play',
       'Settings',
+      'Achievements',
       'Help',
     ]);
     expect(screen.getByRole('navigation', { name: 'Main menu' })).toBeInTheDocument();
@@ -25,14 +32,16 @@ describe('MenuScreen', () => {
   });
 
   it('reports each choice', () => {
-    const { onPlay, onSettings, onHelp } = setup();
+    const { onPlay, onSettings, onAchievements, onHelp } = setup();
 
     fireEvent.click(screen.getByRole('button', { name: 'Play' }));
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Achievements' }));
     fireEvent.click(screen.getByRole('button', { name: 'Help' }));
 
     expect(onPlay).toHaveBeenCalledOnce();
     expect(onSettings).toHaveBeenCalledOnce();
+    expect(onAchievements).toHaveBeenCalledOnce();
     expect(onHelp).toHaveBeenCalledOnce();
   });
 

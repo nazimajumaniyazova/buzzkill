@@ -1,7 +1,7 @@
 import { createAudioMixer } from '@buzzkill/engine';
 import type * as GameModule from '@buzzkill/game';
 import { createGame, type Game, type GameHud as Hud, type GameSound } from '@buzzkill/game';
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { Profiler, type ProfilerOnRenderCallback } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -158,8 +158,13 @@ describe('renders during play', () => {
       (hud, index) => index > 0 && shown(hud) === shown(published[index - 1] ?? hud),
     );
     expect(repeats).toEqual([]);
-    // One commit per frame that changed a value on screen, and nothing else renders.
-    expect(onRender.mock.calls.length - commitsBefore).toBe(shownChanges);
+    // One commit per frame that changed a value on screen, and one per toast of an achievement the
+    // play earned (#163): the first insect earns one. Nothing else renders.
+    const toasts = within(screen.getByRole('list', { name: 'Notifications' })).queryAllByRole(
+      'listitem',
+    ).length;
+    expect(toasts).toBe(1);
+    expect(onRender.mock.calls.length - commitsBefore).toBe(shownChanges + toasts);
     expect(vi.mocked(GameView).mock.calls.length - viewRendersBefore).toBe(0);
     expect(vi.mocked(GameHud).mock.calls.length - hudRendersBefore).toBe(0);
   });
