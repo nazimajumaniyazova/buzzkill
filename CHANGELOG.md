@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.26.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.25.0...v0.26.0) (2026-11-17)
+
+
+### Features
+
+* **web:** bounce the score, blink a lost life and fade in the screens ([#193](https://github.com/nazimajumaniyazova/buzzkill/issues/193)) ([38497cb](https://github.com/nazimajumaniyazova/buzzkill/commit/38497cb4e5fbad4eeae2950890f647763949b7f2))
+* **web:** burst sparks, debris, dust and trails from the run's events ([#189](https://github.com/nazimajumaniyazova/buzzkill/issues/189)) ([dfeeb9f](https://github.com/nazimajumaniyazova/buzzkill/commit/dfeeb9fe540a300e137f65649d330f5b4ae54bf1))
+* **web:** flash sprites on hits, and squash and stretch them ([#191](https://github.com/nazimajumaniyazova/buzzkill/issues/191)) ([2dff797](https://github.com/nazimajumaniyazova/buzzkill/commit/2dff797564a1e3339898f79c81c1452b5bb2989d)), closes [#159](https://github.com/nazimajumaniyazova/buzzkill/issues/159)
+* **web:** hold the picture for a moment on strong blows ([#194](https://github.com/nazimajumaniyazova/buzzkill/issues/194)) ([cb05cde](https://github.com/nazimajumaniyazova/buzzkill/commit/cb05cde0c9beedeac28b64623c23793726637ed0)), closes [#158](https://github.com/nazimajumaniyazova/buzzkill/issues/158)
+* **web:** shake the screen on hits, explosions and the queen ([#190](https://github.com/nazimajumaniyazova/buzzkill/issues/190)) ([80cc8e7](https://github.com/nazimajumaniyazova/buzzkill/commit/80cc8e7bfb01f6cc663242f25a68574600a10b6f)), closes [#157](https://github.com/nazimajumaniyazova/buzzkill/issues/157)
+* **web:** vibrate the phone briefly when the hero is hit ([#195](https://github.com/nazimajumaniyazova/buzzkill/issues/195)) ([154f35c](https://github.com/nazimajumaniyazova/buzzkill/commit/154f35c179a510eddf5c7765ed9b91dd2a314dfc)), closes [#162](https://github.com/nazimajumaniyazova/buzzkill/issues/162)
+
 ## [0.25.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.24.0...v0.25.0) (2026-11-17)
 
 
