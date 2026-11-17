@@ -6,7 +6,8 @@ import { GAME_ACTIONS, type GameAction } from '../actions';
 import { LEVELS } from '../config/levels';
 import { POWER_UP_RULES, POWER_UPS, type PowerUpKind } from '../config/power-ups';
 import { RULES } from '../config/rules';
-import { deserializeReplay, type Replay, serializeReplay } from '../replay/format';
+import { DAILY_RUN, dailySeed } from '../daily/daily';
+import { deserializeReplay, parseReplay, type Replay, serializeReplay } from '../replay/format';
 import type { RunResult } from '../replay/result';
 import { simulate } from '../replay/simulate';
 import { createSimulation } from '../simulation/simulation';
@@ -608,6 +609,24 @@ describe('createGame replays', () => {
     expect(replay).toMatchObject({ gameVersion: 'test', seed: 5, heroId: 'male', mode: 'day' });
     expect(replay.inputs.length).toBeLessThan(12);
     expect(replayAsServer(s.game)).toEqual(s.game.result());
+  });
+
+  it('records the date of a daily run in its replay, and no date for any other (#165)', () => {
+    const daily = (date: string | null) =>
+      createGame({
+        settings: { heroId: 'female', ...DAILY_RUN, daily: date },
+        seed: date === null ? 7 : dailySeed(date),
+        gameVersion: 'test',
+        input: createActionInput(GAME_ACTIONS),
+        host: createFakeHost().host,
+        renderer: { render: vi.fn() },
+        audio: { play: vi.fn() },
+      });
+
+    expect(daily('2026-11-17').replay().daily).toBe('2026-11-17');
+    expect(parseReplay(daily('2026-11-17').replay()).ok).toBe(true);
+    expect(setup().game.replay().daily).toBeNull();
+    expect(daily(null).replay().daily).toBeNull();
   });
 
   it('keeps the result of the tick the run ended, while the world moves on', () => {

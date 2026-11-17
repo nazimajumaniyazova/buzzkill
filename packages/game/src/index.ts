@@ -45,6 +45,7 @@ export {
   type PowerUpKind,
 } from './config/power-ups';
 export { type HeroConfig, HEROES, type HeroId, RULES, WORLD } from './config/rules';
+export { DAILY_RUN, dailyDate, dailySeed, isDailyDate } from './daily/daily';
 export {
   createGame,
   type CreateGameOptions,

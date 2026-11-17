@@ -23,6 +23,11 @@ export interface GameSettings {
   readonly mode: GameMode;
   /** Fixed for the run and recorded in its replay (#155). */
   readonly difficulty: Difficulty;
+  /**
+   * The UTC date of a daily run (#165), recorded in its replay; the seed must be the day's. Any
+   * other run has none.
+   */
+  readonly daily?: string | null;
 }
 
 /**
@@ -188,6 +193,7 @@ export function createGame(options: CreateGameOptions): Game {
     heroId: settings.heroId,
     mode: settings.mode,
     difficulty: settings.difficulty,
+    daily: settings.daily ?? null,
   });
   /** The input of the tick being simulated, reused: a tick allocates nothing. */
   const tickInput = { down: 0, pressed: 0 };

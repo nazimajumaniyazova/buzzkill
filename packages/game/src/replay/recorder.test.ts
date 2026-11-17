@@ -20,10 +20,17 @@ describe('createReplayRecorder', () => {
     });
 
     expect(recorder.replay()).toEqual({
-      formatVersion: 2,
+      formatVersion: 3,
       ...OPTIONS,
+      daily: null,
       inputs: [3, 4, 3, 6, 2, 0],
     });
+  });
+
+  it('records the date of a daily run (#165)', () => {
+    const recorder = createReplayRecorder({ ...OPTIONS, daily: '2026-11-17' });
+
+    expect(recorder.replay().daily).toBe('2026-11-17');
   });
 
   it('records nothing while nothing changes', () => {

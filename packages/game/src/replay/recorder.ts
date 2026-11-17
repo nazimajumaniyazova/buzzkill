@@ -9,6 +9,8 @@ export interface ReplayRecorderOptions {
   readonly heroId: HeroId;
   readonly mode: GameMode;
   readonly difficulty: Difficulty;
+  /** The UTC date of a daily run (#165); a run of no day without it. */
+  readonly daily?: string | null;
 }
 
 export interface ReplayRecorder {
@@ -55,6 +57,7 @@ export function createReplayRecorder(options: ReplayRecorderOptions): ReplayReco
         heroId: options.heroId,
         mode: options.mode,
         difficulty: options.difficulty,
+        daily: options.daily ?? null,
         inputs: inputs.slice(),
       };
     },

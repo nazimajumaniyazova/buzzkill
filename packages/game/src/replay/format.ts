@@ -6,6 +6,7 @@ import { GAME_ACTIONS } from '../actions';
 import { type Difficulty, DIFFICULTY_IDS } from '../config/difficulty';
 import type { GameMode } from '../config/enemies';
 import type { HeroId } from '../config/rules';
+import { dailySeed, isDailyDate } from '../daily/daily';
 
 /**
  * The replay of a run (ADR-0009): everything needed to play it again bit for bit.
@@ -25,11 +26,19 @@ export interface Replay {
   readonly mode: GameMode;
   /** Since format 2 (#155): runs at different difficulties belong on different boards. */
   readonly difficulty: Difficulty;
+  /**
+   * Since format 3 (#165): the UTC date of a daily run as `YYYY-MM-DD`, whose seed must be the
+   * day's (`dailySeed`); `null` for any other run.
+   */
+  readonly daily: string | null;
   readonly inputs: readonly number[];
 }
 
-/** 2 since #155, which added `difficulty`; no replay of format 1 was ever stored. */
-export const REPLAY_FORMAT_VERSION = 2;
+/**
+ * 3 since #165, which added `daily`; 2 since #155, which added `difficulty`. A replay of format 2
+ * reads as one of format 3 that is not a daily run; no replay of format 1 was ever stored.
+ */
+export const REPLAY_FORMAT_VERSION = 3;
 
 /**
  * The bits a replay may contain: every action but `pause`. A paused tick is never simulated, so
@@ -67,8 +76,7 @@ function inputsProblem(inputs: readonly number[]): string | undefined {
   return undefined;
 }
 
-const replaySchema = z.object({
-  formatVersion: z.literal(REPLAY_FORMAT_VERSION),
+const fields = {
   gameVersion: z.string().check(z.minLength(1), z.maxLength(64)),
   seed: z.uint32(),
   heroId: z.enum(HERO_IDS),
@@ -83,7 +91,31 @@ const replaySchema = z.object({
       }
     }),
   ),
-});
+};
+
+/** Format 2, from #155 to #165: everything but `daily`. */
+const format2Schema = z.object({ formatVersion: z.literal(2), ...fields });
+
+const replaySchema = z
+  .object({
+    formatVersion: z.literal(REPLAY_FORMAT_VERSION),
+    ...fields,
+    daily: z.nullable(
+      z.string().check(z.refine(isDailyDate, 'daily must be a date written as YYYY-MM-DD')),
+    ),
+  })
+  .check(
+    z.refine(
+      (replay) =>
+        replay.daily === null ||
+        !isDailyDate(replay.daily) ||
+        replay.seed === dailySeed(replay.daily),
+      {
+        message: "daily: the seed of a daily run must be its day's",
+        path: ['daily'],
+      },
+    ),
+  );
 
 export type ReplayParseResult =
   { readonly ok: true; readonly replay: Replay } | { readonly ok: false; readonly error: string };
@@ -93,6 +125,10 @@ export type ReplayParseResult =
  * player loaded. Unknown fields are dropped. Never throws.
  */
 export function parseReplay(value: unknown): ReplayParseResult {
+  const old = format2Schema.safeParse(value);
+  if (old.success) {
+    return { ok: true, replay: { ...old.data, formatVersion: REPLAY_FORMAT_VERSION, daily: null } };
+  }
   const result = replaySchema.safeParse(value);
   if (result.success) {
     return { ok: true, replay: result.data };
@@ -102,8 +138,17 @@ export function parseReplay(value: unknown): ReplayParseResult {
 
 /** The replay as compact JSON with a fixed field order. */
 export function serializeReplay(replay: Replay): string {
-  const { formatVersion, gameVersion, seed, heroId, mode, difficulty, inputs } = replay;
-  return JSON.stringify({ formatVersion, gameVersion, seed, heroId, mode, difficulty, inputs });
+  const { formatVersion, gameVersion, seed, heroId, mode, difficulty, daily, inputs } = replay;
+  return JSON.stringify({
+    formatVersion,
+    gameVersion,
+    seed,
+    heroId,
+    mode,
+    difficulty,
+    daily,
+    inputs,
+  });
 }
 
 /** Parses the output of `serializeReplay`; malformed JSON is reported like any other problem. */

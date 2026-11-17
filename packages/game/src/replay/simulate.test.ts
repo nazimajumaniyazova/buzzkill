@@ -44,14 +44,14 @@ describe('simulate', () => {
   });
 
   it('stops at maxTicks', () => {
-    const replay: Replay = { formatVersion: 2, ...META, seed: 1, inputs: [] };
+    const replay: Replay = { formatVersion: 3, ...META, daily: null, seed: 1, inputs: [] };
 
     expect(simulate(replay, { maxTicks: 10 }).ticks).toBe(10);
   });
 
   it('stops at the tick the run is lost', () => {
     // Idle at the start position, the hero is eventually hit five times.
-    const replay: Replay = { formatVersion: 2, ...META, seed: 1, inputs: [] };
+    const replay: Replay = { formatVersion: 3, ...META, daily: null, seed: 1, inputs: [] };
 
     const result = simulate(replay, { maxTicks: 60 * 60 * 10 });
 
@@ -62,7 +62,7 @@ describe('simulate', () => {
   });
 
   it('ignores changes recorded after the last simulated tick', () => {
-    const replay: Replay = { formatVersion: 2, ...META, seed: 1, inputs: [50, 4] };
+    const replay: Replay = { formatVersion: 3, ...META, daily: null, seed: 1, inputs: [50, 4] };
 
     expect(simulate(replay, { maxTicks: 49 })).toEqual(
       simulate({ ...replay, inputs: [] }, { maxTicks: 49 }),
@@ -70,7 +70,7 @@ describe('simulate', () => {
   });
 
   it('accepts 0 ticks and rejects a maxTicks that is not a whole number', () => {
-    const replay: Replay = { formatVersion: 2, ...META, seed: 1, inputs: [] };
+    const replay: Replay = { formatVersion: 3, ...META, daily: null, seed: 1, inputs: [] };
 
     expect(simulate(replay, { maxTicks: 0 }).ticks).toBe(0);
     expect(() => simulate(replay, { maxTicks: -1 })).toThrow(RangeError);
