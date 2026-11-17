@@ -304,7 +304,12 @@ function collisionSystem(state: GameState): void {
       const health = healthAfterHit(world.health[enemy] as number);
       world.health[enemy] = health;
       if (health > 0) {
-        state.events.emit('enemyHit', { id: enemy, healthLeft: health });
+        state.events.emit('enemyHit', {
+          id: enemy,
+          healthLeft: health,
+          x: headX(state, projectile),
+          y: headY(state, projectile),
+        });
         continue;
       }
       world.kill(enemy);
@@ -313,14 +318,24 @@ function collisionSystem(state: GameState): void {
       const value = world.value[enemy] as number;
       state.score = scoreAfterKill(state.score, value);
       state.events.emit('enemyDestroyed', {
-        x: world.x[enemy] as number,
-        y: world.y[enemy] as number,
+        x: (world.x[enemy] as number) + (world.width[enemy] as number) * 0.5,
+        y: (world.y[enemy] as number) + (world.height[enemy] as number) * 0.5,
         value,
       });
       break;
     }
   }
 }
+
+/**
+ * Where a projectile strikes what it hits: its head, the middle of its right edge. Only the events
+ * report it, for the renderer's sparks (#156); a killed entity keeps its position until the world
+ * is flushed.
+ */
+const headX = (state: GameState, projectile: EntityId): number =>
+  (state.world.x[projectile] as number) + (state.world.width[projectile] as number);
+const headY = (state: GameState, projectile: EntityId): number =>
+  (state.world.y[projectile] as number) + (state.world.height[projectile] as number) * 0.5;
 
 /** A blow to the hero: a life, unless a shield takes it. */
 function hurtHero(state: GameState): void {
@@ -372,7 +387,11 @@ function bossCollisionSystem(state: GameState): void {
     world.kill(shot);
     const health = healthAfterHit(world.health[id] as number);
     world.health[id] = health;
-    state.events.emit('bossHit', { healthLeft: health });
+    state.events.emit('bossHit', {
+      healthLeft: health,
+      x: headX(state, shot),
+      y: headY(state, shot),
+    });
   }
 }
 

@@ -117,6 +117,88 @@ describe('SettingsScreen', () => {
     expect(onChange).toHaveBeenCalledExactlyOnceWith({ motion: 'reduced' });
   });
 
+  it('turns the particles off and on in the effects tab, after the gameplay tab', async () => {
+    const onChange = vi.fn();
+    const { container, rerender } = render(
+      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />,
+    );
+
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+      'Sound',
+      'Display',
+      'Gameplay',
+      'Effects',
+      'Controls',
+    ]);
+    fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+    const particles = screen.getByRole('switch', { name: 'Particles' });
+    expect(particles).toBeChecked();
+    expect(particles).toHaveAccessibleDescription(/With reduced motion, fewer and shorter\.$/);
+    fireEvent.click(particles);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ particles: false });
+    expect(await axe(container)).toHaveNoViolations();
+
+    rerender(
+      <SettingsScreen
+        settings={{ ...DEFAULT_SETTINGS, particles: false }}
+        onChange={onChange}
+        onBack={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Particles' }));
+    expect(onChange).toHaveBeenLastCalledWith({ particles: true });
+  });
+
+  it('turns the screen shake off and on in the effects tab, below the particles', async () => {
+    const onChange = vi.fn();
+    const { container, rerender } = render(
+      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+    expect(
+      within(screen.getByRole('tabpanel'))
+        .getAllByRole('switch')
+        .map((item) => item.textContent),
+    ).toEqual(['Particles', 'Screen shake', 'Hit flash', 'Squash and stretch']);
+    const shake = screen.getByRole('switch', { name: 'Screen shake' });
+    expect(shake).toBeChecked();
+    expect(shake).toHaveAccessibleDescription(/Never while motion is reduced\.$/);
+    fireEvent.click(shake);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ screenShake: false });
+    expect(await axe(container)).toHaveNoViolations();
+
+    rerender(
+      <SettingsScreen
+        settings={{ ...DEFAULT_SETTINGS, screenShake: false }}
+        onChange={onChange}
+        onBack={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole('switch', { name: 'Screen shake' }));
+    expect(onChange).toHaveBeenLastCalledWith({ screenShake: true });
+  });
+
+  it('turns the hit flash and the squash and stretch off in the effects tab', async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <SettingsScreen settings={DEFAULT_SETTINGS} onChange={onChange} onBack={vi.fn()} />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Effects' }));
+    const flash = screen.getByRole('switch', { name: 'Hit flash' });
+    const squash = screen.getByRole('switch', { name: 'Squash and stretch' });
+    expect(flash).toBeChecked();
+    expect(squash).toBeChecked();
+    expect(flash).toHaveAccessibleDescription(/never more than three times a second\.$/);
+    expect(squash).toHaveAccessibleDescription(/Never while motion is reduced\.$/);
+    fireEvent.click(flash);
+    fireEvent.click(squash);
+
+    expect(onChange.mock.calls).toEqual([[{ hitFlash: false }], [{ squashStretch: false }]]);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
   it('offers the game speed on the gameplay tab, with what a slower game means', () => {
     const onChange = vi.fn();
     render(

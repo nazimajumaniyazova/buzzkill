@@ -83,6 +83,7 @@ function english(format: Format) {
         sound: 'Sound',
         display: 'Display',
         gameplay: 'Gameplay',
+        effects: 'Effects',
         controls: 'Controls',
       },
       sound: 'Sound',
@@ -109,6 +110,18 @@ function english(format: Format) {
       } satisfies Record<Difficulty, string>,
       gameSpeed: 'Game speed',
       gameSpeedHint: `A slower game leaves more time to react. Only games at ${format.percent(1)} enter the leaderboard.`,
+      particles: 'Particles',
+      particlesHint:
+        'Sparks where shots hit, debris and dust where insects break, and trails behind shots. With reduced motion, fewer and shorter.',
+      screenShake: 'Screen shake',
+      screenShakeHint:
+        'The screen shakes when the hero is hit, when insects explode, and when the queen arrives, rages and falls. Never while motion is reduced.',
+      hitFlash: 'Hit flash',
+      hitFlashHint:
+        'An insect, the queen or the hero flashes white when hit: softer while motion is reduced, and never more than three times a second.',
+      squashStretch: 'Squash and stretch',
+      squashStretchHint:
+        'The hero squashes a little when firing, and insects stretch as they bob. Never while motion is reduced.',
     },
     keyEditor: {
       caption: 'Keyboard',

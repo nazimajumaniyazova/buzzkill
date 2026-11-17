@@ -19,9 +19,10 @@ const LANGUAGES = ['en', 'ru'] as const satisfies readonly Language[];
 const MOTIONS = ['system', 'reduced', 'full'] as const satisfies readonly MotionChoice[];
 
 /**
- * The `settings` panel of the menu, one tab per kind: sound, display, gameplay and controls.
- * Every change goes to the settings store at once, which saves it; the mixer, the theme and the
- * language follow while the player is still here, and the keys apply to the next run.
+ * The `settings` panel of the menu, one tab per kind: sound, display, gameplay, effects and
+ * controls. Every change goes to the settings store at once, which saves it; the mixer, the theme
+ * and the language follow while the player is still here, the effects apply to the run on screen,
+ * and the keys to the next run. The effects of stage 7 join the particles in their tab (#156).
  */
 export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenProps): JSX.Element {
   const titleId = useId();
@@ -145,6 +146,46 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
               ),
             },
             {
+              value: 'effects',
+              label: t.settings.tabs.effects,
+              panel: (
+                <Stack gap="lg">
+                  <EffectSwitch
+                    label={t.settings.particles}
+                    hint={t.settings.particlesHint}
+                    checked={settings.particles}
+                    onCheckedChange={(particles) => {
+                      onChange({ particles });
+                    }}
+                  />
+                  <EffectSwitch
+                    label={t.settings.screenShake}
+                    hint={t.settings.screenShakeHint}
+                    checked={settings.screenShake}
+                    onCheckedChange={(screenShake) => {
+                      onChange({ screenShake });
+                    }}
+                  />
+                  <EffectSwitch
+                    label={t.settings.hitFlash}
+                    hint={t.settings.hitFlashHint}
+                    checked={settings.hitFlash}
+                    onCheckedChange={(hitFlash) => {
+                      onChange({ hitFlash });
+                    }}
+                  />
+                  <EffectSwitch
+                    label={t.settings.squashStretch}
+                    hint={t.settings.squashStretchHint}
+                    checked={settings.squashStretch}
+                    onCheckedChange={(squashStretch) => {
+                      onChange({ squashStretch });
+                    }}
+                  />
+                </Stack>
+              ),
+            },
+            {
               value: 'controls',
               label: t.settings.tabs.controls,
               panel: (
@@ -165,5 +206,29 @@ export function SettingsScreen({ settings, onChange, onBack }: SettingsScreenPro
         </Inline>
       </Stack>
     </section>
+  );
+}
+
+interface EffectSwitchProps {
+  readonly label: string;
+  /** What the effect does, read out as the switch's description. */
+  readonly hint: string;
+  readonly checked: boolean;
+  readonly onCheckedChange: (checked: boolean) => void;
+}
+
+/** One effect of the Effects tab: its switch, and below it what it does. */
+function EffectSwitch({ label, hint, checked, onCheckedChange }: EffectSwitchProps): JSX.Element {
+  const hintId = useId();
+  return (
+    <Stack gap="sm">
+      <Switch
+        label={label}
+        aria-describedby={hintId}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+      />
+      <p id={hintId}>{hint}</p>
+    </Stack>
   );
 }

@@ -1,20 +1,41 @@
-import { createGridAtlas, type Renderer, type SpriteAtlas } from '@buzzkill/engine';
-import { createSimulation, type EntityId, Kind, QUEEN, type Simulation } from '@buzzkill/game';
+import {
+  type Camera,
+  createEventBus,
+  createGridAtlas,
+  IDENTITY_CAMERA,
+  type Renderer,
+  type SpriteAtlas,
+} from '@buzzkill/engine';
+import {
+  createSimulation,
+  type EntityId,
+  type GameEvents,
+  Kind,
+  QUEEN,
+  type Simulation,
+} from '@buzzkill/game';
 import { tokens } from '@buzzkill/ui';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createGameDrawer } from './draw-game';
+import { PARTICLE_BURSTS } from './particles';
+import { FLASH, SQUASH, STRETCH } from './sprite-effects';
 import type { GameSprites } from './sprites';
 
 type Call = readonly unknown[];
 
 function createFakeRenderer() {
   const calls: Call[] = [];
+  /** The camera of each frame, copied: the drawer may hand out the same object every frame. */
+  const cameras: Camera[] = [];
   const renderer: Renderer<string> = {
     width: 1280,
     height: 720,
     setScale: () => undefined,
-    beginFrame: () => calls.push(['beginFrame']),
+    beginFrame: (camera) => {
+      cameras.push({ ...(camera ?? IDENTITY_CAMERA) });
+      calls.push(['beginFrame']);
+    },
     drawSprite: (atlas: SpriteAtlas<string>, frame, x, y, options) =>
       calls.push(['sprite', atlas.image, frame, x, y, options]),
     fillRect: (x, y, width, height, color) => calls.push(['rect', x, y, width, height, color]),
@@ -24,7 +45,7 @@ function createFakeRenderer() {
       return { sprites: 0, culled: 0 };
     },
   };
-  return { renderer, calls };
+  return { renderer, calls, cameras };
 }
 
 const atlas = (image: string, frames: number) =>
@@ -317,5 +338,230 @@ describe('the city behind the run', () => {
 
     const near = calls.filter((call) => call[1] === 'day-near').map((call) => call[3]);
     expect(near).toEqual([-100, 1180, -25, 1255]);
+  });
+});
+
+describe('the particles of the run', () => {
+  let sim: Simulation;
+
+  beforeEach(() => {
+    sim = createSimulation({ seed: 1, heroId: 'female', mode: 'day' });
+    emptyWorld(sim);
+  });
+
+  type Burst = keyof typeof PARTICLE_BURSTS;
+
+  /**
+   * What a call drew: a sprite's image, or which of `bursts` has a rectangle's color. Some bursts
+   * share a color, so a test names the bursts it expects.
+   */
+  const drawn = (call: Call, bursts: readonly Burst[]): string => {
+    if (call[0] === 'sprite') {
+      return String(call[1]);
+    }
+    const color = String(call[5]);
+    return bursts.find((burst) => PARTICLE_BURSTS[burst].colors.includes(color)) ?? color;
+  };
+
+  /** The kinds drawn in a frame, each run of the same kind once. */
+  const order = (calls: readonly Call[], bursts: readonly Burst[]): string[] =>
+    calls
+      .slice(1, -1)
+      .map((call) => drawn(call, bursts))
+      .filter((kind, index, kinds) => kind !== kinds[index - 1]);
+
+  it('follows the events of the run: dust behind the insects, debris in front of them', () => {
+    const { renderer, calls } = createFakeRenderer();
+    add(sim, Kind.explosion, 300, 0, 200);
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, CITY);
+    drawer.listen?.(events);
+
+    events.emit('enemyDestroyed', { x: 400, y: 100, value: 1 });
+    events.emit('explosion', { x: 400, y: 100, variant: 0 });
+    drawer.render(sim.state, 0);
+
+    expect(order(calls, ['dust', 'debris'])).toEqual([
+      'day-sky',
+      'day-far',
+      'day-near',
+      'dust',
+      'smoke',
+      'debris',
+    ]);
+  });
+
+  it('sheds a trail behind each shot for every tick since the last frame', () => {
+    const { renderer, calls } = createFakeRenderer();
+    add(sim, Kind.projectile, 100, 200, 10);
+    const drawer = createGameDrawer(renderer, SPRITES);
+
+    drawer.render(sim.state, 0);
+    sim.state.tick += 2;
+    drawer.render(sim.state, 0);
+    calls.length = 0;
+    drawer.render(sim.state, 0);
+
+    // Half a speck a tick: one for the two ticks, at the middle of the shot's left edge.
+    const specks = calls.filter((call) => call[0] === 'rect');
+    expect(specks.map((call) => drawn(call, ['trail']))).toEqual(['trail']);
+    // A rectangle's call: its name, then its position and size.
+    const [, x, y, width, height] = specks[0] as readonly [string, number, number, number, number];
+    expect([x + width / 2, y + height / 2]).toEqual([100, 205]);
+  });
+
+  it('draws no particles while they are off', () => {
+    const { renderer, calls } = createFakeRenderer();
+    add(sim, Kind.projectile, 100, 200, 10);
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES, { particles: () => false });
+    drawer.listen?.(events);
+
+    // An insect of no world: the particles take the point of a hit and never read the insect.
+    events.emit('enemyHit', { id: 3 as EntityId, healthLeft: 1, x: 400, y: 100 });
+    drawer.render(sim.state, 0);
+    sim.state.tick += 2;
+    drawer.render(sim.state, 0);
+    drawer.render(sim.state, 0);
+
+    expect(calls.filter((call) => call[0] === 'rect')).toEqual([]);
+  });
+});
+
+describe('the screen shake of the run', () => {
+  let sim: Simulation;
+
+  beforeEach(() => {
+    sim = createSimulation({ seed: 1, heroId: 'female', mode: 'day' });
+    emptyWorld(sim);
+  });
+
+  it('looks through a still camera until something shakes it', () => {
+    const { renderer, cameras } = createFakeRenderer();
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES);
+    drawer.listen?.(events);
+
+    drawer.render(sim.state, 0);
+    events.emit('playerHit', { livesLeft: 2 });
+    drawer.render(sim.state, 0.5);
+
+    expect(cameras[0]).toEqual(IDENTITY_CAMERA);
+    expect(cameras[1]).not.toEqual(IDENTITY_CAMERA);
+  });
+
+  it('keeps the camera still while the shake is off or motion is reduced', () => {
+    for (const options of [{ screenShake: () => false }, { reducedMotion: () => true }]) {
+      const { renderer, cameras } = createFakeRenderer();
+      const events = createEventBus<GameEvents>();
+      const drawer = createGameDrawer(renderer, SPRITES, options);
+      drawer.listen?.(events);
+
+      events.emit('bossDefeated', { x: 640, y: 360, value: 60 });
+      drawer.render(sim.state, 0);
+
+      expect(cameras).toEqual([IDENTITY_CAMERA]);
+    }
+  });
+});
+
+describe('the flash of a hit, and squash and stretch', () => {
+  let sim: Simulation;
+
+  beforeEach(() => {
+    sim = createSimulation({ seed: 1, heroId: 'female', mode: 'day' });
+  });
+
+  /** A wasp of two lives that keeps still, alone in the world but for the hero. */
+  function wasp(): EntityId {
+    const id = add(sim, Kind.enemy, 300, 400);
+    sim.state.world.variant[id] = 1;
+    sim.state.world.health[id] = 1;
+    sim.state.world.value[id] = 2;
+    return id;
+  }
+
+  const spriteOf = (calls: readonly Call[], image: string): Call | undefined =>
+    calls.find((call) => call[0] === 'sprite' && call[1] === image);
+
+  it('flashes an insect that a shot hit, drawing its own sprite tinted white', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const insect = wasp();
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES);
+    drawer.listen?.(events);
+
+    events.emit('enemyHit', { id: insect, healthLeft: 1, x: 300, y: 420 });
+    drawer.render(sim.state, 0);
+
+    expect(spriteOf(calls, 'wasp')?.[5]).toEqual({
+      width: 50,
+      height: 50,
+      tint: FLASH.color,
+      tintAmount: FLASH.amount,
+    });
+    // The hero was not hit: drawn as it is.
+    expect(spriteOf(calls, 'julie')?.[5]).not.toHaveProperty('tint');
+  });
+
+  it('squashes the hero about the middle of its base when it fires', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES);
+    drawer.listen?.(events);
+    const { width, height } = sim.state.hero;
+
+    events.emit('shot', { x: 180, y: 120 });
+    drawer.render(sim.state, 0);
+
+    const wide = width * (1 + SQUASH.amount);
+    const low = height * (1 - SQUASH.amount);
+    const hero = spriteOf(calls, 'julie');
+    expect(hero?.[3]).toBeCloseTo(20 + (width - wide) / 2);
+    expect(hero?.[4]).toBeCloseTo(100 + (height - low));
+    expect(hero?.[5]).toEqual({ width: wide, height: low });
+  });
+
+  it('stretches a bobbing insect upright about the middle of its base', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const insect = wasp();
+    // It rose a pixel in its last tick, and is drawn where it is now.
+    sim.state.world.prevY[insect] = 401;
+
+    createGameDrawer(renderer, SPRITES).render(sim.state, 1);
+
+    const tall = 50 * (1 + STRETCH.perPixel);
+    const narrow = 50 / (1 + STRETCH.perPixel);
+    const drawn = spriteOf(calls, 'wasp');
+    expect(drawn?.[3]).toBeCloseTo(300 + (50 - narrow) / 2);
+    expect(drawn?.[4]).toBeCloseTo(400 + (50 - tall));
+    // The matchers are typed `any`; as numbers, they keep the lint's checks on the object.
+    expect(drawn?.[5]).toEqual({
+      width: expect.closeTo(narrow, 9) as number,
+      height: expect.closeTo(tall, 9) as number,
+    });
+  });
+
+  it('neither flashes nor squashes nor stretches while they are off', () => {
+    const { renderer, calls } = createFakeRenderer();
+    const insect = wasp();
+    sim.state.world.prevY[insect] = 401;
+    const events = createEventBus<GameEvents>();
+    const drawer = createGameDrawer(renderer, SPRITES, {
+      hitFlash: () => false,
+      squashStretch: () => false,
+    });
+    drawer.listen?.(events);
+
+    events.emit('enemyHit', { id: insect, healthLeft: 1, x: 300, y: 420 });
+    events.emit('shot', { x: 180, y: 120 });
+    drawer.render(sim.state, 1);
+
+    expect(spriteOf(calls, 'wasp')?.slice(3)).toEqual([300, 400, { width: 50, height: 50 }]);
+    expect(spriteOf(calls, 'julie')?.slice(3)).toEqual([
+      20,
+      100,
+      { width: sim.state.hero.width, height: sim.state.hero.height },
+    ]);
   });
 });

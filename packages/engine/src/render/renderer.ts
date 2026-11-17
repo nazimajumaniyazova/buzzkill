@@ -1,4 +1,5 @@
 import type { SpriteAtlas } from './atlas';
+import type { Camera } from './screen-shake';
 
 /**
  * The drawing interface of the engine (ADR-0004). Game code draws through it and never calls
@@ -11,8 +12,12 @@ export interface Renderer<TImage> {
   readonly height: number;
   /** Device pixels per logical pixel, from `computeCanvasFit`. Takes effect at the next frame. */
   setScale(scale: number): void;
-  /** Clears the canvas and starts counting the frame's draws. */
-  beginFrame(): void;
+  /**
+   * Clears the canvas and starts counting the frame's draws. The frame is drawn through `camera`,
+   * moved, turned and zoomed about the center of the play area, such as by a screen shake (#157);
+   * without one, as it is.
+   */
+  beginFrame(camera?: Camera): void;
   /**
    * Draws frame `frame` of `atlas` with its top-left corner at (`x`, `y`). Size defaults to the
    * frame's size. A sprite entirely outside the play area is skipped.
@@ -24,8 +29,18 @@ export interface Renderer<TImage> {
     y: number,
     options?: SpriteOptions,
   ): void;
-  /** Fills a rectangle; also the stand-in for sprites whose art does not exist yet. */
-  fillRect(x: number, y: number, width: number, height: number, color: string): void;
+  /**
+   * Fills a rectangle, at an opacity from 0 to 1 (1 by default): health bars, warnings and
+   * particles (#156).
+   */
+  fillRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    color: string,
+    alpha?: number,
+  ): void;
   drawText(text: string, x: number, y: number, style: TextStyle): void;
   /** Ends the frame and returns its counts. The object is reused by the next frame. */
   endFrame(): RenderStats;
@@ -36,6 +51,14 @@ export interface SpriteOptions {
   readonly height?: number;
   /** Opacity from 0 to 1. */
   readonly alpha?: number;
+  /**
+   * A color to mix into the sprite's own pixels, such as white for a flash on a hit (#159). The
+   * renderer tints the same frame on its tint buffer, so no second sprite is needed; without a
+   * buffer the sprite is drawn as it is.
+   */
+  readonly tint?: string;
+  /** How much of `tint`, from 0, none, to 1, the color alone. 1 by default. */
+  readonly tintAmount?: number;
 }
 
 export interface TextStyle {
@@ -81,14 +104,29 @@ export interface Context2DLike<TImage> {
   font: string;
   textAlign: string;
   textBaseline: string;
+  globalCompositeOperation: string;
 }
 
-export interface Canvas2DRendererOptions {
+/**
+ * A scratch canvas the renderer tints a sprite on before it draws it (#159): `source-atop` paints
+ * the color over the sprite's own pixels only, which the main canvas cannot do over the scene.
+ */
+export interface TintBuffer<TImage> {
+  readonly context: Context2DLike<TImage>;
+  /** The scratch canvas itself, which the main context draws from. */
+  readonly image: TImage;
+  /** Makes the canvas at least this many pixels wide and high; it never shrinks. */
+  ensureSize(width: number, height: number): void;
+}
+
+export interface Canvas2DRendererOptions<TImage = unknown> {
   /** Logical size of the play area. */
   readonly width: number;
   readonly height: number;
   /** Initial device pixels per logical pixel. Default 1. */
   readonly scale?: number;
+  /** Where tinted sprites are made; without one, a tint is ignored. */
+  readonly tintBuffer?: TintBuffer<TImage>;
 }
 
 /**
@@ -97,9 +135,9 @@ export interface Canvas2DRendererOptions {
  */
 export function createCanvas2DRenderer<TImage>(
   context: Context2DLike<TImage>,
-  options: Canvas2DRendererOptions,
+  options: Canvas2DRendererOptions<TImage>,
 ): Renderer<TImage> {
-  const { width, height } = options;
+  const { width, height, tintBuffer } = options;
   let scale = options.scale ?? 1;
   const stats = { sprites: 0, culled: 0 };
 
@@ -122,9 +160,28 @@ export function createCanvas2DRenderer<TImage>(
       assertScale(value);
       scale = value;
     },
-    beginFrame() {
+    beginFrame(camera) {
       context.setTransform(scale, 0, 0, scale, 0, 0);
       context.clearRect(0, 0, width, height);
+      if (
+        camera !== undefined &&
+        (camera.x !== 0 || camera.y !== 0 || camera.angle !== 0 || camera.zoom !== 1)
+      ) {
+        // A point p of the scene goes to center + zoom × rotate(p - center) + offset, in device
+        // pixels.
+        const cos = Math.cos(camera.angle) * camera.zoom;
+        const sin = Math.sin(camera.angle) * camera.zoom;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        context.setTransform(
+          scale * cos,
+          scale * sin,
+          -scale * sin,
+          scale * cos,
+          scale * (centerX + camera.x - (cos * centerX - sin * centerY)),
+          scale * (centerY + camera.y - (sin * centerX + cos * centerY)),
+        );
+      }
       context.globalAlpha = 1;
       stats.sprites = 0;
       stats.culled = 0;
@@ -146,25 +203,73 @@ export function createCanvas2DRenderer<TImage>(
       if (alpha !== 1) {
         context.globalAlpha = alpha;
       }
-      context.drawImage(
-        atlas.image,
-        rect.x,
-        rect.y,
-        rect.width,
-        rect.height,
-        snap(x),
-        snap(y),
-        drawWidth,
-        drawHeight,
-      );
+      const tint = spriteOptions?.tint;
+      const tintAmount = spriteOptions?.tintAmount ?? 1;
+      if (tint !== undefined && tintAmount > 0 && tintBuffer !== undefined) {
+        // The frame at its size on screen in device pixels, its own pixels then painted over.
+        const bufferWidth = Math.ceil(drawWidth * scale);
+        const bufferHeight = Math.ceil(drawHeight * scale);
+        tintBuffer.ensureSize(bufferWidth, bufferHeight);
+        const buffer = tintBuffer.context;
+        buffer.setTransform(1, 0, 0, 1, 0, 0);
+        buffer.globalCompositeOperation = 'source-over';
+        buffer.globalAlpha = 1;
+        buffer.clearRect(0, 0, bufferWidth, bufferHeight);
+        buffer.drawImage(
+          atlas.image,
+          rect.x,
+          rect.y,
+          rect.width,
+          rect.height,
+          0,
+          0,
+          bufferWidth,
+          bufferHeight,
+        );
+        buffer.globalCompositeOperation = 'source-atop';
+        buffer.globalAlpha = tintAmount;
+        buffer.fillStyle = tint;
+        buffer.fillRect(0, 0, bufferWidth, bufferHeight);
+        buffer.globalCompositeOperation = 'source-over';
+        buffer.globalAlpha = 1;
+        context.drawImage(
+          tintBuffer.image,
+          0,
+          0,
+          bufferWidth,
+          bufferHeight,
+          snap(x),
+          snap(y),
+          drawWidth,
+          drawHeight,
+        );
+      } else {
+        context.drawImage(
+          atlas.image,
+          rect.x,
+          rect.y,
+          rect.width,
+          rect.height,
+          snap(x),
+          snap(y),
+          drawWidth,
+          drawHeight,
+        );
+      }
       if (alpha !== 1) {
         context.globalAlpha = 1;
       }
       stats.sprites += 1;
     },
-    fillRect(x, y, rectWidth, rectHeight, color) {
+    fillRect(x, y, rectWidth, rectHeight, color, alpha = 1) {
       context.fillStyle = color;
+      if (alpha !== 1) {
+        context.globalAlpha = alpha;
+      }
       context.fillRect(snap(x), snap(y), rectWidth, rectHeight);
+      if (alpha !== 1) {
+        context.globalAlpha = 1;
+      }
     },
     drawText(text, x, y, style) {
       context.font = style.font;

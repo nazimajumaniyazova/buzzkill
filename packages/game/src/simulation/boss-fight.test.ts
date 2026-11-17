@@ -325,17 +325,20 @@ describe('her stings', () => {
 });
 
 describe("the hero's shots on the queen", () => {
-  it('take her health one hit at a time', () => {
+  it('take her health one hit at a time, and report where the shot struck', () => {
     const sim = setup({ shielded: true });
     runUntil(sim, inPhase('attacking'));
     const hit = listen(sim, 'bossHit');
     const shot = shotIntoQueen(sim);
+    const { world } = sim.state;
+    // The shot keeps still; its head is its right end, halfway down its 3 px.
+    const head = { x: (world.x[shot] as number) + 10, y: (world.y[shot] as number) + 1.5 };
 
     sim.step(IDLE);
 
-    expect(sim.state.world.health[queen(sim)]).toBe(8);
-    expect(sim.state.world.isAlive(shot)).toBe(false);
-    expect(hit.mock.calls).toEqual([[{ healthLeft: 8 }]]);
+    expect(world.health[queen(sim)]).toBe(8);
+    expect(world.isAlive(shot)).toBe(false);
+    expect(hit.mock.calls).toEqual([[{ healthLeft: 8, ...head }]]);
   });
 
   it('enrage her at a third of her health, once for the whole fight', () => {

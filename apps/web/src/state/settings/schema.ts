@@ -48,6 +48,17 @@ export interface Settings {
   readonly motion: MotionChoice;
   /** The pace of the next run, as a fraction of normal speed (#114, ADR-0014). */
   readonly gameSpeed: GameSpeed;
+  /**
+   * Sparks, debris, dust and trails in the game (#156): the first switch of the Effects group,
+   * which the other effects join. Motion reduced by `motion` makes them fewer and shorter.
+   */
+  readonly particles: boolean;
+  /** The screen shake (#157), in the Effects group; never while motion is reduced. */
+  readonly screenShake: boolean;
+  /** A sprite that is hit flashes white (#159), softer while motion is reduced. */
+  readonly hitFlash: boolean;
+  /** The hero squashes when firing and insects stretch as they bob (#159); never while reduced. */
+  readonly squashStretch: boolean;
   /** `KeyboardEvent.code` values, `KEYS_PER_ACTION` per action, no key bound twice. */
   readonly keyBindings: KeyBindings<GameAction>;
 }
@@ -61,6 +72,10 @@ export const DEFAULT_SETTINGS: Settings = {
   language: 'en',
   motion: 'system',
   gameSpeed: 1,
+  particles: true,
+  screenShake: true,
+  hitFlash: true,
+  squashStretch: true,
   keyBindings: DEFAULT_KEY_BINDINGS,
 };
 
@@ -120,6 +135,10 @@ function storedSettingsSchema(defaults: Settings) {
     language: z.catch(z.enum(LANGUAGES), defaults.language),
     motion: z.catch(z.enum(MOTIONS), defaults.motion),
     gameSpeed: z.catch(z.literal(GAME_SPEEDS), defaults.gameSpeed),
+    particles: z.catch(z.boolean(), defaults.particles),
+    screenShake: z.catch(z.boolean(), defaults.screenShake),
+    hitFlash: z.catch(z.boolean(), defaults.hitFlash),
+    squashStretch: z.catch(z.boolean(), defaults.squashStretch),
     // A fresh copy each time: the schema's output is mutable, the defaults are not.
     keyBindings: z.catch(keyBindingsSchema, () => ({
       moveUp: [...defaults.keyBindings.moveUp],
@@ -152,6 +171,10 @@ export function parseSettings(
     language,
     motion,
     gameSpeed,
+    particles,
+    screenShake,
+    hitFlash,
+    squashStretch,
     keyBindings,
   } = result.data;
   return {
@@ -163,6 +186,10 @@ export function parseSettings(
     language,
     motion,
     gameSpeed,
+    particles,
+    screenShake,
+    hitFlash,
+    squashStretch,
     keyBindings,
   };
 }

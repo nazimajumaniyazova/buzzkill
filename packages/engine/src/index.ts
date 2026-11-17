@@ -74,6 +74,15 @@ export {
 export { clamp } from './math/clamp';
 export { createRng, type Rng, type RngState } from './math/rng';
 export { cos, sin } from './math/trig';
+export {
+  createParticleSystem,
+  defineParticleBurst,
+  type Particle,
+  type ParticleBurst,
+  type ParticleRange,
+  type ParticleSystem,
+  type ParticleSystemOptions,
+} from './particles/particles';
 export { createPool, type Pool, type PoolOptions } from './pool/object-pool';
 export {
   createGridAtlas,
@@ -89,4 +98,14 @@ export {
   type RenderStats,
   type SpriteOptions,
   type TextStyle,
+  type TintBuffer,
 } from './render/renderer';
+export {
+  type Camera,
+  coverZoom,
+  createScreenShake,
+  IDENTITY_CAMERA,
+  type ScreenShake,
+  type ScreenShakeOptions,
+} from './render/screen-shake';
+export { createCanvasTintBuffer, type TintCanvas } from './render/tint-buffer';

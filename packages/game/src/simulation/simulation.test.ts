@@ -170,20 +170,31 @@ describe('createSimulation', () => {
   it('destroys an enemy with enough hits, scores its value and leaves an explosion', () => {
     const sim = setup();
     const enemy = addEnemy(sim, 300, 150, 2, 3);
-    const destroyed = vi.fn();
-    const hit = vi.fn();
+    const destroyed = vi.fn<(event: GameEvents['enemyDestroyed']) => void>();
+    const hit = vi.fn<(event: GameEvents['enemyHit']) => void>();
     sim.state.events.on('enemyDestroyed', destroyed);
     sim.state.events.on('enemyHit', hit);
+    // The shot flies at the height of the hero's muzzle, its head halfway down its 3 px.
+    const shotY =
+      (sim.state.world.y[player(sim)] as number) +
+      HEROES.male.muzzle.y +
+      RULES.projectile.height * 0.5;
 
     sim.step(FIRE);
     run(sim, 60);
-    expect(hit).toHaveBeenCalledExactlyOnceWith({ id: enemy, healthLeft: 1 });
+    expect(hit).toHaveBeenCalledOnce();
+    const struck = hit.mock.calls[0]?.[0];
+    expect(struck).toMatchObject({ id: enemy, healthLeft: 1, y: shotY });
+    // The shot's head had just crossed the enemy's left side, at x = 300.
+    expect(struck?.x).toBeGreaterThan(300);
+    expect(struck?.x).toBeLessThanOrEqual(300 + RULES.projectile.speed);
     expect(sim.state.score).toBe(0);
 
     sim.step(FIRE);
     run(sim, 60);
     expect(sim.state.score).toBe(3);
-    expect(destroyed).toHaveBeenCalledOnce();
+    // Reported at its center: the 100 px box at (300, 150) keeps still.
+    expect(destroyed).toHaveBeenCalledExactlyOnceWith({ x: 350, y: 200, value: 3 });
     expect(ofKind(sim.state, Kind.projectile)).toHaveLength(0);
   });
 

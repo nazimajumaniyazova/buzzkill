@@ -308,6 +308,10 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 betweenLevels={state.name === 'levelCleared'}
                 keyBindings={settings.keyBindings}
                 reducedMotion={reducedMotion}
+                particles={settings.particles}
+                screenShake={settings.screenShake}
+                hitFlash={settings.hitFlash}
+                squashStretch={settings.squashStretch}
                 onEvent={send}
               />
             </Suspense>

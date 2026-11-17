@@ -28,6 +28,10 @@ describe('DEFAULT_SETTINGS', () => {
       language: 'en',
       motion: 'system',
       gameSpeed: 1,
+      particles: true,
+      screenShake: true,
+      hitFlash: true,
+      squashStretch: true,
       keyBindings: DEFAULT_KEY_BINDINGS,
     });
   });
@@ -48,6 +52,10 @@ describe('parseSettings', () => {
       language: 'ru',
       motion: 'reduced',
       gameSpeed: 0.5,
+      particles: false,
+      screenShake: false,
+      hitFlash: false,
+      squashStretch: false,
       keyBindings: {
         moveUp: ['KeyW', 'ArrowUp'],
         moveDown: ['KeyS', 'ArrowDown'],
@@ -68,6 +76,34 @@ describe('parseSettings', () => {
     );
 
     expect(parseSettings(saved)).toEqual({ ...DEFAULT_SETTINGS, theme: 'night' });
+  });
+
+  it('reads settings saved before the particles could be turned off, with them on', () => {
+    // What 0.24.0 saved: the same version, without the field (#156).
+    const saved = Object.fromEntries(
+      Object.entries(stored({ ...DEFAULT_SETTINGS, muted: true })).filter(
+        ([key]) => key !== 'particles',
+      ),
+    );
+
+    expect(parseSettings(saved)).toEqual({ ...DEFAULT_SETTINGS, muted: true, particles: true });
+  });
+
+  it('reads settings saved before the later effects could be turned off, with them on', () => {
+    // The same version, without the fields of the effects that came later (#157, #159).
+    const saved = Object.fromEntries(
+      Object.entries(stored({ ...DEFAULT_SETTINGS, particles: false })).filter(
+        ([key]) => key !== 'screenShake' && key !== 'hitFlash' && key !== 'squashStretch',
+      ),
+    );
+
+    expect(parseSettings(saved)).toEqual({
+      ...DEFAULT_SETTINGS,
+      particles: false,
+      screenShake: true,
+      hitFlash: true,
+      squashStretch: true,
+    });
   });
 
   it('takes only the paces it offers and the three motion choices', () => {
@@ -91,6 +127,10 @@ describe('parseSettings', () => {
       musicVolume: Number.NaN,
       difficulty: 'nightmare',
       language: 42,
+      particles: 'off',
+      screenShake: 0,
+      hitFlash: 'no',
+      squashStretch: null,
     });
 
     expect(parsed).toEqual(DEFAULT_SETTINGS);
