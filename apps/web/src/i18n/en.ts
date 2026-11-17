@@ -122,6 +122,9 @@ function english(format: Format) {
       squashStretch: 'Squash and stretch',
       squashStretchHint:
         'The hero squashes a little when firing, and insects stretch as they bob. Never while motion is reduced.',
+      hitStop: 'Hit-stop',
+      hitStopHint:
+        'The picture holds for a moment when the hero is hit, when the queen rages and when she falls; the game itself goes on. Never while motion is reduced.',
     },
     keyEditor: {
       caption: 'Keyboard',

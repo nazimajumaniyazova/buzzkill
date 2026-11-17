@@ -120,6 +120,7 @@ describe('GameView', () => {
     readonly screenShake: boolean;
     readonly hitFlash: boolean;
     readonly squashStretch: boolean;
+    readonly hitStop: boolean;
     readonly betweenLevels: boolean;
   }
 
@@ -135,6 +136,7 @@ describe('GameView', () => {
         screenShake={props.screenShake ?? true}
         hitFlash={props.hitFlash ?? true}
         squashStretch={props.squashStretch ?? true}
+        hitStop={props.hitStop ?? true}
         betweenLevels={props.betweenLevels ?? false}
         onEvent={onEvent}
       />,
@@ -153,6 +155,7 @@ describe('GameView', () => {
             screenShake={next.screenShake ?? props.screenShake ?? true}
             hitFlash={next.hitFlash ?? props.hitFlash ?? true}
             squashStretch={next.squashStretch ?? props.squashStretch ?? true}
+            hitStop={next.hitStop ?? props.hitStop ?? true}
             betweenLevels={next.betweenLevels ?? props.betweenLevels ?? false}
             onEvent={onEvent}
           />,
@@ -283,6 +286,19 @@ describe('GameView', () => {
     expect([options?.hitFlash?.(), options?.squashStretch?.()]).toEqual([false, false]);
   });
 
+  it('applies a change of the hit-stop setting to the run on screen', () => {
+    const frames = installFrames();
+    const view = renderView();
+    frames.run(1);
+    const options = vi.mocked(createGameDrawer).mock.lastCall?.[2];
+    expect(options?.hitStop?.()).toBe(true);
+
+    view.rerender({ hitStop: false });
+    frames.run(1);
+
+    expect(options?.hitStop?.()).toBe(false);
+  });
+
   it('starts the next level when the machine leaves the screen between levels', () => {
     const frames = installFrames();
     const view = renderView({ betweenLevels: true });
@@ -401,6 +417,7 @@ describe('GameView', () => {
           screenShake
           hitFlash
           squashStretch
+          hitStop
           betweenLevels={false}
           onEvent={onEvent}
         />
@@ -492,6 +509,7 @@ describe('GameView', () => {
           screenShake
           hitFlash
           squashStretch
+          hitStop
           betweenLevels={false}
           onEvent={onEvent}
         />

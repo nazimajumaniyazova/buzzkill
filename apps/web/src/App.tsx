@@ -312,6 +312,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 screenShake={settings.screenShake}
                 hitFlash={settings.hitFlash}
                 squashStretch={settings.squashStretch}
+                hitStop={settings.hitStop}
                 onEvent={send}
               />
             </Suspense>
