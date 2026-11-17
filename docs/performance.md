@@ -10,9 +10,12 @@ Web Vitals, and the measurements before and after each optimization.
 | --------------------------------------- | --------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Any file tracked by git                 | 1 MB, 1,000,000 bytes | 338 kB at most (`pnpm-lock.yaml`)                    | `scripts/check-file-sizes.mjs`, in `pnpm lint:repo` and the CI Quality job                |
 | The game's images and sounds in a build | 1 MB, 1,000,000 bytes | 919 kB in 22 files; 637 kB without the WAV fallbacks | `assetBudget` in `apps/web/vite.config.ts`, in every build: the CI Build job and Vercel's |
+| The music in a build (ADR-0018)         | 3 MB, 3,000,000 bytes | None yet                                             | The same plugin: the files whose name starts with `music-`                                |
 
-The build prints the second line every time, for example
-`Game assets: 919.1 kB of the 1000.0 kB budget (92%), 22 files`, and fails above the budget.
+The build prints the second and third lines every time, for example
+`Game assets: 919.1 kB of the 1000.0 kB budget (92%), 22 files`, and fails above either budget.
+The music streams during a run, so it does not wait for the first frame; each of its files is
+still a file in git, and so stays under 1 MB.
 
 ### Why these numbers
 

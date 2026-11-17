@@ -24,6 +24,7 @@ continue from 0010.
 | [0015](0015-art-and-sound-sources.md)       | Where the game's art and sounds come from | Accepted |
 | [0016](0016-asset-pipeline.md)              | The asset pipeline                        | Accepted |
 | [0017](0017-levels-and-the-end-of-a-run.md) | Levels and the end of a run               | Accepted |
+| [0018](0018-music.md)                       | The music, its source and its budget      | Accepted |
 
 ## Template
 

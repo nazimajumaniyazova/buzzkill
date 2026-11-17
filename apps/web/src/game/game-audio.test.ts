@@ -1,13 +1,16 @@
 // @vitest-environment node
-import type { PlayOptions } from '@buzzkill/engine';
+import type { DuckOptions, PlayOptions } from '@buzzkill/engine';
 import type { GameSound } from '@buzzkill/game';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createGameAudio, PAN_WIDTH, PITCH_CENTS } from './game-audio';
+import { createGameAudio, DUCK, PAN_WIDTH, PITCH_CENTS } from './game-audio';
 
 /** A mixer that records how each sound was asked to play. */
 function fakeMixer() {
-  return { play: vi.fn<(sound: GameSound, options?: PlayOptions) => void>() };
+  return {
+    play: vi.fn<(sound: GameSound, options?: PlayOptions) => void>(),
+    duck: vi.fn<(options: DuckOptions) => void>(),
+  };
 }
 
 /** The pitch of a playback rate, in cents. */
@@ -30,6 +33,23 @@ describe('createGameAudio', () => {
     expect(pitches[3]).toBeCloseTo(-PITCH_CENTS / 2);
     expect(PITCH_CENTS).toBeGreaterThan(0);
     expect(PITCH_CENTS).toBeLessThanOrEqual(100);
+  });
+
+  it('ducks the music for each explosion, and for nothing else', () => {
+    const mixer = fakeMixer();
+    const audio = createGameAudio(mixer, { random: () => 0.5, width: 1000 });
+
+    audio.play('shot', 100);
+    audio.play('explosion', 400);
+    audio.play('hit', 100);
+    audio.play('explosion', 600);
+
+    expect(mixer.duck.mock.calls).toEqual([[DUCK], [DUCK]]);
+    // Down fast, back slower, and still heard while down.
+    expect(DUCK.attack).toBeLessThan(DUCK.release);
+    expect(DUCK.depth).toBeGreaterThan(0);
+    expect(DUCK.depth).toBeLessThan(1);
+    expect(DUCK.attack + DUCK.hold + DUCK.release).toBeLessThanOrEqual(1.5);
   });
 
   it('pans each sound by where it happened across the world, and the rest to the middle', () => {

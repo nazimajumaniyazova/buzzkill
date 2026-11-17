@@ -19,12 +19,41 @@ export interface AudioParamLike {
   value: number;
 }
 
+/** A parameter that changes on a schedule of the context's clock, such as a gain. */
+export interface AutomatedParamLike extends AudioParamLike {
+  cancelScheduledValues(time: number): unknown;
+  setValueAtTime(value: number, time: number): unknown;
+  linearRampToValueAtTime(value: number, time: number): unknown;
+}
+
 export interface AudioNodeLike {
   connect(destination: AudioNodeLike): unknown;
 }
 
 export interface GainNodeLike extends AudioNodeLike {
-  readonly gain: AudioParamLike;
+  readonly gain: AutomatedParamLike;
+}
+
+/**
+ * The part of an `<audio>` element the mixer drives: music streams from one (#161) instead of
+ * being decoded whole before the first frame.
+ */
+export interface MediaElementLike {
+  loop: boolean;
+  play(): Promise<void>;
+  pause(): void;
+}
+
+/** How the music gets out of the way of a loud sound (#161), in seconds and a part of its volume. */
+export interface DuckOptions {
+  /** The part of its volume the music keeps while ducked, from 0 to 1. */
+  readonly depth: number;
+  /** How long the music takes to go down. */
+  readonly attack: number;
+  /** How long it stays down. */
+  readonly hold: number;
+  /** How long it takes to come back. */
+  readonly release: number;
 }
 
 export interface AudioBufferSourceLike<TBuffer> extends AudioNodeLike {
@@ -53,10 +82,14 @@ export interface AudioContextLike<TBuffer> {
   /** `suspended` until a gesture resumes it, then `running`; `closed` after `close()`. */
   readonly state: string;
   readonly destination: AudioNodeLike;
+  /** The context's clock in seconds, which schedules the ducking of the music. */
+  readonly currentTime: number;
   createGain(): GainNodeLike;
   createBufferSource(): AudioBufferSourceLike<TBuffer>;
   /** Missing in some older browsers, where sounds play from the middle. */
   createStereoPanner?(): StereoPannerLike;
+  /** Takes an element's sound into the graph; an element can have only one such source. */
+  createMediaElementSource?(element: MediaElementLike): AudioNodeLike;
   resume(): Promise<void>;
   close(): Promise<void>;
 }
@@ -88,7 +121,14 @@ export interface AudioMixer<TSound extends string> {
   play(sound: TSound, options?: PlayOptions): void;
   /** Loops a music track, replacing the current one. Same rules as `play`. */
   playMusic(sound: TSound): void;
+  /**
+   * Loops the music of a media element through the music group, replacing the current music
+   * (#161). Same rules as `play`; a start the browser refuses is let be.
+   */
+  streamMusic(element: MediaElementLike): void;
   stopMusic(): void;
+  /** Lowers the music for a moment and brings it back (#161). Nothing while locked. */
+  duck(options: DuckOptions): void;
   /** Sets a group's volume, clamped to [0, 1]. Applies to sounds already playing. */
   setVolume(group: VolumeGroup, volume: number): void;
   getVolume(group: VolumeGroup): number;
@@ -119,6 +159,9 @@ export function createAudioMixer<TSound extends string, TBuffer>(
 
   let disposed = false;
   let music: AudioBufferSourceLike<TBuffer> | null = null;
+  let stream: MediaElementLike | null = null;
+  /** The source of each element streamed so far: the browser makes only one per element. */
+  const streamed = new WeakMap<MediaElementLike, AudioNodeLike>();
 
   /** A started source for `sound` in `group`, or null when nothing should play. */
   const start = (
@@ -151,6 +194,8 @@ export function createAudioMixer<TSound extends string, TBuffer>(
   const stopMusic = (): void => {
     music?.stop();
     music = null;
+    stream?.pause();
+    stream = null;
   };
 
   return {
@@ -175,9 +220,44 @@ export function createAudioMixer<TSound extends string, TBuffer>(
       stopMusic();
       music = start(sound, 'music', true);
     },
+    streamMusic(element) {
+      stopMusic();
+      if (
+        disposed ||
+        context.state !== 'running' ||
+        context.createMediaElementSource === undefined
+      ) {
+        return;
+      }
+      if (!streamed.has(element)) {
+        const source = context.createMediaElementSource(element);
+        source.connect(groups.music);
+        streamed.set(element, source);
+      }
+      element.loop = true;
+      stream = element;
+      // The autoplay policy may still refuse; the next stream can try again.
+      element.play().catch(() => undefined);
+    },
     stopMusic,
+    duck({ depth, attack, hold, release }) {
+      if (disposed || context.state !== 'running') {
+        return;
+      }
+      const { gain } = groups.music;
+      const now = context.currentTime;
+      const full = volumes.music;
+      const low = full * clampVolume(depth);
+      gain.cancelScheduledValues(now);
+      gain.setValueAtTime(gain.value, now);
+      gain.linearRampToValueAtTime(low, now + attack);
+      gain.setValueAtTime(low, now + attack + hold);
+      gain.linearRampToValueAtTime(full, now + attack + hold + release);
+    },
     setVolume(group, volume) {
       volumes[group] = clampVolume(volume);
+      // A change of volume drops a duck under way, so the new volume holds.
+      groups[group].gain.cancelScheduledValues(context.currentTime);
       groups[group].gain.value = volumes[group];
     },
     getVolume(group) {
@@ -204,7 +284,9 @@ function createSilentMixer<TSound extends string>(
     unlock: () => Promise.resolve(),
     play: nothing,
     playMusic: nothing,
+    streamMusic: nothing,
     stopMusic: nothing,
+    duck: nothing,
     setVolume(group, volume) {
       volumes[group] = clampVolume(volume);
     },
