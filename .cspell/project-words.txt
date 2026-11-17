@@ -8,6 +8,7 @@ bryc
 bundlephobia
 Buzzkill
 Catmull
+chiptune
 CLDR
 codegen
 codspeed
@@ -48,6 +49,7 @@ subcomponents
 subfolders
 subtag
 Supabase
+Tallbeard
 Turborepo
 typecheck
 typechecks
