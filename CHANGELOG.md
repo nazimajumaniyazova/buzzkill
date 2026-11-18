@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.31.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.30.0...v0.31.0) (2026-11-18)
+
+
+### Features
+
+* **web:** offer the daily challenge in the menu with today's best ([#205](https://github.com/nazimajumaniyazova/buzzkill/issues/205)) ([0f4b892](https://github.com/nazimajumaniyazova/buzzkill/commit/0f4b892d8a577c0cc26d5473c3b2d4a12081f2c0)), closes [#165](https://github.com/nazimajumaniyazova/buzzkill/issues/165)
+
 ## [0.30.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.29.0...v0.30.0) (2026-11-17)
 
 
