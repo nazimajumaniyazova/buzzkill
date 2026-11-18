@@ -24,6 +24,8 @@ export interface Run extends RunChoice {
   readonly speed: GameSpeed;
   /** The difficulty from the settings when the run started; its replay records it (#155). */
   readonly difficulty: Difficulty;
+  /** The UTC date of a daily run (#165), whose seed is the day's; `null` for any other run. */
+  readonly daily: string | null;
 }
 
 /**
@@ -57,7 +59,11 @@ interface OnScreen {
  */
 export type AppState =
   | { readonly name: 'menu'; readonly panel: MenuPanel }
-  | { readonly name: 'heroSelect' }
+  | {
+      readonly name: 'heroSelect';
+      /** The date of the daily run being set up (#165), or `null` for a run of the player's own. */
+      readonly daily: string | null;
+    }
   | { readonly name: 'loading'; readonly run: Run }
   | ({ readonly name: 'playing' } & OnScreen)
   | ({ readonly name: 'paused'; readonly reason: PauseReason } & OnScreen)
@@ -78,7 +84,7 @@ export type RunState = Extract<AppState, { readonly assets: GameAssets }>;
 
 /**
  * What moves the flow: the player's choices (`openSettings`, `openHelp`, `openAchievements`,
- * `selectHero`, `back`,
+ * `selectHero`, `selectDaily`, `back`,
  * `play`, `pause`, `resume`, `nextLevel`, `quit`, `restart`), the end of the game's loading
  * (`gameLoaded`), what the game reports through the bridge (`gamePaused`, `gameResumed`,
  * `levelCleared`, `runEnded`), a gamepad lost during a run (`gamepadLost`, #154) and the error
@@ -90,6 +96,8 @@ export type AppEvent =
   | { readonly type: 'openHelp' }
   | { readonly type: 'openAchievements' }
   | { readonly type: 'selectHero' }
+  /** The daily challenge of `date`, the UTC date when the player chose it (#165). */
+  | { readonly type: 'selectDaily'; readonly date: string }
   | { readonly type: 'back' }
   | { readonly type: 'play'; readonly run: Run }
   | { readonly type: 'gameLoaded'; readonly assets: GameAssets }
@@ -141,13 +149,19 @@ export function transition(state: AppState, event: AppEvent): AppState {
         ? { ...state, panel: 'achievements' }
         : state;
     case 'selectHero':
-      return state.name === 'menu' && state.panel === 'main' ? { name: 'heroSelect' } : state;
+      return state.name === 'menu' && state.panel === 'main'
+        ? { name: 'heroSelect', daily: null }
+        : state;
+    case 'selectDaily':
+      return state.name === 'menu' && state.panel === 'main'
+        ? { name: 'heroSelect', daily: event.date }
+        : state;
     case 'back':
       if (state.name === 'heroSelect' || (state.name === 'menu' && state.panel !== 'main')) {
         return { name: 'menu', panel: 'main' };
       }
       // The game goes on loading; Start again finds it further along.
-      return state.name === 'loading' ? { name: 'heroSelect' } : state;
+      return state.name === 'loading' ? { name: 'heroSelect', daily: state.run.daily } : state;
     case 'play':
       if (state.name === 'heroSelect') {
         return { name: 'loading', run: event.run };

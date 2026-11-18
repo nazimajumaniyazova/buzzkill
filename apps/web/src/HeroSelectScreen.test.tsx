@@ -28,6 +28,24 @@ describe('HeroSelectScreen', () => {
     expect(onStart).toHaveBeenCalledExactlyOnceWith({ heroId: 'female', mode: 'night' });
   });
 
+  it('sets up the daily run: the hero only, by day, with what the run of the day is (#165)', async () => {
+    const onStart = vi.fn();
+    const { container } = render(
+      <HeroSelectScreen daily="2026-11-17" onStart={onStart} onBack={vi.fn()} />,
+    );
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Daily challenge' })).toBeInTheDocument();
+    expect(
+      screen.getByText(/^November 17, 2026: the same run for everyone today/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup', { name: 'Time of day' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Julie' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+
+    expect(onStart).toHaveBeenCalledExactlyOnceWith({ heroId: 'female', mode: 'day' });
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
   it('goes back without starting', () => {
     const onStart = vi.fn();
     const onBack = vi.fn();

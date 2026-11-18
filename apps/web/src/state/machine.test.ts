@@ -20,8 +20,24 @@ import {
 const assets = { sprites: {}, audio: {} } as GameAssets;
 const otherAssets = { sprites: {}, audio: {} } as GameAssets;
 
-const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1, difficulty: 'normal' };
-const nextRun: Run = { heroId: 'female', mode: 'night', seed: 2, speed: 1, difficulty: 'normal' };
+const run: Run = {
+  heroId: 'male',
+  mode: 'day',
+  seed: 1,
+  speed: 1,
+  difficulty: 'normal',
+  daily: null,
+};
+const nextRun: Run = {
+  heroId: 'female',
+  mode: 'night',
+  seed: 2,
+  speed: 1,
+  difficulty: 'normal',
+  daily: null,
+};
+/** The daily run of 2026-11-17 (#165). */
+const dailyRun: Run = { ...run, seed: 1917294966, daily: '2026-11-17' };
 
 function resultWith(status: RunResult['status']): RunResult {
   return {
@@ -37,7 +53,7 @@ function resultWith(status: RunResult['status']): RunResult {
 /** One example of every state; the `satisfies` keeps the list complete. */
 const states = {
   menu: { name: 'menu', panel: 'main' },
-  heroSelect: { name: 'heroSelect' },
+  heroSelect: { name: 'heroSelect', daily: null },
   loading: { name: 'loading', run },
   playing: { name: 'playing', assets, run, time: 'day' },
   paused: { name: 'paused', assets, run, time: 'day', reason: 'player' },
@@ -67,6 +83,7 @@ const events = {
   openHelp: { type: 'openHelp' },
   openAchievements: { type: 'openAchievements' },
   selectHero: { type: 'selectHero' },
+  selectDaily: { type: 'selectDaily', date: '2026-11-17' },
   back: { type: 'back' },
   play: { type: 'play', run: nextRun },
   gameLoaded: { type: 'gameLoaded', assets: otherAssets },
@@ -95,6 +112,7 @@ const TRANSITIONS: readonly Row[] = [
   { from: states.menu, event: events.openHelp, to: 'menu' },
   { from: states.menu, event: events.openAchievements, to: 'menu' },
   { from: states.menu, event: events.selectHero, to: 'heroSelect' },
+  { from: states.menu, event: events.selectDaily, to: 'heroSelect' },
   { from: settingsMenu, event: events.back, to: 'menu' },
   { from: helpMenu, event: events.back, to: 'menu' },
   { from: achievementsMenu, event: events.back, to: 'menu' },
@@ -168,7 +186,7 @@ describe('transition', () => {
   });
 
   it('returns from the wait to the hero select, and ignores a load that ends elsewhere', () => {
-    expect(transition(states.loading, events.back)).toEqual({ name: 'heroSelect' });
+    expect(transition(states.loading, events.back)).toEqual({ name: 'heroSelect', daily: null });
     expect(transition(states.heroSelect, events.gameLoaded)).toBe(states.heroSelect);
     expect(transition(states.playing, events.gameLoaded)).toBe(states.playing);
   });
@@ -184,6 +202,17 @@ describe('transition', () => {
     expect(transition(settingsMenu, events.openHelp)).toBe(settingsMenu);
     expect(transition(helpMenu, events.openSettings)).toBe(helpMenu);
     expect(transition(settingsMenu, events.selectHero)).toBe(settingsMenu);
+  });
+
+  it('opens the hero select of the daily run from the main menu, and keeps its day (#165)', () => {
+    const daily = transition(states.menu, events.selectDaily);
+
+    expect(daily).toEqual({ name: 'heroSelect', daily: '2026-11-17' });
+    expect(transition(states.menu, events.selectHero)).toEqual({ name: 'heroSelect', daily: null });
+    expect(transition(helpMenu, events.selectDaily)).toBe(helpMenu);
+    // Back from the wait for the game returns to the hero select of the same day.
+    const waiting = transition(daily, { type: 'play', run: dailyRun });
+    expect(transition(waiting, events.back)).toEqual(daily);
   });
 
   it('opens the achievements from the main menu only, and back returns to it (#163)', () => {
@@ -309,12 +338,14 @@ describe('invariants of the flow', () => {
     seed: fc.nat(),
     speed: fc.constantFrom(1, 0.75, 0.5),
     difficulty: fc.constantFrom('easy', 'normal', 'hard'),
+    daily: fc.constantFrom(null, '2026-11-17'),
   });
   const step: fc.Arbitrary<AppEvent> = fc.oneof(
     fc.constant(events.openSettings),
     fc.constant(events.openHelp),
     fc.constant(events.openAchievements),
     fc.constant(events.selectHero),
+    fc.constant(events.selectDaily),
     fc.constant(events.back),
     fc.record({ type: fc.constant('play' as const), run: choice }),
     fc.record({

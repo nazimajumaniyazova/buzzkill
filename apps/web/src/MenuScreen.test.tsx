@@ -4,15 +4,16 @@ import { axe } from 'vitest-axe';
 
 import { MenuScreen } from './MenuScreen';
 
-function setup() {
+function setup(dailyBest: number | null = null) {
   const handlers = {
     onPlay: vi.fn(),
+    onDaily: vi.fn(),
     onPreload: vi.fn(),
     onSettings: vi.fn(),
     onAchievements: vi.fn(),
     onHelp: vi.fn(),
   };
-  const view = render(<MenuScreen {...handlers} />);
+  const view = render(<MenuScreen {...handlers} dailyBest={dailyBest} />);
   return { ...handlers, ...view };
 }
 
@@ -23,6 +24,7 @@ describe('MenuScreen', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Buzzkill' })).toBeInTheDocument();
     expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
       'Play',
+      'Daily challenge',
       'Settings',
       'Achievements',
       'Help',
@@ -43,6 +45,23 @@ describe('MenuScreen', () => {
     expect(onSettings).toHaveBeenCalledOnce();
     expect(onAchievements).toHaveBeenCalledOnce();
     expect(onHelp).toHaveBeenCalledOnce();
+  });
+
+  it("offers the daily challenge, with this device's best score of the day under it (#165)", () => {
+    const { onDaily, onPreload, unmount } = setup();
+    const daily = screen.getByRole('button', { name: 'Daily challenge' });
+    expect(daily).toHaveAccessibleDescription('Not played today yet');
+
+    fireEvent.pointerEnter(daily);
+    fireEvent.click(daily);
+    expect(onPreload).toHaveBeenCalledOnce();
+    expect(onDaily).toHaveBeenCalledOnce();
+    unmount();
+
+    setup(1234);
+    expect(screen.getByRole('button', { name: 'Daily challenge' })).toHaveAccessibleDescription(
+      "Today's best: 1,234",
+    );
   });
 
   it('asks for the game to preload when the pointer enters Play or Play gets focus', () => {

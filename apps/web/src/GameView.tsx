@@ -227,7 +227,12 @@ export function GameView({
       const feels = vibrator !== null || canRumble(globalThis);
       const soundRng = createRng((run.seed ^ SOUND_SEED) >>> 0);
       const created = createGame({
-        settings: { heroId: run.heroId, mode: run.mode, difficulty: run.difficulty },
+        settings: {
+          heroId: run.heroId,
+          mode: run.mode,
+          difficulty: run.difficulty,
+          daily: run.daily,
+        },
         seed: run.seed,
         gameVersion: GAME_VERSION,
         input: polledInput,
