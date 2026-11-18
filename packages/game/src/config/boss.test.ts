@@ -52,8 +52,9 @@ describe('QUEEN', () => {
     // A fan leaves her post at the muzzle and flies left at one speed, so its stings spread
     // apart by the difference of their vertical speeds every tick. A difficulty scales both
     // speeds alike, which keeps the gaps.
-    const tallest = Math.max(HEROES.male.height, HEROES.female.height);
-    const front = RULES.player.start.x + Math.max(HEROES.male.width, HEROES.female.width);
+    const heroes = Object.values(HEROES);
+    const tallest = Math.max(...heroes.map(({ height }) => height));
+    const front = RULES.player.start.x + Math.max(...heroes.map(({ width }) => width));
     const ticks = (BOSS.postX + BOSS.sting.muzzle.x - front) / BOSS.sting.speed;
     const narrowest = PHASES.map((phase) =>
       Math.min(...phase.fan.slice(1).map((vy, index) => vy - (phase.fan[index] ?? vy))),

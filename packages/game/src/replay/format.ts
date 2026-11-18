@@ -50,7 +50,7 @@ export const REPLAY_ACTION_MASK =
 /** Upper bound on input changes: well beyond an hour of play at several changes per second. */
 export const MAX_REPLAY_CHANGES = 100_000;
 
-const HERO_IDS = ['male', 'female'] as const satisfies readonly HeroId[];
+const HERO_IDS = ['male', 'female', 'sam', 'leo'] as const satisfies readonly HeroId[];
 const MODES = ['day', 'night'] as const satisfies readonly GameMode[];
 
 /** Why the input list is not in canonical form, or `undefined` when it is. */

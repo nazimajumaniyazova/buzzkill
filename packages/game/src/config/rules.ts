@@ -10,7 +10,9 @@
  */
 export const WORLD = { width: 1280, height: 720, ticksPerSecond: 60 } as const;
 
-export type HeroId = 'male' | 'female';
+import type { AchievementId } from '../achievements/achievements';
+
+export type HeroId = 'male' | 'female' | 'sam' | 'leo';
 
 export interface HeroConfig {
   /** Collision box and drawing size. */
@@ -20,9 +22,15 @@ export interface HeroConfig {
   readonly muzzle: { readonly x: number; readonly y: number };
   /** The hero's sprite in `@buzzkill/art`. */
   readonly sprite: { readonly sheet: string };
+  /** The achievement that unlocks the hero (#164); a hero without one is there from the start. */
+  readonly unlockedBy?: AchievementId;
 }
 
-/** Mike and Julie: the 2023 sprites scaled by 0.7 (and 0.8 for Julie's width). */
+/**
+ * Mike and Julie: the 2023 sprites scaled by 0.7 (and 0.8 for Julie's width). Sam and Leo (#164)
+ * are drawn on Mike's body and have his box, so a hero earned plays no easier than the first two
+ * and the scores stay comparable: the first queen unlocks Sam, the campaign won unlocks Leo.
+ */
 export const HEROES = {
   male: {
     width: 229 * 0.7,
@@ -35,6 +43,20 @@ export const HEROES = {
     height: 212 * 0.7,
     muzzle: { x: 105, y: 90 },
     sprite: { sheet: 'julie' },
+  },
+  sam: {
+    width: 229 * 0.7,
+    height: 226 * 0.7,
+    muzzle: { x: 105, y: 90 },
+    sprite: { sheet: 'sam' },
+    unlockedBy: 'regicide',
+  },
+  leo: {
+    width: 229 * 0.7,
+    height: 226 * 0.7,
+    muzzle: { x: 105, y: 90 },
+    sprite: { sheet: 'leo' },
+    unlockedBy: 'champion',
   },
 } as const satisfies Record<HeroId, HeroConfig>;
 
