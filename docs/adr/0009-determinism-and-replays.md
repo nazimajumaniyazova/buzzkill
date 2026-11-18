@@ -96,3 +96,12 @@ Format version 2 (#155) adds `difficulty`: `{ formatVersion, gameVersion, seed, 
 difficulty, inputs }`. Runs at different difficulties play different numbers and belong on
 different boards, so the server must know which one it re-simulates. No replay of format 1 was
 ever stored; `parseReplay` rejects it.
+
+## Amendment, 2026-11-17
+
+Format version 3 (#165) adds `daily`: `{ formatVersion, gameVersion, seed, heroId, mode,
+difficulty, daily, inputs }`. It is the UTC date of a daily run as `YYYY-MM-DD`, or `null` for any
+other run, as the `runs` table of stage 8 expects (`mode` there: `classic` or `daily`, with
+`daily_date`). `parseReplay` rejects a daily replay whose seed is not `dailySeed(daily)`, so the
+server checks the day's seed for free. A replay of format 2 reads as one of format 3 with
+`daily: null`; the golden replays stay as they were recorded.

@@ -183,16 +183,27 @@ describe('every text on screen comes from the dictionary', () => {
     expect(foreignText()).toEqual([]);
   });
 
-  it('in the menu', () => {
-    renderMarked(
+  it('in the menu, before and after a daily run of the day', () => {
+    const menu = (dailyBest: number | null) => (
       <MenuScreen
         onPlay={vi.fn()}
         onPreload={vi.fn()}
+        onDaily={vi.fn()}
+        dailyBest={dailyBest}
         onSettings={vi.fn()}
         onAchievements={vi.fn()}
         onHelp={vi.fn()}
-      />,
+      />
     );
+    const view = renderMarked(menu(null));
+    expect(foreignText()).toEqual([]);
+
+    view.rerender(<I18nProvider i18n={marked}>{menu(1234)}</I18nProvider>);
+    expect(foreignText()).toEqual([]);
+  });
+
+  it('in the hero select of the daily run', () => {
+    renderMarked(<HeroSelectScreen daily="2026-11-17" onStart={vi.fn()} onBack={vi.fn()} />);
 
     expect(foreignText()).toEqual([]);
   });
@@ -287,7 +298,7 @@ describe('every text on screen comes from the dictionary', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
     renderMarked(
       <GameView
-        run={{ heroId: 'male', mode: 'day', seed: 1, speed: 1, difficulty: 'normal' }}
+        run={{ heroId: 'male', mode: 'day', seed: 1, speed: 1, difficulty: 'normal', daily: null }}
         assets={{} as GameAssets}
         paused={false}
         keyBindings={DEFAULT_KEY_BINDINGS}

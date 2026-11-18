@@ -68,7 +68,14 @@ const images = Object.fromEntries(
 ) as GameImages<ImageBitmap>;
 const sprites = createGameSprites(images);
 
-const run: Run = { heroId: 'male', mode: 'day', seed: 1, speed: 1, difficulty: 'normal' };
+const run: Run = {
+  heroId: 'male',
+  mode: 'day',
+  seed: 1,
+  speed: 1,
+  difficulty: 'normal',
+  daily: null,
+};
 
 /**
  * Animation frames that run only when the test says so, 50 ms apart: the first frame sets the
@@ -486,6 +493,16 @@ describe('GameView', () => {
       heroId: 'male',
       mode: 'day',
       difficulty: 'hard',
+      daily: null,
+    });
+  });
+
+  it('starts a daily run with its date, which the replay records (#165)', () => {
+    installFrames();
+    renderView({ run: { ...run, daily: '2026-11-17' } });
+
+    expect(vi.mocked(createGame).mock.lastCall?.[0].settings).toMatchObject({
+      daily: '2026-11-17',
     });
   });
 

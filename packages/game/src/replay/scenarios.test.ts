@@ -16,6 +16,7 @@ const replay = (seed: number, inputs: number[], mode: 'day' | 'night' = 'day'): 
   heroId: 'male',
   mode,
   difficulty: 'normal',
+  daily: null,
   inputs,
 });
 

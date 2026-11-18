@@ -73,6 +73,10 @@ function english(format: Format) {
       tagline: 'The year is 3023. Giant insects from outer space attack the city. Shoot them down.',
       navigation: 'Main menu',
       play: 'Play',
+      daily: 'Daily challenge',
+      /** The best score of this device in today's daily challenge (#165), under its button. */
+      dailyBest: (score: number) => `Today's best: ${format.number(score)}`,
+      dailyNotPlayed: 'Not played today yet',
       settings: 'Settings',
       help: 'Help',
       achievements: 'Achievements',
@@ -122,6 +126,10 @@ function english(format: Format) {
       timeOfDay: 'Time of day',
       modes: { day: 'Day', night: 'Night' } satisfies Record<GameMode, string>,
       start: 'Start',
+      dailyTitle: 'Daily challenge',
+      /** What the daily run of `date` is (#165); the date as the language writes it. */
+      dailyAbout: (date: Date) =>
+        `${format.date(date)}: the same run for everyone today, by day at the normal difficulty.`,
     },
     settings: {
       title: 'Settings',

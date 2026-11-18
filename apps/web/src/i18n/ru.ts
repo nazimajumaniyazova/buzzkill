@@ -55,6 +55,9 @@ export const ru: Dictionary = (format): Messages => ({
     tagline: '3023 год. Гигантские насекомые из космоса атакуют город. Сбейте их.',
     navigation: 'Главное меню',
     play: 'Играть',
+    daily: 'Ежедневный челлендж',
+    dailyBest: (score) => `Лучший результат сегодня: ${format.number(score)}`,
+    dailyNotPlayed: 'Сегодня ещё не сыграно',
     settings: 'Настройки',
     help: 'Справка',
     achievements: 'Достижения',
@@ -105,6 +108,9 @@ export const ru: Dictionary = (format): Messages => ({
     timeOfDay: 'Время суток',
     modes: { day: 'День', night: 'Ночь' },
     start: 'Начать',
+    dailyTitle: 'Ежедневный челлендж',
+    dailyAbout: (date) =>
+      `${format.date(date)}: сегодня у всех одна и та же игра, днём, на обычной сложности.`,
   },
   settings: {
     title: 'Настройки',

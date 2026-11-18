@@ -1,6 +1,11 @@
 import type { AssetFailure } from '@buzzkill/engine';
 import type { GamepadLike } from '@buzzkill/engine/browser';
-import type { AchievementId, AchievementProgress, RunResult } from '@buzzkill/game';
+import {
+  type AchievementId,
+  type AchievementProgress,
+  dailySeed,
+  type RunResult,
+} from '@buzzkill/game';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -81,6 +86,7 @@ vi.mock('./GameView', async () => {
           </p>
           <p>Speed {run.speed}</p>
           <p>Difficulty {run.difficulty}</p>
+          <p>Daily {run.daily ?? 'none'}</p>
           <button
             type="button"
             onClick={() => {
@@ -263,6 +269,7 @@ describe('App', () => {
     expect(heading('Buzzkill')).toBeInTheDocument();
     expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
       'Play',
+      'Daily challenge',
       'Settings',
       'Achievements',
       'Help',
@@ -346,6 +353,39 @@ describe('App', () => {
     expect(screen.getByRole('progressbar', { name: 'Loading' })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(heading('Choose your hero')).toBeInTheDocument();
+  });
+
+  it('plays the daily challenge of the UTC day, the same for everyone, and keeps its best (#165)', async () => {
+    // Late on the 17th in UTC: already the 18th in Tokyo, still the 17th in California.
+    const now = () => new Date('2026-11-17T23:30:00Z');
+    render(<App now={now} />);
+    // Hard in the settings: the daily run is at the normal difficulty all the same.
+    click('Settings');
+    fireEvent.click(screen.getByRole('tab', { name: 'Gameplay' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
+    click('Back');
+    expect(screen.getByRole('button', { name: 'Daily challenge' })).toHaveAccessibleDescription(
+      'Not played today yet',
+    );
+
+    click('Daily challenge');
+    expect(heading('Daily challenge')).toBeInTheDocument();
+    click('Start');
+    expect(await gameView()).toHaveTextContent(
+      `Game view: male day seed ${String(dailySeed('2026-11-17'))}`,
+    );
+    expect(screen.getByText('Difficulty normal')).toBeInTheDocument();
+    expect(screen.getByText('Daily 2026-11-17')).toBeInTheDocument();
+
+    click('Lose');
+    click('Play again');
+    expect(screen.getByText('Daily 2026-11-17')).toBeInTheDocument();
+    click('Game pauses itself');
+    click('Quit to menu');
+
+    expect(screen.getByRole('button', { name: 'Daily challenge' })).toHaveAccessibleDescription(
+      "Today's best: 42",
+    );
   });
 
   it('lists the achievements in the menu with the progress kept on this device (#163)', () => {
@@ -671,7 +711,14 @@ describe('App', () => {
   });
 
   it("resumes on the player's pause key, not on the default one it replaced", () => {
-    const run: Run = { heroId: 'male', mode: 'day', seed: 3, speed: 1, difficulty: 'normal' };
+    const run: Run = {
+      heroId: 'male',
+      mode: 'day',
+      seed: 3,
+      speed: 1,
+      difficulty: 'normal',
+      daily: null,
+    };
     render(
       <App
         store={createAppStore({ name: 'paused', assets, run, time: run.mode, reason: 'player' })}
@@ -745,7 +792,14 @@ describe('App', () => {
   });
 
   it('renders the state of the stores it is given, the game view once its code is in place', async () => {
-    const run: Run = { heroId: 'female', mode: 'night', seed: 3, speed: 1, difficulty: 'normal' };
+    const run: Run = {
+      heroId: 'female',
+      mode: 'night',
+      seed: 3,
+      speed: 1,
+      difficulty: 'normal',
+      daily: null,
+    };
     render(
       <App
         store={createAppStore({ name: 'paused', assets, run, time: run.mode, reason: 'player' })}
@@ -828,7 +882,7 @@ describe('App', () => {
     tap(13);
     expect(screen.getByRole('button', { name: 'Play' })).toHaveFocus();
     tap(13);
-    expect(screen.getByRole('button', { name: 'Settings' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Daily challenge' })).toHaveFocus();
     tap(12);
     expect(screen.getByRole('button', { name: 'Play' })).toHaveFocus();
     // Focus on Play preloads the game, from the pad as from the keyboard.

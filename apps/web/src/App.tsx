@@ -1,4 +1,11 @@
-import { type AchievementId, type AchievementProgress, DIFFICULTIES } from '@buzzkill/game';
+import {
+  type AchievementId,
+  type AchievementProgress,
+  DAILY_RUN,
+  dailyDate,
+  dailySeed,
+  DIFFICULTIES,
+} from '@buzzkill/game';
 import { ToastProvider } from '@buzzkill/ui';
 import { type JSX, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
@@ -23,6 +30,7 @@ import { RunOverDialog } from './RunOverDialog';
 import { SettingsScreen } from './SettingsScreen';
 import { loadProgress, saveProgress } from './state/achievements/progress';
 import { createAchievementsStore } from './state/achievements/store';
+import { dailyBest, recordDailyScore } from './state/daily/best';
 import { createGameLoader } from './state/game-loader';
 import {
   type AppEvent,
@@ -52,6 +60,8 @@ interface AppProps {
    * browser's language as the default language.
    */
   readonly settings?: SettingsStore;
+  /** The clock, for the day of the daily challenge (#165); a test sets the day. */
+  readonly now?: () => Date;
 }
 
 const whole = <T,>(value: T): T => value;
@@ -91,7 +101,13 @@ function backEvent(state: AppState): AppEvent | null {
  * saving the settings, the theme, the language, the mixer's volumes, the start of a run once the
  * game has loaded, the keys that go back, and the gamepad in the menus.
  */
-export function App({ store: givenStore, settings: givenSettings }: AppProps): JSX.Element {
+const systemClock = (): Date => new Date();
+
+export function App({
+  store: givenStore,
+  settings: givenSettings,
+  now = systemClock,
+}: AppProps): JSX.Element {
   const [ownStore] = useState(() => createAppStore());
   const [ownSettings] = useState(() =>
     createSettingsStore(
@@ -226,22 +242,45 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
     };
   }, [navigating, store]);
 
-  const play = (choice: RunChoice): void => {
+  /**
+   * Starts a run of `choice`; with `daily`, the daily run of that day (#165), whose seed is the
+   * day's and which starts by day at the normal difficulty, whatever the settings say.
+   */
+  const play = (choice: RunChoice, daily: string | null): void => {
     // Loads the game if no hover did, or again after a failure. Browsers start audio only in
     // response to a gesture, and this click is one, even while the game is still loading.
     gameLoader.load();
     gameLoader.unlockAudio();
     send({
       type: 'play',
-      run: {
-        heroId: choice.heroId,
-        mode: choice.mode,
-        seed: seedForRun(window.location.search),
-        speed: settings.gameSpeed,
-        difficulty: settings.difficulty,
-      },
+      run:
+        daily === null
+          ? {
+              heroId: choice.heroId,
+              mode: choice.mode,
+              seed: seedForRun(window.location.search),
+              speed: settings.gameSpeed,
+              difficulty: settings.difficulty,
+              daily: null,
+            }
+          : {
+              heroId: choice.heroId,
+              mode: DAILY_RUN.mode,
+              seed: dailySeed(daily),
+              speed: settings.gameSpeed,
+              difficulty: DAILY_RUN.difficulty,
+              daily,
+            },
     });
   };
+
+  // The best score of a daily run on this device, kept when the run ends (#165).
+  const finished = state.name === 'victory' || state.name === 'gameOver' ? state : null;
+  useEffect(() => {
+    if (finished !== null && finished.run.daily !== null) {
+      recordDailyScore(browserStorage(), finished.run.daily, finished.result.score);
+    }
+  }, [finished]);
 
   const back = (): void => {
     send({ type: 'back' });
@@ -256,6 +295,11 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
               gameLoader.load();
               send({ type: 'selectHero' });
             }}
+            onDaily={() => {
+              gameLoader.load();
+              send({ type: 'selectDaily', date: dailyDate(now()) });
+            }}
+            dailyBest={dailyBest(browserStorage(), dailyDate(now()))}
             onPreload={gameLoader.load}
             onSettings={() => {
               send({ type: 'openSettings' });
@@ -301,7 +345,15 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
       case 'menu':
         return menuPanel(state.panel);
       case 'heroSelect':
-        return <HeroSelectScreen onStart={play} onBack={back} />;
+        return (
+          <HeroSelectScreen
+            daily={state.daily}
+            onStart={(choice) => {
+              play(choice, state.daily);
+            }}
+            onBack={back}
+          />
+        );
       case 'loading':
         return loadingScreen;
       case 'failed':
@@ -378,7 +430,7 @@ export function App({ store: givenStore, settings: givenSettings }: AppProps): J
                 title={i18n.t.runOver.titles[state.name]}
                 result={state.result}
                 onPlayAgain={() => {
-                  play(state.run);
+                  play(state.run, state.run.daily);
                 }}
                 onQuit={() => {
                   send({ type: 'quit' });

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ENEMY_SETS } from '../config/enemies';
 import { HEROES } from '../config/rules';
+import { dailySeed } from '../daily/daily';
 import {
   deserializeReplay,
   MAX_REPLAY_CHANGES,
@@ -16,13 +17,23 @@ import {
 import { createReplayRecorder } from './recorder';
 
 const VALID: Replay = {
-  formatVersion: 2,
+  formatVersion: 3,
   gameVersion: '0.1.0',
   seed: 0xde_ad_be_ef,
   heroId: 'female',
   mode: 'night',
   difficulty: 'hard',
+  daily: null,
   inputs: [1, 4, 30, 6, 200, 0],
+};
+
+/** A daily run of 2026-11-17: its seed comes from its date (#165). */
+const DAILY: Replay = {
+  ...VALID,
+  seed: dailySeed('2026-11-17'),
+  mode: 'day',
+  difficulty: 'normal',
+  daily: '2026-11-17',
 };
 
 function errorOf(value: unknown): string {
@@ -50,10 +61,35 @@ describe('replay format', () => {
     const json = serializeReplay({ ...VALID, extra: 1 } as Replay);
 
     expect(json).toBe(
-      '{"formatVersion":2,"gameVersion":"0.1.0","seed":3735928559,"heroId":"female",' +
-        '"mode":"night","difficulty":"hard","inputs":[1,4,30,6,200,0]}',
+      '{"formatVersion":3,"gameVersion":"0.1.0","seed":3735928559,"heroId":"female",' +
+        '"mode":"night","difficulty":"hard","daily":null,"inputs":[1,4,30,6,200,0]}',
     );
     expect(deserializeReplay(json)).toEqual({ ok: true, replay: VALID });
+  });
+
+  it('reads a replay of format 2 as a run that is not a daily one (#165)', () => {
+    const format2 = {
+      formatVersion: 2,
+      gameVersion: VALID.gameVersion,
+      seed: VALID.seed,
+      heroId: VALID.heroId,
+      mode: VALID.mode,
+      difficulty: VALID.difficulty,
+      inputs: VALID.inputs,
+    };
+
+    expect(parseReplay(format2)).toEqual({ ok: true, replay: VALID });
+  });
+
+  it('keeps the date of a daily run, and round-trips it', () => {
+    expect(parseReplay(DAILY)).toEqual({ ok: true, replay: DAILY });
+    expect(deserializeReplay(serializeReplay(DAILY))).toEqual({ ok: true, replay: DAILY });
+  });
+
+  it("rejects a daily run whose seed is not its day's, or whose date is not a date", () => {
+    expect(errorOf({ ...DAILY, seed: DAILY.seed ^ 1 })).toMatch(/daily/);
+    expect(errorOf({ ...DAILY, daily: '2026-02-30' })).toMatch(/daily/);
+    expect(errorOf({ ...DAILY, daily: 20261117 })).toMatch(/daily/);
   });
 
   it('drops unknown fields', () => {
@@ -64,7 +100,7 @@ describe('replay format', () => {
 
   it.each([
     ['format 1, from before difficulties', { formatVersion: 1 }, 'formatVersion'],
-    ['another format version', { formatVersion: 3 }, 'formatVersion'],
+    ['another format version', { formatVersion: 4 }, 'formatVersion'],
     ['an empty game version', { gameVersion: '' }, 'gameVersion'],
     ['a negative seed', { seed: -1 }, 'seed'],
     ['a seed beyond 32 bits', { seed: 2 ** 32 }, 'seed'],
