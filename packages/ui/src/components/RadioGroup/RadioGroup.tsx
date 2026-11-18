@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import { type JSX, useId } from 'react';
 
 import { cx } from '../../utils/cx';
 import { useControlled } from '../../utils/use-controlled';
@@ -8,6 +8,11 @@ export interface RadioOption<T extends string> {
   readonly value: T;
   readonly label: string;
   readonly disabled?: boolean;
+  /**
+   * What the option needs or means, under its label: why a disabled option is not there yet. The
+   * radio's description, so a screen reader reads it after the name.
+   */
+  readonly description?: string;
 }
 
 export interface RadioGroupProps<T extends string> {
@@ -29,7 +34,8 @@ export interface RadioGroupProps<T extends string> {
 /**
  * One choice out of a few, as native radios in a `fieldset`: Tab reaches the checked option,
  * the arrow keys move and choose within the group, and the legend names it. The state is held
- * here unless the parent passes `value`.
+ * here unless the parent passes `value`. An option's description sits under its label, outside
+ * it, so the radio keeps a short name.
  */
 export function RadioGroup<T extends string>({
   label,
@@ -41,6 +47,7 @@ export function RadioGroup<T extends string>({
   orientation = 'horizontal',
   className,
 }: RadioGroupProps<T>): JSX.Element {
+  const descriptionId = useId();
   const [current, setCurrent] = useControlled<T | null>(value, defaultValue ?? null, (next) => {
     if (next !== null) {
       onValueChange?.(next);
@@ -51,22 +58,33 @@ export function RadioGroup<T extends string>({
     <fieldset className={cx(styles.group, className)} data-orientation={orientation}>
       <legend className={styles.legend}>{label}</legend>
       <div className={styles.options}>
-        {options.map((option) => (
-          <label key={option.value} className={styles.option}>
-            <input
-              type="radio"
-              name={name}
-              value={option.value}
-              checked={current === option.value}
-              disabled={option.disabled}
-              className={styles.input}
-              onChange={() => {
-                setCurrent(option.value);
-              }}
-            />
-            {option.label}
-          </label>
-        ))}
+        {options.map((option) => {
+          const described = `${descriptionId}-${option.value}`;
+          return (
+            <div key={option.value} className={styles.item}>
+              <label className={styles.option}>
+                <input
+                  type="radio"
+                  name={name}
+                  value={option.value}
+                  checked={current === option.value}
+                  disabled={option.disabled}
+                  aria-describedby={option.description === undefined ? undefined : described}
+                  className={styles.input}
+                  onChange={() => {
+                    setCurrent(option.value);
+                  }}
+                />
+                {option.label}
+              </label>
+              {option.description !== undefined && (
+                <p id={described} className={styles.description}>
+                  {option.description}
+                </p>
+              )}
+            </div>
+          );
+        })}
       </div>
     </fieldset>
   );
