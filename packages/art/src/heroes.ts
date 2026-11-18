@@ -1,12 +1,93 @@
 import { PALETTE as P } from './palette';
 import { INK, limb } from './svg';
 
-export type HeroName = 'mike' | 'julie';
+export type HeroName = 'mike' | 'julie' | 'sam' | 'leo';
+
+/** What sets a hero apart on the one body they share. */
+interface Look {
+  readonly suit: string;
+  readonly suitDark: string;
+  readonly panel: string;
+  readonly light: string;
+  /** Where the soles rest; Julie stands a little higher. */
+  readonly foot: number;
+  /** On the helmet. */
+  readonly crest: string;
+  /** Behind the helmet, over the body: Julie's ponytail. */
+  readonly hair?: string;
+  /** Over the jetpack, behind the body, per frame: Leo's scarf ends. */
+  readonly behind?: (frame: number) => string;
+  /** Over the helmet's collar, under the arm: the knot of Leo's scarf. */
+  readonly collar?: string;
+}
+
+/** How far the ends of Leo's scarf wave in each frame, in step with the flame. */
+const WAVE = [0, 6, 2, 8] as const;
+
+/** The two ends of Leo's scarf, waving behind him as he flies. */
+function scarfEnds(frame: number): string {
+  const w = WAVE[frame % WAVE.length] ?? 0;
+  const y = (base: number, sign: 1 | -1): string => String(base + sign * w);
+  const end = (d: string): string =>
+    `<path d="${d}" fill="${P.red}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>`;
+  return (
+    end(
+      `M116,140 C90,${y(146, 1)} 60,${y(168, -1)} 22,${y(160, 1)} L20,${y(180, 1)} C62,${y(188, -1)} 94,${y(166, 1)} 120,154 Z`,
+    ) +
+    end(
+      `M116,124 C84,${y(106, 1)} 46,${y(132, -1)} 4,${y(110, 1)} L4,${y(132, 1)} C46,${y(154, -1)} 84,${y(132, 1)} 116,146 Z`,
+    ) +
+    `<path d="M96,128 C70,${String(124 + w / 2)} 44,${String(138 - w / 2)} 14,${y(122, 1)}" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="4" stroke-linecap="round"/>`
+  );
+}
 
 const LOOKS = {
-  mike: { suit: P.blue, suitDark: P.blueDark, panel: P.blueLight, light: P.blueMist, foot: 296 },
-  julie: { suit: P.pink, suitDark: P.pinkDark, panel: P.pinkLight, light: '#fff0f6', foot: 278 },
-} as const satisfies Record<HeroName, unknown>;
+  mike: {
+    suit: P.blue,
+    suitDark: P.blueDark,
+    panel: P.blueLight,
+    light: P.blueMist,
+    foot: 296,
+    crest: `<path d="M118,34 L106,8" stroke="${INK}" stroke-width="4" stroke-linecap="round"/><circle cx="106" cy="8" r="7" fill="${P.red}" stroke="${INK}" stroke-width="3"/>`,
+  },
+  julie: {
+    suit: P.pink,
+    suitDark: P.pinkDark,
+    panel: P.pinkLight,
+    light: '#fff0f6',
+    foot: 278,
+    crest: `<path d="M110,34 Q150,10 192,36" fill="none" stroke="${P.pink}" stroke-width="9" stroke-linecap="round"/>`,
+    hair:
+      `<path d="M100,60 C72,52 44,66 34,98 C48,86 64,86 78,92 C62,102 54,120 58,140 C74,116 92,102 108,96 Z" fill="${P.hair}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+      `<path d="M86,66 C66,64 52,74 44,88" fill="none" stroke="${P.hairLight}" stroke-width="4" stroke-linecap="round"/>`,
+  },
+  /** Two feelers with glowing tips: a hunter of insects who looks a little like one (#164). */
+  sam: {
+    suit: P.teal,
+    suitDark: P.tealDark,
+    panel: P.tealLight,
+    light: '#e6fffa',
+    foot: 296,
+    crest:
+      `<path d="M128,30 Q120,14 104,10" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>` +
+      `<path d="M162,25 Q170,10 186,8" fill="none" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>` +
+      `<circle cx="104" cy="10" r="8" fill="${P.glow}" stroke="${INK}" stroke-width="3"/>` +
+      `<circle cx="186" cy="9" r="8" fill="${P.glow}" stroke="${INK}" stroke-width="3"/>`,
+  },
+  /** A red scarf whose ends wave behind him in step with the flame (#164). */
+  leo: {
+    suit: P.amber,
+    suitDark: P.amberDark,
+    panel: P.cream,
+    light: '#ffffff',
+    foot: 296,
+    crest: '',
+    behind: scarfEnds,
+    collar:
+      `<path d="M106,128 Q148,146 192,128 L192,142 Q148,160 106,142 Z" fill="${P.red}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+      `<path d="M120,140 Q148,150 176,140" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="4" stroke-linecap="round"/>`,
+  },
+} as const satisfies Record<HeroName, Look>;
 
 /** How long the jetpack's flame is in each frame. */
 const FLAMES = [46, 62, 52, 66] as const;
@@ -14,10 +95,10 @@ const FLAMES = [46, 62, 52, 66] as const;
 /**
  * A hero in a space suit with a jetpack and a blaster, facing right. The blaster's muzzle is at
  * (210, 180), twice the game's muzzle (105, 90), so shots leave from its tip. The frames differ in
- * the jetpack's flame only.
+ * the jetpack's flame, and Leo's scarf.
  */
 export function hero(name: HeroName, frame: number, id: string): string {
-  const look = LOOKS[name];
+  const look: Look = LOOKS[name];
   const L = FLAMES[frame % FLAMES.length] ?? FLAMES[0];
   const foot = look.foot;
   const knee = foot - 34;
@@ -42,15 +123,6 @@ export function hero(name: HeroName, frame: number, id: string): string {
   const frontLeg =
     limb(`M160,238 L196,${String(knee - 8)} L206,${String(foot - 12)}`, look.suit, 26) +
     `<rect x="186" y="${String(foot - 20)}" width="50" height="24" rx="10" fill="${P.graphite}" stroke="${INK}" stroke-width="4"/>`;
-  const ponytail =
-    name === 'julie'
-      ? `<path d="M100,60 C72,52 44,66 34,98 C48,86 64,86 78,92 C62,102 54,120 58,140 C74,116 92,102 108,96 Z" fill="${P.hair}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
-        `<path d="M86,66 C66,64 52,74 44,88" fill="none" stroke="${P.hairLight}" stroke-width="4" stroke-linecap="round"/>`
-      : '';
-  const crest =
-    name === 'mike'
-      ? `<path d="M118,34 L106,8" stroke="${INK}" stroke-width="4" stroke-linecap="round"/><circle cx="106" cy="8" r="7" fill="${P.red}" stroke="${INK}" stroke-width="3"/>`
-      : `<path d="M110,34 Q150,10 192,36" fill="none" stroke="${look.suit}" stroke-width="9" stroke-linecap="round"/>`;
   const helmet =
     `<ellipse cx="148" cy="136" rx="40" ry="11" fill="${P.slate}" stroke="${INK}" stroke-width="3"/>` +
     `<circle cx="150" cy="84" r="60" fill="${P.silver}"/>` +
@@ -59,7 +131,7 @@ export function hero(name: HeroName, frame: number, id: string): string {
     `<path d="M150,50 Q216,46 214,92 Q212,130 162,128 Q128,126 130,92 Q130,54 150,50 Z" fill="url(#${id}-visor)" stroke="${INK}" stroke-width="4"/>` +
     `<path d="M168,64 Q196,62 204,86" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="7" stroke-linecap="round"/>` +
     `<circle cx="200" cy="104" r="4" fill="#ffffff" opacity="0.5"/>` +
-    crest;
+    look.crest;
   const arm =
     limb('M162,158 L178,196 L196,186', look.suit, 22) +
     `<rect x="168" y="168" width="38" height="24" rx="6" fill="${P.slate}" stroke="${INK}" stroke-width="4"/>` +
@@ -76,11 +148,13 @@ export function hero(name: HeroName, frame: number, id: string): string {
     `</defs>` +
     flame +
     jetpack +
+    (look.behind?.(frame) ?? '') +
     backLeg +
     torso +
     frontLeg +
-    ponytail +
+    (look.hair ?? '') +
     helmet +
+    (look.collar ?? '') +
     arm
   );
 }

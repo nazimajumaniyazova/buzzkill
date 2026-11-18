@@ -58,6 +58,8 @@ export const SPRITES = {
     frameTicks: 4,
     draw: (f, id) => hero('julie', f, id),
   },
+  sam: { width: 321, height: 316, frames: 4, frameTicks: 4, draw: (f, id) => hero('sam', f, id) },
+  leo: { width: 321, height: 316, frames: 4, frameTicks: 4, draw: (f, id) => hero('leo', f, id) },
   'explosion-fire': {
     width: 400,
     height: 400,

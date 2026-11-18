@@ -86,16 +86,22 @@ describe('the art', () => {
   });
 
   it("draws the heroes at twice their boxes, the explosions in the game's 9 frames and the shot at twice its size", () => {
-    expect(HEROES.male.sprite.sheet).toBe('mike');
-    expect([SPRITES.mike.width, SPRITES.mike.height]).toEqual([
-      Math.round(HEROES.male.width * 2),
-      Math.round(HEROES.male.height * 2),
+    expect(Object.values(HEROES).map(({ sprite }) => sprite.sheet)).toEqual([
+      'mike',
+      'julie',
+      'sam',
+      'leo',
     ]);
-    expect(HEROES.female.sprite.sheet).toBe('julie');
-    expect([SPRITES.julie.width, SPRITES.julie.height]).toEqual([
-      Math.round(HEROES.female.width * 2),
-      Math.round(HEROES.female.height * 2),
-    ]);
+    for (const { sprite, width, height } of Object.values(HEROES)) {
+      // The sheet names of the configuration are sprites of the art; the loop above lists them.
+      const art = SPRITES[sprite.sheet as SpriteName];
+      expect([sprite.sheet, art.width, art.height, art.frames]).toEqual([
+        sprite.sheet,
+        Math.round(width * 2),
+        Math.round(height * 2),
+        SPRITES.mike.frames,
+      ]);
+    }
     for (const name of ['explosion-fire', 'explosion-smoke'] as const) {
       expect(SPRITES[name]).toMatchObject({
         width: RULES.explosion.size * 2,
