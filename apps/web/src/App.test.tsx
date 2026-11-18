@@ -108,6 +108,14 @@ vi.mock('./GameView', async () => {
           <button
             type="button"
             onClick={() => {
+              onAchievements({ ...achievements, regicide: 1 }, ['regicide']);
+            }}
+          >
+            Beat the queen
+          </button>
+          <button
+            type="button"
+            onClick={() => {
               onEvent({ type: 'gamepadLost' });
             }}
           >
@@ -421,6 +429,28 @@ describe('App', () => {
     click('Quit to menu');
     click('Achievements');
     expect(screen.getByText('1 of 500')).toBeInTheDocument();
+  });
+
+  it('unlocks Sam once the queen falls, and keeps him on this device (#164)', async () => {
+    const { unmount } = render(<App />);
+    click('Play');
+    expect(screen.getByRole('radio', { name: 'Sam' })).toBeDisabled();
+    click('Start');
+    await gameView();
+
+    click('Beat the queen');
+    click('Game pauses itself');
+    click('Quit to menu');
+    click('Play');
+    expect(screen.getByRole('radio', { name: 'Sam' })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: 'Leo' })).toBeDisabled();
+    unmount();
+
+    render(<App />);
+    click('Play');
+    fireEvent.click(screen.getByRole('radio', { name: 'Sam' }));
+    click('Start');
+    expect(await gameView()).toHaveTextContent(/^Game view: sam day/);
   });
 
   it('pauses a run whose gamepad disconnects and says why, then plays on', async () => {

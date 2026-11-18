@@ -87,6 +87,8 @@ export function createGameSprites<TImage>(images: GameImages<TImage>): GameSprit
     heroes: {
       male: animation(HEROES.male.sprite.sheet),
       female: animation(HEROES.female.sprite.sheet),
+      sam: animation(HEROES.sam.sprite.sheet),
+      leo: animation(HEROES.leo.sprite.sheet),
     },
     enemies,
     projectile: atlas('shot-trail'),

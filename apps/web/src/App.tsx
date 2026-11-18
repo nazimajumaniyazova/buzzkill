@@ -348,6 +348,7 @@ export function App({
         return (
           <HeroSelectScreen
             daily={state.daily}
+            progress={achievements.getState().progress}
             onStart={(choice) => {
               play(choice, state.daily);
             }}

@@ -1,4 +1,12 @@
-import { DAY_ENEMIES, HEROES, NIGHT_ENEMIES, POWER_UPS, QUEEN, RULES } from '@buzzkill/game';
+import {
+  DAY_ENEMIES,
+  HEROES,
+  type HeroId,
+  NIGHT_ENEMIES,
+  POWER_UPS,
+  QUEEN,
+  RULES,
+} from '@buzzkill/game';
 import { describe, expect, it } from 'vitest';
 
 import { ATLASES, BACKGROUNDS, SPRITES } from '../assets/manifest.gen';
@@ -61,9 +69,15 @@ describe('game assets and sprites', () => {
   it('animates each hero with its art', () => {
     const sprites = createGameSprites(IMAGES);
 
-    expect(sprites.heroes.male.atlas.frames).toBe(SPRITES[HEROES.male.sprite.sheet].frames);
-    expect(sprites.heroes.female.atlas.frames).toBe(SPRITES[HEROES.female.sprite.sheet].frames);
-    expect(sprites.heroes.female.frameTicks).toBe(SPRITES.julie.frameTicks);
+    expect(Object.keys(sprites.heroes)).toEqual(Object.keys(HEROES));
+    for (const [heroId, { sprite }] of Object.entries(HEROES)) {
+      const art = SPRITES[sprite.sheet];
+      // The keys of `HEROES` are the hero ids.
+      expect(sprites.heroes[heroId as HeroId]).toEqual({
+        atlas: { image: IMAGES[art.atlas], frames: art.frames },
+        frameTicks: art.frameTicks,
+      });
+    }
   });
 
   it('draws explosions in the frames and pace the simulation times them by', () => {

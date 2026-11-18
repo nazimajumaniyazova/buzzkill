@@ -3,7 +3,7 @@
 // file no longer matches the art or the sounds.
 //
 // The input of each file, as SHA-256:
-//   creatures.webp        ad5f2f4d257fc2be2826b500d88002f848e94e89956a4e8cfa6f80368263cdee
+//   creatures.webp        fe6d3065fcfc6a6c23bcb3769edd215d620ed3915a26846ba92db49f42bc8abb
 //   effects.webp          7c3b8fab0b5624e40c994392542b612c9159e075f4918fe5897c84d400b690ea
 //   boss.webp             8766dd83104626e2ed491f37068491e5b09d980a9d5d0f9e868281085239daeb
 //   city-day-sky.webp     b23707311cd5e072da086f3e6c1cb27d5f46d8a8dd6b15bbdd26d29ca87d4058
@@ -46,7 +46,7 @@ import bossPhaseWav from './bossPhase.wav';
 
 /** The atlases the game loads, with their size in pixels. */
 export const ATLASES = {
-  creatures: { url: creaturesAtlas, width: 2030, height: 1485 },
+  creatures: { url: creaturesAtlas, width: 1936, height: 1972 },
   effects: { url: effectsAtlas, width: 2008, height: 1672 },
   boss: { url: bossAtlas, width: 1804, height: 1504 },
 } as const;
@@ -56,7 +56,7 @@ export const ATLASES = {
  * atlas pixels. The art is drawn at twice the world's pixels.
  */
 export const SPRITES = {
-  mike: {
+  leo: {
     atlas: 'creatures',
     frameTicks: 4,
     frames: [
@@ -66,84 +66,104 @@ export const SPRITES = {
       { x: 969, y: 0, width: 321, height: 316 },
     ],
   },
+  mike: {
+    atlas: 'creatures',
+    frameTicks: 4,
+    frames: [
+      { x: 1292, y: 0, width: 321, height: 316 },
+      { x: 1615, y: 0, width: 321, height: 316 },
+      { x: 0, y: 318, width: 321, height: 316 },
+      { x: 323, y: 318, width: 321, height: 316 },
+    ],
+  },
+  sam: {
+    atlas: 'creatures',
+    frameTicks: 4,
+    frames: [
+      { x: 646, y: 318, width: 321, height: 316 },
+      { x: 969, y: 318, width: 321, height: 316 },
+      { x: 1292, y: 318, width: 321, height: 316 },
+      { x: 1615, y: 318, width: 321, height: 316 },
+    ],
+  },
   julie: {
     atlas: 'creatures',
     frameTicks: 4,
     frames: [
-      { x: 1292, y: 0, width: 275, height: 297 },
-      { x: 1569, y: 0, width: 275, height: 297 },
-      { x: 0, y: 318, width: 275, height: 297 },
-      { x: 277, y: 318, width: 275, height: 297 },
+      { x: 0, y: 636, width: 275, height: 297 },
+      { x: 277, y: 636, width: 275, height: 297 },
+      { x: 554, y: 636, width: 275, height: 297 },
+      { x: 831, y: 636, width: 275, height: 297 },
     ],
   },
   beetle: {
     atlas: 'creatures',
     frameTicks: 3,
     frames: [
-      { x: 554, y: 318, width: 273, height: 273 },
-      { x: 829, y: 318, width: 273, height: 273 },
-      { x: 1104, y: 318, width: 273, height: 273 },
-      { x: 1379, y: 318, width: 273, height: 273 },
-      { x: 1654, y: 318, width: 273, height: 273 },
-      { x: 0, y: 617, width: 273, height: 273 },
+      { x: 1108, y: 636, width: 273, height: 273 },
+      { x: 1383, y: 636, width: 273, height: 273 },
+      { x: 1658, y: 636, width: 273, height: 273 },
+      { x: 0, y: 935, width: 273, height: 273 },
+      { x: 275, y: 935, width: 273, height: 273 },
+      { x: 550, y: 935, width: 273, height: 273 },
     ],
   },
   dragonfly: {
     atlas: 'creatures',
     frameTicks: 1,
     frames: [
-      { x: 275, y: 617, width: 266, height: 207 },
-      { x: 543, y: 617, width: 266, height: 207 },
-      { x: 811, y: 617, width: 266, height: 207 },
-      { x: 1079, y: 617, width: 266, height: 207 },
+      { x: 825, y: 935, width: 266, height: 207 },
+      { x: 1093, y: 935, width: 266, height: 207 },
+      { x: 1361, y: 935, width: 266, height: 207 },
+      { x: 1629, y: 935, width: 266, height: 207 },
     ],
   },
   wasp: {
     atlas: 'creatures',
     frameTicks: 2,
     frames: [
-      { x: 1347, y: 617, width: 253, height: 207 },
-      { x: 1602, y: 617, width: 253, height: 207 },
-      { x: 0, y: 892, width: 253, height: 207 },
-      { x: 255, y: 892, width: 253, height: 207 },
-      { x: 510, y: 892, width: 253, height: 207 },
-      { x: 765, y: 892, width: 253, height: 207 },
+      { x: 0, y: 1210, width: 253, height: 207 },
+      { x: 255, y: 1210, width: 253, height: 207 },
+      { x: 510, y: 1210, width: 253, height: 207 },
+      { x: 765, y: 1210, width: 253, height: 207 },
+      { x: 1020, y: 1210, width: 253, height: 207 },
+      { x: 1275, y: 1210, width: 253, height: 207 },
     ],
   },
   firefly: {
     atlas: 'creatures',
     frameTicks: 2,
     frames: [
-      { x: 1020, y: 892, width: 271, height: 194 },
-      { x: 1293, y: 892, width: 271, height: 194 },
-      { x: 1566, y: 892, width: 271, height: 194 },
-      { x: 0, y: 1101, width: 271, height: 194 },
-      { x: 273, y: 1101, width: 271, height: 194 },
-      { x: 546, y: 1101, width: 271, height: 194 },
+      { x: 1530, y: 1210, width: 271, height: 194 },
+      { x: 0, y: 1419, width: 271, height: 194 },
+      { x: 273, y: 1419, width: 271, height: 194 },
+      { x: 546, y: 1419, width: 271, height: 194 },
+      { x: 819, y: 1419, width: 271, height: 194 },
+      { x: 1092, y: 1419, width: 271, height: 194 },
     ],
   },
   moth: {
     atlas: 'creatures',
     frameTicks: 3,
     frames: [
-      { x: 819, y: 1101, width: 266, height: 188 },
-      { x: 1087, y: 1101, width: 266, height: 188 },
-      { x: 1355, y: 1101, width: 266, height: 188 },
-      { x: 1623, y: 1101, width: 266, height: 188 },
-      { x: 0, y: 1297, width: 266, height: 188 },
-      { x: 268, y: 1297, width: 266, height: 188 },
-      { x: 536, y: 1297, width: 266, height: 188 },
-      { x: 804, y: 1297, width: 266, height: 188 },
+      { x: 1365, y: 1419, width: 266, height: 188 },
+      { x: 1633, y: 1419, width: 266, height: 188 },
+      { x: 0, y: 1615, width: 266, height: 188 },
+      { x: 268, y: 1615, width: 266, height: 188 },
+      { x: 536, y: 1615, width: 266, height: 188 },
+      { x: 804, y: 1615, width: 266, height: 188 },
+      { x: 1072, y: 1615, width: 266, height: 188 },
+      { x: 1340, y: 1615, width: 266, height: 188 },
     ],
   },
   mosquito: {
     atlas: 'creatures',
     frameTicks: 1,
     frames: [
-      { x: 1072, y: 1297, width: 238, height: 167 },
-      { x: 1312, y: 1297, width: 238, height: 167 },
-      { x: 1552, y: 1297, width: 238, height: 167 },
-      { x: 1792, y: 1297, width: 238, height: 167 },
+      { x: 1608, y: 1615, width: 238, height: 167 },
+      { x: 0, y: 1805, width: 238, height: 167 },
+      { x: 240, y: 1805, width: 238, height: 167 },
+      { x: 480, y: 1805, width: 238, height: 167 },
     ],
   },
   'explosion-fire': {

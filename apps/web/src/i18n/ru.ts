@@ -104,7 +104,9 @@ export const ru: Dictionary = (format): Messages => ({
   heroSelect: {
     title: 'Выберите героя',
     hero: 'Герой',
-    heroes: { male: 'Майк', female: 'Джули' },
+    heroes: { male: 'Майк', female: 'Джули', sam: 'Сэм', leo: 'Лео' },
+    locked: (achievement, description) =>
+      `Закрыт: получите достижение «${achievement}». ${description}`,
     timeOfDay: 'Время суток',
     modes: { day: 'День', night: 'Ночь' },
     start: 'Начать',
