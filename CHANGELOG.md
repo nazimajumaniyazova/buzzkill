@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.33.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.32.0...v0.33.0) (2026-11-19)
+
+
+### Features
+
+* **web:** play the music during a run, once there is a track ([#209](https://github.com/nazimajumaniyazova/buzzkill/issues/209)) ([008c733](https://github.com/nazimajumaniyazova/buzzkill/commit/008c733552c5564bc43cdd9fdec555f99ff74712))
+
 ## [0.32.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.31.0...v0.32.0) (2026-11-19)
 
 
