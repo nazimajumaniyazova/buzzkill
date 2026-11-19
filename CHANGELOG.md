@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.31.0...v0.32.0) (2026-11-19)
+
+
+### Features
+
+* add Sam and Leo, heroes that achievements unlock ([#207](https://github.com/nazimajumaniyazova/buzzkill/issues/207)) ([4f9be16](https://github.com/nazimajumaniyazova/buzzkill/commit/4f9be16c36ea61c233fa75c9e4ed0acfec7be1d9)), closes [#164](https://github.com/nazimajumaniyazova/buzzkill/issues/164)
+
 ## [0.31.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.30.0...v0.31.0) (2026-11-18)
 
 
