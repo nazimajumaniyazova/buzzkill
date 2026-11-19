@@ -51,6 +51,7 @@ const images = Object.fromEntries(
 const assets: GameAssets = {
   sprites: createGameSprites(images),
   audio: createAudioMixer<GameSound, AudioBuffer>({ context: null, buffers: {} }),
+  music: { follow: () => undefined },
 };
 
 const run: Run = {

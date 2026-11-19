@@ -1,6 +1,7 @@
 import type { AudioMixer } from '@buzzkill/engine';
 import type { Difficulty, GameMode, GameSound, HeroId, RunResult } from '@buzzkill/game';
 
+import type { MusicPlayer } from '../game/music';
 import type { GameSprites } from '../game/sprites';
 import type { GameSpeed } from './settings/schema';
 import { createStore, type Store } from './store';
@@ -9,6 +10,7 @@ import { createStore, type Store } from './store';
 export interface GameAssets {
   readonly sprites: GameSprites<ImageBitmap>;
   readonly audio: AudioMixer<GameSound>;
+  readonly music: MusicPlayer;
 }
 
 /** What the player picks before a run. */

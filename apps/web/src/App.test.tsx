@@ -21,8 +21,16 @@ import { DEFAULT_SETTINGS } from './state/settings/schema';
 import { createSettingsStore } from './state/settings/store';
 
 const setVolume = vi.hoisted(() => vi.fn());
-// The shell calls setVolume; the game view, which uses the rest, is replaced below.
-const assets = vi.hoisted(() => ({ sprites: {}, audio: { setVolume } }) as unknown as GameAssets);
+const followMusic = vi.hoisted(() => vi.fn());
+// The shell calls setVolume and the music; the game view, which uses the rest, is replaced below.
+const assets = vi.hoisted(
+  () =>
+    ({
+      sprites: {},
+      audio: { setVolume },
+      music: { follow: followMusic },
+    }) as unknown as GameAssets,
+);
 
 const failure: AssetFailure = {
   id: 'projectile',
@@ -259,6 +267,7 @@ describe('App', () => {
     vi.unstubAllGlobals();
     Reflect.deleteProperty(navigator, 'getGamepads');
     setVolume.mockClear();
+    followMusic.mockClear();
     vi.mocked(importGameChunk).mockClear();
     // Back to the files that load at once, dropping a held load that no call took.
     vi.mocked(loadGameAssets).mockReset();
@@ -558,6 +567,31 @@ describe('App', () => {
     expect(setVolume.mock.calls).toEqual([
       ['effects', 0],
       ['music', 0],
+    ]);
+  });
+
+  it('plays the music while a run is on screen, between levels too, and holds it in a pause (#161)', async () => {
+    render(<App />);
+    await startRun();
+    // Once loaded, the music waits for the run; then the run plays it.
+    expect(followMusic.mock.calls).toEqual([['stopped'], ['playing']]);
+
+    click('Clear level 3');
+    click('Next level');
+    click('Game pauses itself');
+    click('Resume');
+    click('Lose');
+    click('Play again');
+    click('Game pauses itself');
+    click('Quit to menu');
+
+    expect(followMusic.mock.calls.slice(2)).toEqual([
+      ['paused'],
+      ['playing'],
+      ['stopped'],
+      ['playing'],
+      ['paused'],
+      ['stopped'],
     ]);
   });
 
