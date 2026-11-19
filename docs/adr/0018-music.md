@@ -59,6 +59,11 @@ The track A and the budget A.
 The owner accepted the recommendation on 2026-11-17: a track from the Music Loop Bundle, which
 the owner picks, and a music budget of 3 MB.
 
+On 2026-11-19 the owner picked "Pixel War 1" from the bundle's chiptune pack: a 53 s loop whose
+file weighs 1.42 MB. It is re-encoded to fit under the 1 MB of a file, as Ogg Vorbis (0.79 MB)
+and as AAC (0.87 MB) for browsers that cannot play Ogg; `apps/web/assets-src/README.md` has the
+commands.
+
 ## Consequences
 
 - **The budget.** `MUSIC_BUDGET` in `apps/web/scripts/asset-budget.ts`. A built file whose name

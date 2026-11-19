@@ -10,7 +10,7 @@ Web Vitals, and the measurements before and after each optimization.
 | --------------------------------------- | --------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Any file tracked by git                 | 1 MB, 1,000,000 bytes | 338 kB at most (`pnpm-lock.yaml`)                    | `scripts/check-file-sizes.mjs`, in `pnpm lint:repo` and the CI Quality job                |
 | The game's images and sounds in a build | 1 MB, 1,000,000 bytes | 967 kB in 22 files; 685 kB without the WAV fallbacks | `assetBudget` in `apps/web/vite.config.ts`, in every build: the CI Build job and Vercel's |
-| The music in a build (ADR-0018)         | 3 MB, 3,000,000 bytes | None yet                                             | The same plugin: the files whose name starts with `music-`                                |
+| The music in a build (ADR-0018)         | 3 MB, 3,000,000 bytes | 1,658 kB in 2 files: the Ogg and its AAC copy        | The same plugin: the files whose name starts with `music-`                                |
 
 The build prints the second and third lines every time, for example
 `Game assets: 967.0 kB of the 1000.0 kB budget (97%), 22 files`, and fails above either budget.
@@ -49,7 +49,8 @@ still a file in git, and so stays under 1 MB.
 Make the files smaller first: the WebP quality, the frame count, the sample rate. If that is not
 enough, raise the limit in a pull request that says why, here and in the constant:
 `LIMIT` in `scripts/check-file-sizes.mjs` or `ASSET_BUDGET` in `apps/web/scripts/asset-budget.ts`.
-Music, if stage 7 adds it, is better streamed than loaded before the first frame.
+The music streams instead of loading before the first frame, so it has a budget of its own
+(ADR-0018); its track is re-encoded to stay under the 1 MB of a file (#161).
 
 ## Particles
 

@@ -9,11 +9,14 @@ are made and what they replaced.
 - **Sounds.** From Kenney's CC0 packs, as downloaded. Each pack's license is next to its files in
   `apps/web/assets-src/sounds/`. The WAV files are the same sounds, decoded by `pnpm assets` for
   browsers that cannot decode Ogg.
-- **Nothing else.** The game ships no font, icon or music; the 2023 files of unknown source left
-  the repository in #133.
+- **Music.** One CC0 loop by Abstraction (Tallbeard Studios), re-encoded so each file stays under
+  1 MB: Ogg Vorbis, and AAC for browsers that cannot play Ogg. The pack's license is next to it in
+  `apps/web/assets-src/music/`.
+- **Nothing else.** The game ships no font or icon; the 2023 files of unknown source left the
+  repository in #133.
 
-`apps/web/scripts/assets/assets-md.test.ts` fails when a file of the generated manifest has no row
-here, when a row names a file the game no longer ships, and when a pack has no license file.
+`apps/web/scripts/assets/assets-md.test.ts` fails when a file of the generated manifest or of the
+music (`apps/web/src/game/music-track.ts`) has no row here, when a row names a file the game no longer ships, and when a pack has no license file.
 
 ## Images
 
@@ -52,6 +55,15 @@ The Ogg files are in `apps/web/assets-src/sounds/`, in a folder per pack; the WA
 | `pickup.wav`                | The hero collects a power-up, where Ogg does not decode           | `laserRetro_000.ogg`, decoded by `pnpm assets`              | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | `bossPhase.wav`             | The queen arrives, and her rage begins, where Ogg does not decode | `impactMetal_003.ogg`, decoded by `pnpm assets`             | Kenney ([kenney.nl](https://kenney.nl)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 
+## Music
+
+In `apps/web/assets-src/music/abstraction-music-loop-bundle/`. It streams during a run (#161).
+
+| File                    | Plays when                                  | Source                                                                                                                                            | Author                                                                                 | License                                                       |
+| ----------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `music-pixel-war-1.ogg` | A run plays, and between its levels         | `Three Red Hearts Pixel War 1.ogg` of the [Music Loop Bundle](https://tallbeard.itch.io/music-loop-bundle), chiptune pack 20261003-02, re-encoded | Abstraction, Tallbeard Studios ([abstractionmusic.com](https://abstractionmusic.com/)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `music-pixel-war-1.m4a` | The same, where the browser cannot play Ogg | The same file, encoded as AAC                                                                                                                     | Abstraction, Tallbeard Studios ([abstractionmusic.com](https://abstractionmusic.com/)) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
 ## License texts
 
 - **MIT**, for the images: [LICENSE](LICENSE).
@@ -59,3 +71,6 @@ The Ogg files are in `apps/web/assets-src/sounds/`, in a folder per pack; the WA
   [Sci-Fi Sounds](apps/web/assets-src/sounds/kenney-sci-fi-sounds/License.txt) and
   [Impact Sounds](apps/web/assets-src/sounds/kenney-impact-sounds/License.txt). CC0 asks for no
   credit; Kenney welcomes it, and this file gives it.
+- **CC0 1.0**, for the music: [Music Loop Bundle](apps/web/assets-src/music/abstraction-music-loop-bundle/License.txt),
+  the `_LICENSE.txt` of the pack, renamed. Abstraction welcomes credit as "Abstraction" with a link
+  to the bundle or to [abstractionmusic.com](https://abstractionmusic.com/); this file gives it.

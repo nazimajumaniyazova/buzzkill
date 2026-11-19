@@ -10,6 +10,8 @@ export const PATHS = {
   sounds: join(WEB, 'assets-src/sounds'),
   /** The generated files the game loads, and their manifest. */
   output: join(WEB, 'src/assets'),
+  /** The track a run streams (#161), which the manifest does not list. */
+  musicTrack: join(WEB, 'src/game/music-track.ts'),
   /** The source, author and license of every file the game ships (#134). */
   assetsMd: join(WEB, '../../ASSETS.md'),
 };
