@@ -1,4 +1,5 @@
 aabb
+abstractionmusic
 autodocs
 autosquash
 AZERTY
@@ -18,6 +19,7 @@ deadzone
 depcruise
 Eiserloh
 esbuild
+faststart
 googleapis
 hitbox
 hitboxes
@@ -25,12 +27,15 @@ hypot
 jetpack
 jsdom
 Jumaniyazova
+kbit
 Kenney
 letterbox
 letterboxed
 libvips
+libvorbis
 Lingui
 miniplex
+movflags
 Nazima
 nvmrc
 panners
