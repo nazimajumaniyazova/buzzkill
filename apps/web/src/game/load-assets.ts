@@ -4,6 +4,8 @@ import type { GameSound } from '@buzzkill/game';
 
 import type { GameAssets } from '../state/machine';
 import { GAME_ASSETS } from './assets';
+import { createMusicPlayer, documentVisibility } from './music';
+import { MUSIC_TRACK } from './music-track';
 import { createGameSprites } from './sprites';
 
 /** The game's files, ready for a run, or what failed to load. */
@@ -13,8 +15,9 @@ export type GameAssetsResult =
 
 /**
  * Loads every file of the game in parallel and builds what a run draws and plays: the sprite
- * atlases and the mixer. The sounds are decoded on the page's audio context, which may still be
- * suspended; without one the mixer is silent and the optional sounds are skipped.
+ * atlases, the mixer and the music. The sounds are decoded on the page's audio context, which may
+ * still be suspended; without one the mixer is silent and the optional sounds are skipped. The
+ * music is not among the files: it streams once a run plays (#161).
  */
 export async function loadGameAssets(
   audioContext: AudioContext | null,
@@ -39,5 +42,10 @@ export async function loadGameAssets(
     bossPhase: assets.bossPhase,
   } satisfies Record<GameSound, AudioBuffer | undefined>;
   const audio = createAudioMixer<GameSound, AudioBuffer>({ context: audioContext, buffers });
-  return { ok: true, assets: { sprites: createGameSprites(assets), audio } };
+  const music = createMusicPlayer(audio, {
+    sources: MUSIC_TRACK,
+    createElement: () => new Audio(),
+    visibility: documentVisibility(document),
+  });
+  return { ok: true, assets: { sprites: createGameSprites(assets), audio, music } };
 }

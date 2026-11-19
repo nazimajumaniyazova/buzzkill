@@ -201,7 +201,8 @@ describe('GameView', () => {
     );
     play = vi.fn<AudioMixer<GameSound>['play']>();
     audio = { ...createAudioMixer({ context: null, buffers: {} }), play };
-    assets = { sprites, audio };
+    // The shell drives the music; the game view never touches it.
+    assets = { sprites, audio, music: { follow: () => undefined } };
     onEvent = vi.fn<(event: GameEvent) => void>();
     onAchievements =
       vi.fn<(progress: AchievementProgress, earned: readonly AchievementId[]) => void>();

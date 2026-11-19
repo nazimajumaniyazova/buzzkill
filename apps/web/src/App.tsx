@@ -16,6 +16,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { ErrorScreen } from './ErrorScreen';
 import { canRumble, findVibrator } from './game/haptics';
 import { importGameChunk } from './game/import-chunk';
+import type { MusicStatus } from './game/music';
 import { seedForRun } from './game/run-options';
 import { createGamepadNavigation } from './gamepad-navigation';
 import { HelpScreen } from './HelpScreen';
@@ -95,11 +96,29 @@ function backEvent(state: AppState): AppEvent | null {
   }
 }
 
+/** What the music does in each state (#161): it plays on between the levels, and stops off a run. */
+function musicFor(name: AppState['name']): MusicStatus {
+  switch (name) {
+    case 'playing':
+    case 'levelCleared':
+      return 'playing';
+    case 'paused':
+      return 'paused';
+    case 'menu':
+    case 'heroSelect':
+    case 'loading':
+    case 'failed':
+    case 'victory':
+    case 'gameOver':
+      return 'stopped';
+  }
+}
+
 /**
  * Application shell: renders the screen of the machine's state (ADR-0006) and nothing else. The
  * screens and the game report through `send`; the effects here are the ones the whole page needs:
- * saving the settings, the theme, the language, the mixer's volumes, the start of a run once the
- * game has loaded, the keys that go back, and the gamepad in the menus.
+ * saving the settings, the theme, the language, the mixer's volumes and the music, the start of a
+ * run once the game has loaded, the keys that go back, and the gamepad in the menus.
  */
 const systemClock = (): Date => new Date();
 
@@ -173,6 +192,14 @@ export function App({
     assets.audio.setVolume('effects', volumeOf(settings, 'effects'));
     assets.audio.setVolume('music', volumeOf(settings, 'music'));
   }, [assets, settings]);
+
+  // The music follows the run (#161): it plays during play and between the levels, holds its
+  // place in a pause, and starts over with the next run. It outlives the run with the files.
+  const music = gameLoad.status === 'ready' ? gameLoad.assets.music : null;
+  const musicStatus = musicFor(state.name);
+  useEffect(() => {
+    music?.follow(musicStatus);
+  }, [music, musicStatus]);
 
   // The chosen run starts as soon as the game has loaded, or at once when it already had.
   useEffect(() => {

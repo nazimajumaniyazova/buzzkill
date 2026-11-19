@@ -72,4 +72,8 @@ the owner picks, and a music budget of 3 MB.
   track too: a loop of about 60 to 80 s at 96 to 128 kilobits a second in Ogg. The 3 MB leave room for a
   second encoding for browsers without Ogg, as the sounds have WAV.
 - **The track.** It goes into `apps/web/assets-src/music/` with the license of the pack beside it,
-  and into `ASSETS.md`, as the sounds do.
+  and into `ASSETS.md`, as the sounds do. `MUSIC_TRACK` in `apps/web/src/game/music-track.ts`
+  lists its encodings, best first; the browser plays the first it can.
+- **When it plays.** During a run and between its levels. A pause holds its place, a hidden page
+  silences it, since the loop runs no frames then, and the end of a run starts it over for the
+  next. The menu downloads none of it: the `<audio>` element is made at the first play.
