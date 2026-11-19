@@ -203,13 +203,20 @@ describe('every text on screen comes from the dictionary', () => {
   });
 
   it('in the hero select of the daily run', () => {
-    renderMarked(<HeroSelectScreen daily="2026-11-17" onStart={vi.fn()} onBack={vi.fn()} />);
+    renderMarked(
+      <HeroSelectScreen
+        daily="2026-11-17"
+        progress={noProgress()}
+        onStart={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    );
 
     expect(foreignText()).toEqual([]);
   });
 
   it('in the hero select', () => {
-    renderMarked(<HeroSelectScreen onStart={vi.fn()} onBack={vi.fn()} />);
+    renderMarked(<HeroSelectScreen progress={noProgress()} onStart={vi.fn()} onBack={vi.fn()} />);
 
     expect(foreignText()).toEqual([]);
   });

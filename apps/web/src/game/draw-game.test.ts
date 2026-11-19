@@ -58,7 +58,12 @@ const animation = (image: string, frames: number, frameTicks: number) => ({
 });
 
 const SPRITES: GameSprites<string> = {
-  heroes: { male: animation('mike', 4, 4), female: animation('julie', 4, 4) },
+  heroes: {
+    male: animation('mike', 4, 4),
+    female: animation('julie', 4, 4),
+    sam: animation('sam', 4, 4),
+    leo: animation('leo', 4, 4),
+  },
   enemies: { wasp: animation('wasp', 6, 2) },
   projectile: atlas('shot-trail', 1),
   explosions: [atlas('smoke', 9), atlas('fire', 9)],

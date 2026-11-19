@@ -21,7 +21,7 @@ In `apps/web/src/assets/`, generated from `packages/art`.
 
 | File                   | Holds                                                                    | Source                                        | Author                     | License |
 | ---------------------- | ------------------------------------------------------------------------ | --------------------------------------------- | -------------------------- | ------- |
-| `creatures.webp`       | The heroes Mike and Julie and the six enemies, all frames                | `packages/art/src/heroes.ts`, `insects.ts`    | Buzzkill (this repository) | MIT     |
+| `creatures.webp`       | The heroes Mike, Julie, Sam and Leo and the six enemies, all frames      | `packages/art/src/heroes.ts`, `insects.ts`    | Buzzkill (this repository) | MIT     |
 | `effects.webp`         | The fire and smoke explosions, the shot in flight and the four power-ups | `packages/art/src/effects.ts`, `power-ups.ts` | Buzzkill (this repository) | MIT     |
 | `boss.webp`            | The queen wasp, her rage and her sting                                   | `packages/art/src/boss.ts`                    | Buzzkill (this repository) | MIT     |
 | `city-day-sky.webp`    | The day sky and the sun                                                  | `packages/art/src/city.ts`                    | Buzzkill (this repository) | MIT     |

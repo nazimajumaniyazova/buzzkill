@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import campaignDayMale from '../../fixtures/replays/campaign-day-male-3.json' with { type: 'json' };
 import campaignEasyNight from '../../fixtures/replays/campaign-easy-night-female-11.json' with { type: 'json' };
 import dayMale from '../../fixtures/replays/day-male-2026.json' with { type: 'json' };
+import daySam from '../../fixtures/replays/day-sam-164.json' with { type: 'json' };
 import nightFemale from '../../fixtures/replays/night-female-2026.json' with { type: 'json' };
+import nightLeo from '../../fixtures/replays/night-leo-164.json' with { type: 'json' };
 import { parseReplay } from './format';
 import { simulate } from './simulate';
 
@@ -13,7 +15,8 @@ import { simulate } from './simulate';
  * the PR says so and updates the values below with `vitest -u`.
  *
  * The first two follow a script: sweep down and up over 4 s and fire for 2 ticks out of every 15,
- * until the run ends or after 5 minutes. They fall in the first levels.
+ * until the run ends or after 5 minutes. They fall in the first levels. The two heroes unlocked by
+ * achievements (#164) have a replay each from the same script, recorded with seed 164.
  *
  * The campaign replays were played once by a bot that aims at the nearest enemy and steps aside
  * from one about to fly into the hero, and recorded; their inputs are fixed from then on. The bot
@@ -31,6 +34,8 @@ describe('golden replays', () => {
     ['night, female hero', nightFemale],
     ['the campaign, day, male hero, seed 3', campaignDayMale],
     ['the easy campaign won, night, female hero, seed 11', campaignEasyNight],
+    ['day, Sam', daySam],
+    ['night, Leo', nightLeo],
   ])('%s gives the pinned result', (_name, fixture) => {
     const parsed = parseReplay(fixture);
     if (!parsed.ok) {

@@ -42,6 +42,31 @@ export const Hero: Story = {
   },
 };
 
+/** A disabled option says under its label what unlocks it; the radio reads it as its description. */
+export const LockedOption: Story = {
+  name: 'Locked option',
+  args: {
+    options: [
+      { value: 'male', label: 'Mike' },
+      { value: 'female', label: 'Julie' },
+      {
+        value: 'sam',
+        label: 'Sam',
+        disabled: true,
+        description: 'Locked: earn the achievement “Regicide”. Defeat the queen.',
+      },
+    ],
+  },
+  play: async ({ canvasElement }) => {
+    const sam = within(canvasElement).getByRole('radio', { name: 'Sam' });
+
+    await expect(sam).toBeDisabled();
+    await expect(sam).toHaveAccessibleDescription(
+      'Locked: earn the achievement “Regicide”. Defeat the queen.',
+    );
+  },
+};
+
 export const TimeOfDay: Story = {
   name: 'Time of day',
   args: {

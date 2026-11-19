@@ -122,7 +122,13 @@ function english(format: Format) {
     heroSelect: {
       title: 'Choose your hero',
       hero: 'Hero',
-      heroes: { male: 'Mike', female: 'Julie' } satisfies Record<HeroId, string>,
+      heroes: { male: 'Mike', female: 'Julie', sam: 'Sam', leo: 'Leo' } satisfies Record<
+        HeroId,
+        string
+      >,
+      /** Under a hero not unlocked yet (#164): the achievement that unlocks it and what it asks. */
+      locked: (achievement: string, description: string) =>
+        `Locked: earn the achievement “${achievement}”. ${description}`,
       timeOfDay: 'Time of day',
       modes: { day: 'Day', night: 'Night' } satisfies Record<GameMode, string>,
       start: 'Start',

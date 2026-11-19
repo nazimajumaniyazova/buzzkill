@@ -34,7 +34,18 @@ export const SETTINGS = {
  * do not fit beside the creatures.
  */
 const ATLAS_SPRITES = {
-  creatures: ['mike', 'julie', 'beetle', 'wasp', 'dragonfly', 'moth', 'firefly', 'mosquito'],
+  creatures: [
+    'mike',
+    'julie',
+    'sam',
+    'leo',
+    'beetle',
+    'wasp',
+    'dragonfly',
+    'moth',
+    'firefly',
+    'mosquito',
+  ],
   effects: [
     'explosion-smoke',
     'explosion-fire',

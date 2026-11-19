@@ -15,6 +15,7 @@ export {
   type RunContext,
   unlocked,
 } from './achievements/achievements';
+export { heroUnlocked } from './achievements/heroes';
 export {
   DEFAULT_GAMEPAD_BINDINGS,
   DEFAULT_KEY_BINDINGS,

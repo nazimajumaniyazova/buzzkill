@@ -1,5 +1,16 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`golden replays > day, Sam gives the pinned result 1`] = `
+{
+  "hash": "f79f56cd",
+  "level": 3,
+  "livesLeft": 0,
+  "score": 129,
+  "status": "lost",
+  "ticks": 5007,
+}
+`;
+
 exports[`golden replays > day, male hero gives the pinned result 1`] = `
 {
   "hash": "e36b2599",
@@ -8,6 +19,17 @@ exports[`golden replays > day, male hero gives the pinned result 1`] = `
   "score": 39,
   "status": "lost",
   "ticks": 3159,
+}
+`;
+
+exports[`golden replays > night, Leo gives the pinned result 1`] = `
+{
+  "hash": "6155ff25",
+  "level": 1,
+  "livesLeft": 0,
+  "score": 22,
+  "status": "lost",
+  "ticks": 1664,
 }
 `;
 

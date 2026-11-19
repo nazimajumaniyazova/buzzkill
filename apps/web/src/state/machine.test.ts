@@ -333,7 +333,7 @@ describe('isRunState', () => {
 
 describe('invariants of the flow', () => {
   const choice = fc.record({
-    heroId: fc.constantFrom('male', 'female'),
+    heroId: fc.constantFrom('male', 'female', 'sam', 'leo'),
     mode: fc.constantFrom('day', 'night'),
     seed: fc.nat(),
     speed: fc.constantFrom(1, 0.75, 0.5),

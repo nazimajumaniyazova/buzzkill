@@ -85,6 +85,23 @@ describe('RadioGroup', () => {
     expect(screen.getByRole('radio', { name: 'Julie' })).toBeChecked();
   });
 
+  it('tells what an option needs under its label, without changing its name', async () => {
+    const options = [
+      { value: 'male', label: 'Mike' },
+      { value: 'robot', label: 'Unit 7', disabled: true, description: 'Win a run to unlock.' },
+    ] as const;
+    const { container } = render(
+      <RadioGroup label="Hero" name="hero" options={options} defaultValue="male" />,
+    );
+
+    const locked = screen.getByRole('radio', { name: 'Unit 7' });
+    expect(locked).toBeDisabled();
+    expect(locked).toHaveAccessibleDescription('Win a run to unlock.');
+    expect(screen.getByText('Win a run to unlock.')).toBeVisible();
+    expect(screen.getByRole('radio', { name: 'Mike' })).not.toHaveAttribute('aria-describedby');
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
   it('has no accessibility violations', async () => {
     const { container } = render(
       <RadioGroup

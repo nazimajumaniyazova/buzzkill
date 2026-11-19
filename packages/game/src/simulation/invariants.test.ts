@@ -6,6 +6,7 @@ import { describe, expect } from 'vitest';
 import { DIFFICULTIES, DIFFICULTY_IDS } from '../config/difficulty';
 import { type LevelConfig, LEVELS } from '../config/levels';
 import { POWER_UP_RULES, POWER_UPS, RAPID_FIRE, SHIELD } from '../config/power-ups';
+import { HEROES, type HeroId } from '../config/rules';
 import { Kind } from '../world/world';
 import { createSimulation, type Simulation } from './simulation';
 import type { BossState } from './state';
@@ -35,10 +36,13 @@ function gift(sim: Simulation, variant: number): void {
  * their own properties in `rules.test.ts`; these catch a system that applies a rule wrongly, or
  * twice, or in the wrong state.
  */
+// The keys of the configuration are the hero ids by its type.
+const HERO_IDS = Object.keys(HEROES) as HeroId[];
+
 describe('simulation invariants', () => {
   const run = fc.record({
     seed: fc.nat({ max: 0xff_ff_ff_ff }),
-    heroId: fc.constantFrom('male' as const, 'female' as const),
+    heroId: fc.constantFrom(...HERO_IDS),
     mode: fc.constantFrom('day' as const, 'night' as const),
     difficulty: fc.constantFrom(...DIFFICULTY_IDS),
     // Held masks of moveUp, moveDown and fire, each held for a while: closer to real play than
@@ -175,7 +179,7 @@ const NEXT: Readonly<Record<BossState['phase'], readonly BossState['phase'][]>> 
 describe('boss fight invariants', () => {
   const fight = fc.record({
     seed: fc.nat({ max: 0xff_ff_ff_ff }),
-    heroId: fc.constantFrom('male' as const, 'female' as const),
+    heroId: fc.constantFrom(...HERO_IDS),
     mode: fc.constantFrom('day' as const, 'night' as const),
     difficulty: fc.constantFrom(...DIFFICULTY_IDS),
     // A small health, so that random play often enrages and defeats her.
