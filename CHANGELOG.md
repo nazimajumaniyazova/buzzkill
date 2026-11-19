@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.34.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.33.0...v0.34.0) (2026-11-19)
+
+
+### Features
+
+* **web:** stream Pixel War 1 by Abstraction during a run ([#211](https://github.com/nazimajumaniyazova/buzzkill/issues/211)) ([b915925](https://github.com/nazimajumaniyazova/buzzkill/commit/b915925c641f6764b345aef0f97e8ecb4cd31149)), closes [#161](https://github.com/nazimajumaniyazova/buzzkill/issues/161)
+
 ## [0.33.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.32.0...v0.33.0) (2026-11-19)
 
 
