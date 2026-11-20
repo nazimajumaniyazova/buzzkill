@@ -143,17 +143,15 @@ jobs:
       - name: Test the schema
         run: pnpm db:test
 
+      # The same command as `pnpm db:types`, into a temporary file: the diff shows what changed,
+      # or the whole file when none is committed yet.
       - name: Check that the generated database types are current
         run: |
-          pnpm db:types
-          if [ -n "$(git status --porcelain -- apps/web/src/backend/database.gen.ts)" ]; then
+          pnpm exec supabase gen types typescript --local --schema public > "$RUNNER_TEMP/database.gen.ts"
+          if ! diff -u -N apps/web/src/backend/database.gen.ts "$RUNNER_TEMP/database.gen.ts"; then
             echo "::error::The database types are out of date: run pnpm db:types and commit them."
             exit 1
           fi
-
-      - name: Print the generated database types
-        if: failure()
-        run: cat apps/web/src/backend/database.gen.ts || true
 
   e2e:
     name: E2E
