@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.36.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.35.0...v0.36.0) (2026-11-20)
+
+
+### Features
+
+* **backend:** let anyone read the boards and only the server add runs ([#228](https://github.com/nazimajumaniyazova/buzzkill/issues/228)) ([2d3d164](https://github.com/nazimajumaniyazova/buzzkill/commit/2d3d1642d5961a8a1298f1b35888948101ee2af3))
+* **backend:** verify a submitted run by playing its replay again ([#229](https://github.com/nazimajumaniyazova/buzzkill/issues/229)) ([ced90d7](https://github.com/nazimajumaniyazova/buzzkill/commit/ced90d7453c279e9f6e0e9a47e5cac5b6ea638ef))
+
 ## [0.35.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.34.0...v0.35.0) (2026-11-20)
 
 
