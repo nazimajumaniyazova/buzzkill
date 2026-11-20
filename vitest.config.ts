@@ -5,8 +5,8 @@ const headlessThresholds = { lines: 80, functions: 80, branches: 80, statements:
 export default defineConfig({
   test: {
     // Every package and app is a Vitest project with its own environment; see
-    // packages/config/vitest for the presets. The config package has no tests.
-    projects: ['packages/*', 'apps/*', '!packages/config'],
+    // packages/config/vitest for the presets.
+    projects: ['packages/*', 'apps/*'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary', 'json'],

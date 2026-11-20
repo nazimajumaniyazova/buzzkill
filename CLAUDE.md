@@ -31,7 +31,8 @@ pnpm workspaces + Turborepo (ADR-0001). Shared dependency versions live in the `
   nothing about the game.
 - `packages/art` (`@buzzkill/art`): the game's art drawn as code (ADR-0015): sprites and the city
   as SVG in the frame sizes of the game configuration. Imports nothing in the repository; no DOM.
-- `packages/config` (`@buzzkill/config`): shared `tsconfig.base.json` and tool presets.
+- `packages/config` (`@buzzkill/config`): shared `tsconfig.base.json`, tool presets, and
+  `gameVersion()`, the version of the simulation that a build of the web or the server plays.
 
 The dependency direction is declared in each `package.json` and enforced by dependency-cruiser in
 `pnpm lint:repo` (`engine` standalone, `game` → `engine` only, `server` → `game` only and imported
