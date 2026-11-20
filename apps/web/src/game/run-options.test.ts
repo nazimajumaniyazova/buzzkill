@@ -1,11 +1,13 @@
+import { join } from 'node:path';
+
+import { gameVersion } from '@buzzkill/config/game-version';
 import { describe, expect, it } from 'vitest';
 
-import rootPackage from '../../../../package.json';
 import { GAME_VERSION, seedForRun } from './run-options';
 
 describe('run options', () => {
-  it('takes the game version from the root package', () => {
-    expect(GAME_VERSION).toBe(rootPackage.version);
+  it('names the release and the simulation sources it was built from', () => {
+    expect(GAME_VERSION).toBe(gameVersion(join(import.meta.dirname, '../../../..')));
   });
 
   it('uses a 32-bit seed from the URL', () => {

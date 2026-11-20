@@ -131,3 +131,28 @@ on it (#218).
   three times that for a slower cloud CPU, 0.55 s of the 2 s an Edge Function may use (ADR-0007).
 - **ADR-0007's figures.** Its 125 to 187 ms for the campaign came from `process.cpuUsage` and are
   too high for the reason above. Its conclusion holds with more margin.
+
+## Amendment, 2026-11-20: the game version
+
+`gameVersion`, which the server compares with its own before it plays a replay, was the release in
+the root `package.json`. release-please changes it only when it tags a release, while every commit
+to `main` is deployed (ADR-0010, ADR-0011). Two builds that play differently would then share a
+version, and the server would refuse an honest replay as a forgery (#218).
+
+- **The version.** `gameVersion()` of `@buzzkill/config` gives the release, then, as semver build
+  metadata, the first 12 hex digits of a SHA-256 of the simulation's sources:
+  `0.36.0+1f2e3d4c5b6a`. The sources are the `.ts` files of `packages/engine/src`, without its
+  browser part, and of `packages/game/src`, without tests and benchmarks. Each file counts with its
+  path and with its line endings made `\n`, so a checkout on Windows gives the version of one on
+  Linux. It is at most 32 characters, as the `runs` table keeps it.
+- **Who uses it.** The web build replaces `__GAME_VERSION__` with it (`vite.config.ts`), and the
+  build of the Edge Function will bake it in the same way. Both compute it from the sources they
+  are built from, so the function plays exactly the browser's replays when both come from one
+  commit.
+- **Why not the commit.** A commit hash would also tell builds apart, but every deploy would then
+  send the open tabs a 409 and make them reload, even for a change to the menu, and no preview
+  could submit to the backend. The hash of the sources changes with the simulation and only with
+  it.
+- **Old replays.** A replay keeps the version it was recorded with; the server refuses it once the
+  simulation changes, as before. The replays already recorded carry a bare release and stay
+  readable: `parseReplay` accepts any version of up to 64 characters.
