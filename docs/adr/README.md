@@ -25,6 +25,7 @@ continue from 0010.
 | [0016](0016-asset-pipeline.md)              | The asset pipeline                        | Accepted |
 | [0017](0017-levels-and-the-end-of-a-run.md) | Levels and the end of a run               | Accepted |
 | [0018](0018-music.md)                       | The music, its source and its budget      | Accepted |
+| [0007](0007-backend.md)                     | The backend                               | Accepted |
 
 ## Template
 

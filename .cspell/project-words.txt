@@ -20,6 +20,7 @@ depcruise
 Eiserloh
 esbuild
 faststart
+Firestore
 googleapis
 hitbox
 hitboxes
