@@ -1,0 +1,9 @@
+{
+  "extends": "@buzzkill/config/tsconfig.base.json",
+  "compilerOptions": {
+    // The function's edge: Request, Response and CompressionStream, which Deno and Node share
+    // with the browser. The backend logic in src stays without them.
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": ["."]
+}

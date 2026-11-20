@@ -12,6 +12,8 @@ storybook-static/
 coverage/
 *.tsbuildinfo
 .eslintcache
+# Edge Functions bundled from packages/server (`pnpm functions:build`)
+/supabase/functions/*/index.js
 
 # Test artifacts
 playwright-report/
