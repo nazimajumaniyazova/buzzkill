@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.37.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.36.0...v0.37.0) (2026-11-20)
+
+
+### Features
+
+* **backend:** answer submit-run requests and store runs in Supabase ([#234](https://github.com/nazimajumaniyazova/buzzkill/issues/234)) ([7187823](https://github.com/nazimajumaniyazova/buzzkill/commit/718782302cafa6038a1150f0fecd45a34bc04a2c))
+* **backend:** log replays that play to another result than claimed ([#233](https://github.com/nazimajumaniyazova/buzzkill/issues/233)) ([23a29c1](https://github.com/nazimajumaniyazova/buzzkill/commit/23a29c1d7fbbc72de99d91769a92c2fe11ea8b66))
+* **web:** version a build by its release and simulation sources ([#232](https://github.com/nazimajumaniyazova/buzzkill/issues/232)) ([387f636](https://github.com/nazimajumaniyazova/buzzkill/commit/387f636aa78945dca3597ddc9aa93257eb643f6d))
+
 ## [0.36.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.35.0...v0.36.0) (2026-11-20)
 
 
