@@ -79,7 +79,8 @@ diagrams and the runtime data flow.
 - No direct commits to `main`. Every change: issue → branch `<type>/<issue>-<kebab-description>`
   → pull request → squash merge.
 - Commits follow Conventional Commits 1.0 with the scopes `engine`, `game`, `ui`, `web`, `art`,
-  `config`, `deps`, `repo`, `release`. Header at most 72 characters, subject in imperative mood.
+  `backend`, `config`, `deps`, `repo`, `release`. Header at most 72 characters, subject in
+  imperative mood.
 - All code, comments, documentation, commit messages and PR descriptions are in English.
 - Decisions the plan marks for the owner are never taken by the agent: draft an ADR with two or
   three options, pros, cons and a recommendation, then wait for the owner.

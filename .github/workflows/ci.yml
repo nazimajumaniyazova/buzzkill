@@ -124,6 +124,37 @@ jobs:
       - name: Run the Storybook tests
         run: pnpm test:storybook
 
+  # The backend's schema (ADR-0007): a local Supabase database in Docker, built from the
+  # migrations, tested with pgTAP, and compared with the database types the web app imports.
+  database:
+    name: Database
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js, pnpm and dependencies
+        uses: ./.github/actions/setup
+
+      - name: Start the local database from the migrations
+        run: pnpm db:start
+
+      - name: Test the schema
+        run: pnpm db:test
+
+      - name: Check that the generated database types are current
+        run: |
+          pnpm db:types
+          if [ -n "$(git status --porcelain -- apps/web/src/backend/database.gen.ts)" ]; then
+            echo "::error::The database types are out of date: run pnpm db:types and commit them."
+            exit 1
+          fi
+
+      - name: Print the generated database types
+        if: failure()
+        run: cat apps/web/src/backend/database.gen.ts || true
+
   e2e:
     name: E2E
     runs-on: ubuntu-latest
