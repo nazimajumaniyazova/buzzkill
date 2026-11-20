@@ -1,11 +1,12 @@
-// Only the version field reaches the bundle: Vite tree-shakes named JSON imports.
-import { version } from '../../../../package.json';
+/** Replaced at build time with `gameVersion()` of `@buzzkill/config` (vite.config.ts). */
+declare const __GAME_VERSION__: string;
 
 /**
- * The release that runs, written into every replay. release-please keeps it in the root
- * `package.json`; the stage 8 server re-simulates only replays of its own version (ADR-0009).
+ * The version of the simulation that runs, written into every replay: the release, then a hash of
+ * the engine and game sources, such as `0.36.0+1f2e3d4c5b6a`. The server plays only replays of
+ * the version it was built with (ADR-0009, amendment of 2026-11-20).
  */
-export const GAME_VERSION: string = version;
+export const GAME_VERSION: string = __GAME_VERSION__;
 
 const MAX_SEED = 0xff_ff_ff_ff;
 

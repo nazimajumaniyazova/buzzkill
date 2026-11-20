@@ -5,11 +5,13 @@
   "description": "Shared TypeScript and tooling configuration for the Buzzkill workspace",
   "type": "module",
   "exports": {
+    "./game-version": "./game-version/index.ts",
     "./tsconfig.base.json": "./tsconfig.base.json",
     "./vitest": "./vitest/index.ts",
     "./vitest/setup-jsdom": "./vitest/setup-jsdom.ts"
   },
   "files": [
+    "game-version",
     "tsconfig.base.json",
     "vitest"
   ],
@@ -23,6 +25,7 @@
     "vitest-axe": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "typescript": "catalog:"
   }
 }

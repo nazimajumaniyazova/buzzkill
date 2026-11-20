@@ -11,6 +11,8 @@ export interface ProjectOverrides {
   exclude?: string[];
   /** Added after the preset's own setup files. */
   setupFiles?: string[];
+  /** Constants replaced in the code, as the package's Vite build replaces them. */
+  define?: Record<string, string>;
 }
 
 /**
@@ -22,6 +24,7 @@ export interface ProjectOverrides {
 export function nodeProject(name: string, overrides: ProjectOverrides = {}): ProjectConfig {
   return defineProject({
     plugins: [codspeedPlugin()],
+    define: overrides.define ?? {},
     test: {
       name,
       environment: 'node',
@@ -38,6 +41,7 @@ export function nodeProject(name: string, overrides: ProjectOverrides = {}): Pro
  */
 export function jsdomProject(name: string, overrides: ProjectOverrides = {}): ProjectConfig {
   return defineProject({
+    define: overrides.define ?? {},
     test: {
       name,
       environment: 'jsdom',

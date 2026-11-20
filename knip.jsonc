@@ -15,7 +15,7 @@
     },
     "packages/config": {
       "entry": [],
-      "project": [],
+      "project": ["game-version/*.ts"],
     },
     "packages/engine": {
       "project": ["src/**/*.ts"],
