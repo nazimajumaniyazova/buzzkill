@@ -104,10 +104,10 @@ select is(
   'a player keeps ten attempts a day'
 );
 select is(
-  (select max(seed)::integer from public.suspicious_runs
-    where user_id = '00000000-0000-4000-8000-00000000000a'),
-  10,
-  'the first ten attempts of the day are the ones kept'
+  (select count(*)::integer from public.suspicious_runs
+    where user_id = '00000000-0000-4000-8000-00000000000a' and seed in (11, 12)),
+  0,
+  'the attempts over the limit are the ones dropped'
 );
 
 insert into public.suspicious_runs (user_id, game_version, seed, claimed, found, replay)
