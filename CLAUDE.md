@@ -22,6 +22,9 @@ pnpm workspaces + Turborepo (ADR-0001). Shared dependency versions live in the `
   on React.
 - `packages/game` (`@buzzkill/game`): the game domain: entities, systems, rules, levels as data.
   Depends only on `engine`. No DOM: its `tsconfig.json` has no DOM lib, so it stays headless.
+- `packages/server` (`@buzzkill/server`): backend logic (ADR-0007): verifies a submitted run by
+  playing its replay again with `game`. Depends only on `game`; no DOM. The Supabase Edge
+  Function bundles it, and nothing else in the repository imports it.
 - `packages/ui` (`@buzzkill/ui`): design system: tokens, themes, accessible components. Knows
   nothing about the game.
 - `packages/art` (`@buzzkill/art`): the game's art drawn as code (ADR-0015): sprites and the city
@@ -29,8 +32,8 @@ pnpm workspaces + Turborepo (ADR-0001). Shared dependency versions live in the `
 - `packages/config` (`@buzzkill/config`): shared `tsconfig.base.json` and tool presets.
 
 The dependency direction is declared in each `package.json` and enforced by dependency-cruiser in
-`pnpm lint:repo` (`engine` standalone, `game` → `engine` only, `ui` standalone, `art` standalone, no
-deep imports, no cycles). Packages export TypeScript source (`"exports": "./src/index.ts"`); Vite
+`pnpm lint:repo` (`engine` standalone, `game` → `engine` only, `server` → `game` only and imported
+by nothing, `ui` standalone, `art` standalone, no deep imports, no cycles). Packages export TypeScript source (`"exports": "./src/index.ts"`); Vite
 consumes it directly, so there is no per-package build step. `docs/architecture.md` has the C4
 diagrams and the runtime data flow.
 

@@ -105,3 +105,29 @@ other run, as the `runs` table of stage 8 expects (`mode` there: `classic` or `d
 `daily_date`). `parseReplay` rejects a daily replay whose seed is not `dailySeed(daily)`, so the
 server checks the day's seed for free. A replay of format 2 reads as one of format 3 with
 `daily: null`; the golden replays stay as they were recorded.
+
+## Amendment, 2026-11-20
+
+The CPU budget of the longest allowed replay, as the consequences above ask before stage 8 relies
+on it (#218).
+
+- **The limit.** `MAX_RUN_TICKS` in `@buzzkill/server` is 15 minutes of ticks (54,000). A whole
+  campaign takes about 4.5 minutes, so the limit leaves three times that. A run that is not over by
+  then is refused as unfinished; without a limit, a player who keeps dodging the queen could make
+  the server play a run for as long as they like.
+- **The cost.** The game was bundled with esbuild and run in a fresh Node 24 process for each
+  measurement, seven times each, on the owner's laptop. Time is wall-clock time
+  (`process.hrtime`): the simulation is single-threaded and does no I/O, and on Windows
+  `process.cpuUsage` counts in steps of about 15.6 ms, too coarse for these numbers.
+
+  | Run                                                                 | Ticks  | Time     |
+  | ------------------------------------------------------------------- | ------ | -------- |
+  | The golden campaign `campaign-easy-night-female-11`, parsed and won | 16,386 | 50–60 ms |
+  | 15 minutes of the queen's rage, the hero sweeping and firing        | 54,000 | 35–41 ms |
+  | 15 minutes of the campaign's waves, repeated, the hero never firing | 54,000 | 32–38 ms |
+
+- **The budget.** The campaign, with its many enemies and shots, is the costliest per tick: about
+  3.4 µs, including parsing and the compiler warming up. At that rate the limit costs 0.18 s; with
+  three times that for a slower cloud CPU, 0.55 s of the 2 s an Edge Function may use (ADR-0007).
+- **ADR-0007's figures.** Its 125 to 187 ms for the campaign came from `process.cpuUsage` and are
+  too high for the reason above. Its conclusion holds with more margin.
