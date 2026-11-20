@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.34.0...v0.35.0) (2026-11-20)
+
+
+### Features
+
+* **backend:** store runs, profiles and achievements in migrations ([#225](https://github.com/nazimajumaniyazova/buzzkill/issues/225)) ([dc2f8c8](https://github.com/nazimajumaniyazova/buzzkill/commit/dc2f8c875a0e4a1c89ab8b598099428d66f5e977))
+
 ## [0.34.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.33.0...v0.34.0) (2026-11-19)
 
 
