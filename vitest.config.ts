@@ -27,6 +27,7 @@ export default defineConfig({
       thresholds: {
         'packages/engine/src/**': headlessThresholds,
         'packages/game/src/**': headlessThresholds,
+        'packages/server/src/**': headlessThresholds,
       },
     },
   },

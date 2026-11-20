@@ -1,0 +1,23 @@
+{
+  "name": "@buzzkill/server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Buzzkill backend logic: verifies a submitted run by playing its replay again with the game. No DOM; the Supabase Edge Function bundles it.",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@buzzkill/game": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@buzzkill/config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

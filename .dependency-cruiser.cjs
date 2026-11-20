@@ -47,6 +47,22 @@ module.exports = {
       to: { path: '^(packages/ui|apps)/|node_modules/react(-dom)?/' },
     },
     {
+      name: 'server-depends-only-on-game',
+      severity: 'error',
+      comment:
+        'The backend logic plays replays with the game and its engine; it never imports UI, art, ' +
+        'the app or React (ADR-0007).',
+      from: { path: '^packages/server/' },
+      to: { path: '^(packages/(ui|art)|apps)/|node_modules/react(-dom)?/' },
+    },
+    {
+      name: 'nothing-imports-the-server',
+      severity: 'error',
+      comment: 'The backend logic runs only in the Edge Function; the browser never ships it.',
+      from: { path: '^(apps|packages/(engine|game|ui|art))/' },
+      to: { path: '^packages/server/' },
+    },
+    {
       name: 'ui-knows-nothing-about-game',
       severity: 'error',
       comment: 'The design system is reusable: no imports from engine, game or the app.',
