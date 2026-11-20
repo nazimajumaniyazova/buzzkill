@@ -268,3 +268,131 @@ six releases (v0.9.0 to v0.13.0) over two days, and the tests of the repository 
   whole of #114 (the announcements, the motion setting and the game speed) added 0.86 kB gzip to
   the main chunk. The rule waits for stage 8, written down with its limit: like any pace on a
   client, the speed a record reports cannot be proven.
+
+## Stage 6 — Assets
+
+_Completed on 2026-11-12 with release v0.17.0. The three answers are the owner's; the STAR drafts
+below are facts gathered from the pull requests of the stage (#136 to #149): nine pull requests and
+four releases (v0.14.0 to v0.17.0) over three days, and the tests of the repository grew from 841 to 969._
+
+### What did I learn?
+
+### What was hard?
+
+### What would I do differently?
+
+### STAR stories
+
+#### ADR-0015: Where the game's art and sounds come from
+
+- **Situation:** The inventory of #136 found that nothing the game shipped could be published: 11
+  files, 1.50 MB, downloaded for the 2023 team project from sources nobody recorded. The heroes, the
+  background and the first day enemy were placeholders, because their 2023 art was drawn by other
+  members of the team or was over 1 MB (the two backgrounds weighed 1.14 and 1.62 MB). A search of
+  the CC0 sources covered the sounds, the shots and the explosions well, but had no hero with a
+  jetpack, no night insect with a flying animation and no vector city of the future, and the packs
+  that came close mixed flat, glossy and pixel styles.
+- **Task:** Give every image and sound a known source and a license that allows publishing, in
+  one style, without changing the hitboxes, the muzzle or the explosion timing that the rules and
+  the golden replays depend on.
+- **Action:** The owner asked whether the art could be drawn for the project. A sample answered it:
+  the six kinds of sprite drawn as vector code in the game's frame sizes, rendered in a browser next
+  to the best CC0 candidates, by day and by night. Of three options (CC0 packs as the plan
+  proposed, own art with synthesized sounds, own art with CC0 sounds), the owner chose the third. A
+  new package, `@buzzkill/art`, draws each sprite as a pure function from its frame to an SVG
+  document, and its tests check every frame against the sizes of the game configuration. The shot,
+  the hit and the explosion come from Kenney's Sci-fi Sounds and Impact Sounds, downloaded by the
+  owner. `ASSETS.md` lists every shipped file with its source and license, and a test fails when a
+  file has no row.
+- **Result:** The 11 files of unknown license left the repository. The art is 974 lines of
+  TypeScript in seven modules that import nothing: six enemies, two heroes, two explosions, the shot
+  and the city by day and by night, 61 sprite frames and 9 city layers in all. The three sounds
+  weigh 44.7 kB together. The golden replays did not change during the stage, because the art is
+  drawing only.
+
+#### ADR-0016: The asset pipeline
+
+- **Situation:** The art was now SVG drawn as code, and the sounds three Ogg Vorbis files of 7 to
+  28 kB. The plan asked for atlases, WebP or AVIF, Opus or Ogg with a fallback and a typed
+  manifest. The target browsers, Vite's defaults, all decode WebP, but AVIF needs Safari on macOS 13
+  or later. Rasterizing SVG in the browser is uneven across engines, and Safari before 18.4 does not
+  decode Ogg at all. No audio encoder was installed.
+- **Task:** Turn the sources into files that look the same in every browser and play in every
+  target browser, generate a manifest the drawing code is typed against, and let CI tell that the
+  output is out of date without depending on the encoder build of each platform.
+- **Action:** Of three options for the sprites (resvg and sharp at build time, the browser at load
+  time, Playwright's Chromium at build time) and two for the sounds (the Ogg files as downloaded
+  with WAV fallbacks, Opus with MP3 encoded by ffmpeg), the owner chose resvg and sharp, and the
+  Ogg files with WAV. The engine's loader gained a `fallbackUrl` that it tries only when a file
+  downloads but does not decode. A `pnpm assets` script renders every frame, packs the atlases,
+  writes the WAV files with a JavaScript Vorbis decoder and generates the manifest that replaced
+  the hand-written `GAME_ASSETS`. The manifest records a hash of each output's input and settings;
+  CI recomputes the hashes without rasterizing.
+- **Result:** 61 frames in two WebP atlases (239 and 128 kB) and 9 city layers of 5 to 11 kB, 437
+  kB of images. The WAV files weigh 193 kB and download only where the Ogg file does not decode.
+  No AVIF was needed, and the game ships none of the three tools' code. The build fails when the
+  images and sounds pass 1 MB, and `pnpm lint` fails on a tracked file over 1 MB (#149). In stage
+  7 the same script took the power-ups, the queen, Sam and Leo, and the images and sounds ended at
+  967 of the 1,000 kB.
+
+## Stage 7 — Gameplay, game feel and progress
+
+_Completed on 2026-11-19 with release v0.34.0, the v0.3 milestone. The three answers are the
+owner's; the STAR drafts below are facts gathered from the pull requests of the stage (#166 to
+#211): 26 pull requests and 18 releases (v0.18.0 to v0.34.0) over eight days, and the tests of the
+repository grew from 969 to 1460._
+
+### What did I learn?
+
+### What was hard?
+
+### What would I do differently?
+
+### STAR stories
+
+#### ADR-0017: Levels and the end of a run
+
+- **Situation:** A run was one endless level with the 2023 pace (an enemy every 1.7 s, then every
+  0.4 s from the twentieth second on), won above 100 points. The player picked day or night in the
+  hero select, and the replay stored the choice. `RunResult.level` was always 1. The plan asked
+  for levels as data with a change of day and night, and did not say how that change fits the
+  player's choice or how a run ends once there are levels. The second answer also shapes the boss,
+  the daily challenge and the server's re-simulation in stage 8.
+- **Task:** Describe the levels as data, keep the hero select and the replay format, and give a
+  run an end that a boss, a daily seed and a server can rely on.
+- **Action:** Of three options for each question, the owner chose that the player picks the first
+  level's time and the level data says when it changes, and that a run is a campaign of six
+  levels. `LEVELS` gives each level its waves (a count, the ticks between enemies, optional
+  weights over the time's three enemies), a calm before each wave, a speed factor and whether the
+  time changes after it. A level ends when its waves are sent and no enemy is left. The simulation
+  reports `levelCleared` and `levelStarted`, and the state hash covers the level, the wave and the
+  time of day. The screen between levels holds the game like a pause, so those ticks are never
+  simulated and the replay does not depend on how long the player waits. An amendment of
+  2026-11-13 lets a level end with the queen.
+- **Result:** Six levels, 14 waves and 170 enemies, with the pace growing from an enemy every
+  1.5 s to one every 0.43 s and their speed by a quarter. The queen ends the third level with 60
+  hits and the sixth with 100. The hero select and the replay format stayed as they were, and
+  `RunResult.level` became the level reached without a change to its shape. The golden replays
+  changed once for this decision (#166). Tests play short campaigns of their own to reach the end
+  of a level without the levels before it.
+
+#### ADR-0018: The music, its source and its budget
+
+- **Situation:** #161 asked for music that explosions duck, and the game had none: the 2023 music
+  was of unknown source and was left behind. The images and sounds weighed 919 kB of their 1 MB
+  budget, and a looping track of one or two minutes weighs a megabyte or more even as Ogg.
+  OpenGameArt, the largest source of CC0 music, refused automated requests.
+- **Task:** Find a track that is free to ship, play it without delaying the first frame or taking
+  the budget of what the first frame needs, and keep every tracked file under 1 MB.
+- **Action:** Of three options for the track and two for the budget, the owner chose a loop from
+  the Music Loop Bundle by Abstraction (CC0, 2026-11-17) and a music budget of its own, 3 MB. The
+  mixer streams the music from a media element through its music group, so the volume setting
+  applies, and each explosion ducks it to 40 % in 50 ms, holds it for 0.25 s and brings it back in
+  0.5 s. The shell plays it during a run and between its levels: a pause holds its place, a hidden
+  page silences it, the end of a run starts it over, and the menu downloads none of it. The owner
+  picked "Pixel War 1", a 53 s loop of 1.42 MB, and ffmpeg re-encoded it as Ogg Vorbis and as AAC
+  for the browsers without Ogg.
+- **Result:** The Ogg file weighs 0.79 MB and decodes to exactly as many samples as the pack's
+  file, 2,352,154, so the loop keeps its length; the AAC copy weighs 0.87 MB. The music takes 1,658
+  of its 3,000 kB, the images and sounds stayed at 967 kB, and the main chunk stayed at 101.31 kB
+  gzip. The AAC copy has not yet been heard in a browser that needs it, such as Safari.
