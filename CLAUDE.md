@@ -23,8 +23,10 @@ pnpm workspaces + Turborepo (ADR-0001). Shared dependency versions live in the `
 - `packages/game` (`@buzzkill/game`): the game domain: entities, systems, rules, levels as data.
   Depends only on `engine`. No DOM: its `tsconfig.json` has no DOM lib, so it stays headless.
 - `packages/server` (`@buzzkill/server`): backend logic (ADR-0007): verifies a submitted run by
-  playing its replay again with `game`. Depends only on `game`; no DOM. The Supabase Edge
-  Function bundles it, and nothing else in the repository imports it.
+  playing its replay again with `game`, and answers the submit-run function's requests, storing
+  through Supabase's REST APIs. Depends only on `game`; no DOM and no platform types: `fetch`,
+  gzip and the clock come in from the function. The Supabase Edge Function bundles it, and
+  nothing else in the repository imports it.
 - `packages/ui` (`@buzzkill/ui`): design system: tokens, themes, accessible components. Knows
   nothing about the game.
 - `packages/art` (`@buzzkill/art`): the game's art drawn as code (ADR-0015): sprites and the city

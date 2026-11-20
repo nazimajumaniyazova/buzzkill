@@ -165,7 +165,17 @@ describe('verifySubmission', () => {
       suspicious: true,
       claimed,
       found: IDLE_RESULT,
+      gameVersion: GAME_VERSION,
+      seed: 2026,
     });
+  });
+
+  it('keeps the replay of a suspicious run as canonical JSON, for the log', () => {
+    const verdict = verifySubmission(body(IDLE, { ...IDLE_RESULT, score: 5000 }), CONTEXT);
+
+    expect(!verdict.ok && verdict.reason === 'mismatch' && JSON.parse(verdict.replay)).toEqual(
+      IDLE,
+    );
   });
 
   it('refuses a run whose state hash differs, even with the same score', () => {
