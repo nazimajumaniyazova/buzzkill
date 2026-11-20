@@ -197,6 +197,8 @@ export default defineConfig([
         'error',
         { additionalTestBlockFunctions: ['test.prop', 'it.prop'] },
       ],
+      // A type test asserts with expectTypeOf alone; tsc checks it during typecheck (#215).
+      'vitest/expect-expect': ['error', { assertFunctionNames: ['expect', 'expectTypeOf'] }],
     },
   },
   {
