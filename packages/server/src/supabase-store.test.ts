@@ -87,9 +87,10 @@ describe('the Supabase store', () => {
       const fetch = fakeFetch(201, [{ id: 'run-1' }]);
       const store = createSupabaseStore({ url: `${PROJECT_URL}/`, key: SECRET, fetch });
 
-      await expect(store.addRun(PLAYER, RUN, Uint8Array.of(0x1f, 0x8b, 0x00))).resolves.toBe(
-        'run-1',
-      );
+      await expect(store.addRun(PLAYER, RUN, Uint8Array.of(0x1f, 0x8b, 0x00))).resolves.toEqual({
+        ok: true,
+        id: 'run-1',
+      });
 
       const [url, init] = callOf(fetch);
       expect(url).toBe(`${PROJECT_URL}/rest/v1/runs?select=id`);
@@ -128,6 +129,37 @@ describe('the Supabase store', () => {
 
       await expect(store.addRun(PLAYER, RUN, Uint8Array.of(0))).rejects.toThrow(
         /PostgREST answered 400: .*violates check constraint/,
+      );
+    });
+
+    it('passes on the wait when the database refuses a player over the hour limit', async () => {
+      // What PostgREST answers when the trigger of #235 raises PT429.
+      const store = createSupabaseStore({
+        url: PROJECT_URL,
+        key: SECRET,
+        fetch: fakeFetch(429, {
+          code: 'PT429',
+          details: null,
+          hint: '600',
+          message: 'a player cannot submit more play than an hour holds',
+        }),
+      });
+
+      await expect(store.addRun(PLAYER, RUN, Uint8Array.of(0))).resolves.toEqual({
+        ok: false,
+        retryAfter: 600,
+      });
+    });
+
+    it('fails on a 429 that is not the limit of a player', async () => {
+      const store = createSupabaseStore({
+        url: PROJECT_URL,
+        key: SECRET,
+        fetch: fakeFetch(429, { message: 'rate limited by the gateway' }),
+      });
+
+      await expect(store.addRun(PLAYER, RUN, Uint8Array.of(0))).rejects.toThrow(
+        'PostgREST answered 429',
       );
     });
   });

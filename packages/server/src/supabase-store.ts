@@ -1,6 +1,6 @@
 import * as z from 'zod/mini';
 
-import type { RunStore, SuspiciousRun } from './submit-run';
+import type { AddedRun, RunStore, SuspiciousRun } from './submit-run';
 import type { VerifiedRun } from './verify';
 
 export interface FetchInit {
@@ -29,6 +29,11 @@ export interface SupabaseConfig {
 const USER = z.object({ id: z.string().check(z.minLength(1)) });
 const INSERTED = z.tuple([z.object({ id: z.string() })]);
 const SECRET_KEYS = z.record(z.string(), z.string());
+/** PostgREST's answer when the trigger of #235 refuses a run: the hint is the wait in seconds. */
+const OVER_THE_LIMIT = z.object({
+  code: z.literal('PT429'),
+  hint: z.string().check(z.regex(/^[1-9]\d*$/)),
+});
 
 /**
  * The project's URL and server key from the variables Supabase gives every Edge Function. The
@@ -49,6 +54,15 @@ export function supabaseConfigFromEnv(env: (name: string) => string | undefined)
     throw new Error('neither SUPABASE_SECRET_KEYS.default nor SUPABASE_SERVICE_ROLE_KEY is set');
   }
   return { url, key };
+}
+
+/** JSON's value of `text`, or undefined when it is not JSON. */
+function parsed(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 /** A bytea as PostgREST reads it from JSON: `\x` and the bytes in hex. */
@@ -80,8 +94,8 @@ export function createSupabaseStore({
     ? { apikey: key }
     : { apikey: key, authorization: `Bearer ${key}` };
 
-  async function insert(table: string, row: object, prefer: string): Promise<FetchResponse> {
-    const response = await fetch(
+  function post(table: string, row: object, prefer: string): Promise<FetchResponse> {
+    return fetch(
       `${base}/rest/v1/${table}${prefer === 'return=representation' ? '?select=id' : ''}`,
       {
         method: 'POST',
@@ -89,11 +103,10 @@ export function createSupabaseStore({
         body: JSON.stringify(row),
       },
     );
-    if (!response.ok) {
-      throw new Error(`PostgREST answered ${String(response.status)}: ${await response.text()}`);
-    }
-    return response;
   }
+
+  const failure = (status: number, text: string): Error =>
+    new Error(`PostgREST answered ${String(status)}: ${text}`);
 
   return {
     async userOf(token) {
@@ -110,8 +123,8 @@ export function createSupabaseStore({
       return USER.parse(await response.json()).id;
     },
 
-    async addRun(userId: string, run: VerifiedRun, replay: Uint8Array) {
-      const response = await insert(
+    async addRun(userId: string, run: VerifiedRun, replay: Uint8Array): Promise<AddedRun> {
+      const response = await post(
         'runs',
         {
           user_id: userId,
@@ -132,11 +145,19 @@ export function createSupabaseStore({
         },
         'return=representation',
       );
-      return INSERTED.parse(await response.json())[0].id;
+      if (!response.ok) {
+        const text = await response.text();
+        const refusal = response.status === 429 ? OVER_THE_LIMIT.safeParse(parsed(text)) : null;
+        if (refusal?.success === true) {
+          return { ok: false, retryAfter: Number(refusal.data.hint) };
+        }
+        throw failure(response.status, text);
+      }
+      return { ok: true, id: INSERTED.parse(await response.json())[0].id };
     },
 
     async logSuspicious(attempt: SuspiciousRun) {
-      await insert(
+      const response = await post(
         'suspicious_runs',
         {
           user_id: attempt.userId,
@@ -148,6 +169,9 @@ export function createSupabaseStore({
         },
         'return=minimal',
       );
+      if (!response.ok) {
+        throw failure(response.status, await response.text());
+      }
     },
   };
 }
