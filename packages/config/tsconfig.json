@@ -1,4 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["vitest"]
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["game-version", "vitest", "vitest.config.ts"]
 }
