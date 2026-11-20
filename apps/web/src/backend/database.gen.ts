@@ -47,6 +47,20 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"suspicious_runs": {
+                  Row: {
+                    "claimed": NonNullable<Json>,"created_at": string,"found": NonNullable<Json>,"game_version": string,"id": string,"replay": string,"seed": number,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "claimed": NonNullable<Json>,"created_at"?: string,"found": NonNullable<Json>,"game_version": string,"id"?: string,"replay": string,"seed": number,"user_id": string
+                  }
+                  Update: {
+                    "claimed"?: NonNullable<Json>,"created_at"?: string,"found"?: NonNullable<Json>,"game_version"?: string,"id"?: string,"replay"?: string,"seed"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {

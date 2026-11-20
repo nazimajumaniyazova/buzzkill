@@ -71,7 +71,9 @@ Access to the data has two layers, both set in the migration that creates a tabl
   the attempt changes no row instead of failing.
 
 `supabase/tests/database/policies.test.sql` tries every statement as each role: a visitor, a
-signed-in player and the service role. A new table or policy gets its checks there.
+signed-in player and the service role. A new table or policy gets its checks there, or in a
+file of its own that tries the same roles, as `suspicious-runs.test.sql` does for the log of
+#218.
 
 The local database runs in Docker. Without Docker, the **Database** check of CI does the same on
 every pull request: it starts the database from the migrations, runs the tests and fails when
