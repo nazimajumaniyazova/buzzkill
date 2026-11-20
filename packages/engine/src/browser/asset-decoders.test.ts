@@ -86,7 +86,6 @@ describe('createBrowserAssetDecoders', () => {
   });
 
   // A compile-time check: the type checker fails the build if the contexts stop fitting.
-  // eslint-disable-next-line vitest/expect-expect
   it('accepts the real 2D contexts as the renderer context', () => {
     expectTypeOf<CanvasRenderingContext2D>().toExtend<Context2DLike<CanvasImageSource>>();
     expectTypeOf<OffscreenCanvasRenderingContext2D>().toExtend<Context2DLike<CanvasImageSource>>();

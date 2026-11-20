@@ -79,7 +79,8 @@ diagrams and the runtime data flow.
 - No direct commits to `main`. Every change: issue → branch `<type>/<issue>-<kebab-description>`
   → pull request → squash merge.
 - Commits follow Conventional Commits 1.0 with the scopes `engine`, `game`, `ui`, `web`, `art`,
-  `config`, `deps`, `repo`, `release`. Header at most 72 characters, subject in imperative mood.
+  `backend`, `config`, `deps`, `repo`, `release`. Header at most 72 characters, subject in
+  imperative mood.
 - All code, comments, documentation, commit messages and PR descriptions are in English.
 - Decisions the plan marks for the owner are never taken by the agent: draft an ADR with two or
   three options, pros, cons and a recommendation, then wait for the owner.
@@ -102,11 +103,16 @@ diagrams and the runtime data flow.
   `vite preview`, in Chromium on an emulated Pixel 7 and a desktop.
 - `pnpm assets` regenerates the game's atlases, the WAV fallbacks and the asset manifest after a
   change to `packages/art`, a sound or a pipeline setting (ADR-0016); a test fails until then.
+- `pnpm db:start` starts the local Supabase database from `supabase/migrations` (Docker),
+  `pnpm db:test` runs the pgTAP tests of `supabase/tests`, and `pnpm db:types` regenerates
+  `apps/web/src/backend/database.gen.ts`. CI's Database job runs all three (ADR-0007).
 
 ## Where things are
 
 - `docs/architecture.md` — C4 context and container diagrams, dependency rules, runtime data flow
 - `docs/adr/` — Architecture Decision Records and their template
+- `supabase/` — the backend (ADR-0007): local config, SQL migrations and pgTAP tests; a merged
+  migration is never edited, a change is a new one
 - `ASSETS.md` — source, author and license of every file the game ships; a test fails when a file
   of the generated asset manifest has no row
 - `docs/performance.md` — the budgets, why they are what they are and what checks them

@@ -23,7 +23,6 @@ describe('createBrowserAudioContext', () => {
   });
 
   // A compile-time check: the type checker fails the build if the real context stops fitting.
-  // eslint-disable-next-line vitest/expect-expect
   it('accepts the real AudioContext as the mixer context', () => {
     expectTypeOf<AudioContext>().toExtend<AudioContextLike<AudioBuffer>>();
   });

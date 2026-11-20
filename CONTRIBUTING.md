@@ -23,6 +23,9 @@ pnpm test:e2e       # the built app in Chromium, on a Pixel 7 and a desktop; the
 pnpm storybook      # Storybook of the design system on http://localhost:6006
 pnpm bench          # benchmarks of the engine and the game
 pnpm assets         # regenerate the atlases, WAVs and asset manifest after changing art or a sound
+pnpm db:start       # the local Supabase database, built from supabase/migrations; needs Docker
+pnpm db:test        # the pgTAP tests of supabase/tests against it
+pnpm db:types       # regenerate apps/web/src/backend/database.gen.ts from it
 pnpm format:check   # Prettier
 ```
 
@@ -50,6 +53,20 @@ Two size limits hold (#135, `docs/performance.md`): no file tracked by git over 
 `pnpm build`, which prints the total. Make a file smaller before raising a limit; a raise needs a
 pull request that says why.
 
+The backend is a Supabase project (ADR-0007), and `supabase/` holds what the repository owns of
+it:
+
+- `config.toml`, the settings of the local database;
+- `migrations/`, the SQL that builds the schema;
+- `tests/`, pgTAP tests.
+
+A change to the schema is a new migration (`pnpm exec supabase migration new <name>`), never an
+edit of one that has been merged. A new migration also needs a test and `pnpm db:types`.
+
+The local database runs in Docker. Without Docker, the **Database** check of CI does the same on
+every pull request: it starts the database from the migrations, runs the tests and fails when
+`database.gen.ts` is out of date.
+
 ## Workflow: GitHub Flow
 
 1. Every task starts with an issue (typos and tiny chores are the exception). Use the issue forms
@@ -72,7 +89,7 @@ Closes #12
 ```
 
 - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `build`, `ci`, `chore`, `revert`.
-- Scopes: `engine`, `game`, `ui`, `web`, `art`, `config`, `deps`, `repo`, `release`.
+- Scopes: `engine`, `game`, `ui`, `web`, `art`, `backend` (the `supabase/` folder), `config`, `deps`, `repo`, `release`.
 - Subject: imperative mood, lower-case first letter, no trailing period; the whole header is at
   most 72 characters.
 - One commit is one logical change, and the project builds on every commit. No `wip`, `fix`,

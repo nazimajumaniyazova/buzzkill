@@ -62,6 +62,9 @@ catalog:
   '@resvg/resvg-js': ^2.6.2
   sharp: ^0.35.5
   '@wasm-audio-decoders/ogg-vorbis': ^0.1.20
+  # The backend (ADR-0007): the Supabase CLI runs the local database, its migrations and tests, and
+  # generates the database types; its binary comes as an optional dependency per platform
+  supabase: ^3.2.0
 
 peerDependencyRules:
   allowedVersions:
