@@ -1,5 +1,6 @@
 aabb
 abstractionmusic
+apikey
 autodocs
 autosquash
 AZERTY
@@ -8,6 +9,7 @@ bitecs
 bryc
 bundlephobia
 Buzzkill
+bytea
 Catmull
 chiptune
 CLDR
@@ -41,6 +43,7 @@ Nazima
 nvmrc
 panners
 parsererror
+PostgREST
 PractRand
 rasterizer
 rasterizes

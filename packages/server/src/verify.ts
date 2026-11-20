@@ -90,6 +90,10 @@ export type Rejection =
       readonly suspicious: true;
       readonly claimed: Claim;
       readonly found: Claim;
+      readonly gameVersion: string;
+      readonly seed: number;
+      /** The replay as canonical JSON (`serializeReplay`), to play the attempt again. */
+      readonly replay: string;
     };
 
 export type Verdict = { readonly ok: true; readonly run: VerifiedRun } | Rejection;
@@ -223,6 +227,9 @@ export function verifySubmission(body: string, context: VerifyContext): Verdict 
       suspicious: true,
       claimed,
       found,
+      gameVersion: replay.gameVersion,
+      seed: replay.seed,
+      replay: serializeReplay(replay),
     };
   }
 
