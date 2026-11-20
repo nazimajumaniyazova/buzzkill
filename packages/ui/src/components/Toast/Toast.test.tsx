@@ -1,7 +1,7 @@
-import { render, renderHook, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { Button } from '../Button/Button';
@@ -9,8 +9,8 @@ import type { ToastOptions } from './toast-context';
 import { ToastProvider } from './ToastProvider';
 import { useToast } from './use-toast';
 
-/** Short enough for real timers in a test, long enough to tell "paused" from "slow". */
-const DURATION = 80;
+/** The toast's time in the timer tests, on fake timers. */
+const DURATION = 4000;
 
 function Notifier({ options }: { readonly options: ToastOptions }): JSX.Element {
   const toast = useToast();
@@ -39,16 +39,6 @@ function Page({
     </ToastProvider>
   );
 }
-
-const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-
-const gone = (text: string): Promise<void> =>
-  waitFor(() => {
-    expect(screen.queryByText(text)).not.toBeInTheDocument();
-  });
 
 describe('Toast', () => {
   it('shows the toast in the notification region, announces it politely and keeps focus', async () => {
@@ -91,51 +81,81 @@ describe('Toast', () => {
     expect(screen.queryByText('Replay saved')).not.toBeInTheDocument();
   });
 
-  it('dismisses itself when its time is up', async () => {
-    const user = userEvent.setup();
-    render(<Page />);
+  describe('its timer', () => {
+    // Fake timers move only when a test moves them, so a busy machine cannot run a toast's time
+    // out between two steps of a test (#226). The steps are synchronous events: user-event waits
+    // through Testing Library on timers that only Jest's fake timers would move.
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
 
-    await user.click(screen.getByRole('button', { name: 'Notify' }));
-    expect(screen.getByText('Replay saved')).toBeInTheDocument();
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
-    await gone('Replay saved');
-  });
+    const notify = (): void => {
+      fireEvent.click(screen.getByRole('button', { name: 'Notify' }));
+    };
 
-  it('pauses the timer while hovered and resumes when the pointer leaves', async () => {
-    const user = userEvent.setup();
-    render(<Page />);
+    const wait = (ms: number): void => {
+      act(() => {
+        vi.advanceTimersByTime(ms);
+      });
+    };
 
-    await user.click(screen.getByRole('button', { name: 'Notify' }));
-    await user.hover(screen.getByText('Replay saved'));
-    await sleep(DURATION * 3);
-    expect(screen.getByText('Replay saved')).toBeInTheDocument();
+    const shown = (): boolean => screen.queryByText('Replay saved') !== null;
 
-    await user.unhover(screen.getByText('Replay saved'));
-    await gone('Replay saved');
-  });
+    it('dismisses the toast when its time is up', () => {
+      render(<Page />);
 
-  it('pauses the timer while focus is inside', async () => {
-    const user = userEvent.setup();
-    render(<Page />);
+      notify();
+      wait(DURATION - 1);
+      expect(shown()).toBe(true);
 
-    await user.click(screen.getByRole('button', { name: 'Notify' }));
-    await user.tab();
-    await user.tab();
-    expect(screen.getByRole('button', { name: 'Dismiss' })).toHaveFocus();
-    await sleep(DURATION * 3);
-    expect(screen.getByText('Replay saved')).toBeInTheDocument();
+      wait(1);
+      expect(shown()).toBe(false);
+    });
 
-    await user.tab();
-    await gone('Replay saved');
-  });
+    it('pauses while the toast is hovered and resumes with the time left when the pointer leaves', () => {
+      render(<Page />);
 
-  it('keeps a toast without a duration until it is dismissed', async () => {
-    const user = userEvent.setup();
-    render(<Page duration={null} />);
+      notify();
+      wait(DURATION / 2);
+      fireEvent.pointerEnter(screen.getByRole('listitem'));
+      wait(DURATION * 3);
+      expect(shown()).toBe(true);
 
-    await user.click(screen.getByRole('button', { name: 'Notify' }));
-    await sleep(DURATION * 3);
-    expect(screen.getByText('Replay saved')).toBeInTheDocument();
+      fireEvent.pointerLeave(screen.getByRole('listitem'));
+      wait(DURATION / 2 - 1);
+      expect(shown()).toBe(true);
+      wait(1);
+      expect(shown()).toBe(false);
+    });
+
+    it('pauses while focus is inside the toast', () => {
+      render(<Page />);
+
+      notify();
+      act(() => {
+        screen.getByRole('button', { name: 'Dismiss' }).focus();
+      });
+      wait(DURATION * 3);
+      expect(shown()).toBe(true);
+
+      act(() => {
+        screen.getByRole('button', { name: 'Elsewhere' }).focus();
+      });
+      wait(DURATION);
+      expect(shown()).toBe(false);
+    });
+
+    it('keeps a toast without a duration until it is dismissed', () => {
+      render(<Page duration={null} />);
+
+      notify();
+      wait(DURATION * 100);
+      expect(shown()).toBe(true);
+    });
   });
 
   it('needs a provider', () => {
