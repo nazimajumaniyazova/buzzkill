@@ -49,14 +49,14 @@ export type Database = {
                   ]
                 },"suspicious_runs": {
                   Row: {
-                    "claimed": Json,"created_at": string,"found": Json,"game_version": string,"id": string,"replay": string,"seed": number,"user_id": string
+                    "claimed": NonNullable<Json>,"created_at": string,"found": NonNullable<Json>,"game_version": string,"id": string,"replay": string,"seed": number,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "claimed": Json,"created_at"?: string,"found": Json,"game_version": string,"id"?: string,"replay": string,"seed": number,"user_id": string
+                    "claimed": NonNullable<Json>,"created_at"?: string,"found": NonNullable<Json>,"game_version": string,"id"?: string,"replay": string,"seed": number,"user_id": string
                   }
                   Update: {
-                    "claimed"?: Json,"created_at"?: string,"found"?: Json,"game_version"?: string,"id"?: string,"replay"?: string,"seed"?: number,"user_id"?: string
+                    "claimed"?: NonNullable<Json>,"created_at"?: string,"found"?: NonNullable<Json>,"game_version"?: string,"id"?: string,"replay"?: string,"seed"?: number,"user_id"?: string
                   }
                   Relationships: [
                     
