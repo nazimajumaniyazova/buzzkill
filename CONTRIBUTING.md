@@ -63,6 +63,16 @@ it:
 A change to the schema is a new migration (`pnpm exec supabase migration new <name>`), never an
 edit of one that has been merged. A new migration also needs a test and `pnpm db:types`.
 
+Access to the data has two layers, both set in the migration that creates a table:
+
+- **Policies** (Row Level Security) decide which rows a role may touch.
+- **Grants** decide which statements and columns a role may use at all. Supabase grants every
+  statement to `anon` and `authenticated` by default, so revoke what no policy allows; otherwise
+  the attempt changes no row instead of failing.
+
+`supabase/tests/database/policies.test.sql` tries every statement as each role: a visitor, a
+signed-in player and the service role. A new table or policy gets its checks there.
+
 The local database runs in Docker. Without Docker, the **Database** check of CI does the same on
 every pull request: it starts the database from the migrations, runs the tests and fails when
 `database.gen.ts` is out of date.
