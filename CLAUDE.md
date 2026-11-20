@@ -25,8 +25,9 @@ pnpm workspaces + Turborepo (ADR-0001). Shared dependency versions live in the `
 - `packages/server` (`@buzzkill/server`): backend logic (ADR-0007): verifies a submitted run by
   playing its replay again with `game`, and answers the submit-run function's requests, storing
   through Supabase's REST APIs. Depends only on `game`; no DOM and no platform types: `fetch`,
-  gzip and the clock come in from the function. The Supabase Edge Function bundles it, and
-  nothing else in the repository imports it.
+  gzip and the clock come in from the function. `function/` is the Edge Function's edge on the
+  platform's Request and Response, bundled into `supabase/functions` (git-ignored), and nothing
+  else in the repository imports the package.
 - `packages/ui` (`@buzzkill/ui`): design system: tokens, themes, accessible components. Knows
   nothing about the game.
 - `packages/art` (`@buzzkill/art`): the game's art drawn as code (ADR-0015): sprites and the city
@@ -112,6 +113,10 @@ diagrams and the runtime data flow.
 - `pnpm db:start` starts the local Supabase database from `supabase/migrations` (Docker),
   `pnpm db:test` runs the pgTAP tests of `supabase/tests`, and `pnpm db:types` regenerates
   `apps/web/src/backend/database.gen.ts`. CI's Database job runs all three (ADR-0007).
+- `pnpm functions:build` bundles the submit-run Edge Function from `packages/server` with the game
+  version of the checkout; `pnpm functions:smoke` plays runs through it on a running stack
+  (`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`), as CI's Database job does
+  after `supabase start`.
 
 ## Where things are
 

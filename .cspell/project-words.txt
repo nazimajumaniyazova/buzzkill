@@ -27,6 +27,7 @@ googleapis
 hitbox
 hitboxes
 hypot
+imgproxy
 jetpack
 jsdom
 Jumaniyazova
@@ -37,6 +38,8 @@ letterboxed
 libvips
 libvorbis
 Lingui
+logflare
+mailpit
 miniplex
 movflags
 Nazima
@@ -58,6 +61,7 @@ subcomponents
 subfolders
 subtag
 Supabase
+supavisor
 Tallbeard
 Turborepo
 typecheck

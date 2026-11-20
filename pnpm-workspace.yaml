@@ -65,6 +65,9 @@ catalog:
   # The backend (ADR-0007): the Supabase CLI runs the local database, its migrations and tests, and
   # generates the database types; its binary comes as an optional dependency per platform
   supabase: ^3.2.0
+  # Bundles the submit-run Edge Function (#218) from packages/server for Deno; the release tsx
+  # runs on
+  esbuild: ~0.28.2
 
 peerDependencyRules:
   allowedVersions:

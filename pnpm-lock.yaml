@@ -233,6 +233,9 @@ catalogs:
     '@wasm-audio-decoders/ogg-vorbis':
       specifier: ^0.1.20
       version: 0.1.20
+    esbuild:
+      specifier: ~0.28.2
+      version: 0.28.2
     eslint:
       specifier: ^10.13.0
       version: 10.13.0
@@ -581,6 +584,15 @@ importers:
       '@buzzkill/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.2
+      esbuild:
+        specifier: 'catalog:'
+        version: 0.28.2
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.15
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
