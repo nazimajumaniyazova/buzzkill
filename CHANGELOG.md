@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.38.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.37.0...v0.38.0) (2026-11-21)
+
+
+### Features
+
+* **backend:** bundle submit-run as an Edge Function and play it in CI ([#237](https://github.com/nazimajumaniyazova/buzzkill/issues/237)) ([3e0620f](https://github.com/nazimajumaniyazova/buzzkill/commit/3e0620f6986e07b862dc33703569bab6165cb79c)), closes [#218](https://github.com/nazimajumaniyazova/buzzkill/issues/218)
+* **backend:** refuse runs past an hour of play an hour, with 429 ([#238](https://github.com/nazimajumaniyazova/buzzkill/issues/238)) ([a7ab467](https://github.com/nazimajumaniyazova/buzzkill/commit/a7ab4678adddf97a8b614998fef02c27fbdd7211)), closes [#235](https://github.com/nazimajumaniyazova/buzzkill/issues/235)
+
 ## [0.37.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.36.0...v0.37.0) (2026-11-20)
 
 
