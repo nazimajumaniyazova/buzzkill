@@ -63,7 +63,9 @@ function setup(overrides: Partial<RunStore> = {}, now = new Date('2026-11-20T15:
     userOf: vi.fn<RunStore['userOf']>(
       overrides.userOf ?? ((token) => Promise.resolve(token === 'player-token' ? PLAYER : null)),
     ),
-    addRun: vi.fn<RunStore['addRun']>(overrides.addRun ?? (() => Promise.resolve('run-1'))),
+    addRun: vi.fn<RunStore['addRun']>(
+      overrides.addRun ?? (() => Promise.resolve({ ok: true, id: 'run-1' })),
+    ),
     logSuspicious: vi.fn<RunStore['logSuspicious']>(
       overrides.logSuspicious ?? (() => Promise.resolve()),
     ),
@@ -122,6 +124,8 @@ describe('submit-run', () => {
     expect(response.headers).toMatchObject({
       'content-type': 'application/json',
       'access-control-allow-origin': '*',
+      // Without it, a script of another origin could not read when to try again (#235).
+      'access-control-expose-headers': 'retry-after',
     });
   });
 
@@ -244,6 +248,19 @@ describe('submit-run', () => {
     expect(response.status).toBe(503);
     expect(json(response.body)).toMatchObject({ reason: 'unavailable' });
     expect(dependencies.report).toHaveBeenCalledOnce();
+  });
+
+  it('answers 429 with Retry-After when the player has submitted an hour of play this hour', async () => {
+    const { submit, dependencies } = setup({
+      addRun: () => Promise.resolve({ ok: false, retryAfter: 60 }),
+    });
+
+    const response = await submit(request(SUBMISSION));
+
+    expect(response.status).toBe(429);
+    expect(response.headers).toMatchObject({ 'retry-after': '60' });
+    expect(json(response.body)).toMatchObject({ reason: 'too-many-runs' });
+    expect(dependencies.report).not.toHaveBeenCalled();
   });
 
   it('answers 413 when the compressed replay is still over the 64 KiB a row holds', async () => {
