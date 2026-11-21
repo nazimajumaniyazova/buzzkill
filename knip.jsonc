@@ -24,7 +24,9 @@
       "project": ["src/**/*.ts"],
     },
     "packages/server": {
-      "project": ["src/**/*.ts"],
+      // The Edge Function's entry and the scripts that bundle it and play runs through it (#218).
+      "entry": ["function/main.ts", "scripts/*.ts"],
+      "project": ["src/**/*.ts", "function/*.ts", "scripts/*.ts"],
     },
     "packages/ui": {
       "entry": ["scripts/*.ts"],
