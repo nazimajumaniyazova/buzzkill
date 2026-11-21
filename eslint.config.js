@@ -54,6 +54,7 @@ export default defineConfig([
     '**/storybook-static',
     '**/*.gen.ts',
     '**/*.module.css.d.ts',
+    'supabase/functions/*/index.js',
   ]),
 
   js.configs.recommended,
