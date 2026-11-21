@@ -31,12 +31,19 @@ export interface SuspiciousRun {
   readonly replay: Uint8Array;
 }
 
+/**
+ * A run stored, with its row's id, or refused because the player's last hour already holds as
+ * much play as an hour can (#235); `retryAfter` is the seconds until it has room for this run.
+ */
+export type AddedRun =
+  { readonly ok: true; readonly id: string } | { readonly ok: false; readonly retryAfter: number };
+
 /** Where the function finds players and keeps runs: Supabase, or a fake in a test. */
 export interface RunStore {
   /** The id of the player whose access token this is, or null when Auth does not know it. */
   userOf(token: string): Promise<string | null>;
-  /** Stores a verified run with its gzipped replay and answers with the new row's id. */
-  addRun(userId: string, run: VerifiedRun, replay: Uint8Array): Promise<string>;
+  /** Stores a verified run with its gzipped replay, unless the player is over the hour's limit. */
+  addRun(userId: string, run: VerifiedRun, replay: Uint8Array): Promise<AddedRun>;
   logSuspicious(run: SuspiciousRun): Promise<void>;
 }
 
@@ -63,6 +70,8 @@ const CORS = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': ALLOWED_METHODS,
   'access-control-allow-headers': 'authorization, apikey, content-type, x-client-info',
+  // The browser hides every other response header from a script of another origin.
+  'access-control-expose-headers': 'retry-after',
 };
 
 function answer(status: number, body: object, headers: Record<string, string> = {}): HttpResponse {
@@ -161,19 +170,30 @@ export function createSubmitRun({
     if (replay.length > MAX_STORED_REPLAY_BYTES) {
       return refuse(413, 'too-large', 'the replay is too long to store');
     }
+    let added: AddedRun;
     try {
-      const id = await store.addRun(userId, run, replay);
-      return answer(201, {
-        id,
-        score: run.score,
-        level: run.level,
-        ticks: run.ticks,
-        hash: run.stateHash,
-        status: run.status,
-      });
+      added = await store.addRun(userId, run, replay);
     } catch (error) {
       report('storing a run failed', error);
       return unavailable();
     }
+    if (!added.ok) {
+      return answer(
+        429,
+        {
+          reason: 'too-many-runs',
+          detail: 'a player cannot submit more play in an hour than an hour holds',
+        },
+        { 'retry-after': String(added.retryAfter) },
+      );
+    }
+    return answer(201, {
+      id: added.id,
+      score: run.score,
+      level: run.level,
+      ticks: run.ticks,
+      hash: run.stateHash,
+      status: run.status,
+    });
   };
 }

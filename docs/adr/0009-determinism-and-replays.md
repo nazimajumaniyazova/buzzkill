@@ -156,3 +156,28 @@ version, and the server would refuse an honest replay as a forgery (#218).
 - **Old replays.** A replay keeps the version it was recorded with; the server refuses it once the
   simulation changes, as before. The replays already recorded carry a bare release and stay
   readable: `parseReplay` accepts any version of up to 64 characters.
+
+## Amendment, 2026-11-21: how fast a player may submit runs
+
+Re-simulation proves that a replay plays to its claim, not that anyone played it. A replay in
+which the hero never moves verifies, costs a script nothing to make, and each stored run takes up
+to 64 KiB of the free plan's 500 MB (ADR-0007). Anonymous accounts are free too (#235).
+
+- **The limit.** No run plays faster than real time, at 60 ticks a second, and slower speeds
+  (ADR-0014) only make the same ticks take longer. So the runs an honest player stored in the last
+  hour hold at most an hour of ticks, plus the one run that began before the hour, which is at
+  most `MAX_RUN_TICKS` (54,000, 15 minutes). A player's runs of the last hour may hold
+  3,600 × 60 + 54,000 = 270,000 ticks; a run that would pass it is refused.
+- **Where.** A `before insert` trigger on `runs` sums the player's last hour from an index. It
+  takes an advisory lock on the player first, so requests sent together cannot all pass the check
+  before any is counted. It refuses with the SQL state `PT429`, which PostgREST answers as HTTP 429, and
+  the hint holds the seconds until enough of the hour's oldest runs have left it.
+- **The answer.** The function answers 429 `too-many-runs` with `Retry-After`, which CORS exposes
+  to the web app; the offline queue (#220) waits that long.
+- **What it does not stop.** A script still stores 270,000 ticks an hour per account, about 177
+  idle runs of a few hundred bytes each: about 0.1 MB an hour, which the owner can see and act on.
+  One account playing in two tabs at once could reach the limit honestly; a 429 then only delays
+  its runs. The server still plays a replay before the database refuses it, which costs CPU but
+  not storage.
+- **Rejected: a fixed number of runs a day.** It is simpler, but a fixed count either stops a keen
+  player who loses many short runs or lets a script store as many long idle ones.
