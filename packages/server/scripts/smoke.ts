@@ -5,7 +5,8 @@
  *
  * - `SUPABASE_URL`: the API gateway, such as `http://127.0.0.1:54321`;
  * - `SUPABASE_PUBLISHABLE_KEY`: the key the browser sends;
- * - `SUPABASE_SECRET_KEY`: the server key, to read back what the function stored.
+ * - `SUPABASE_SECRET_KEY`: the server key, to read back what the function stored and to fill
+ *   a player's hour with play for the limit of #235.
  *
  * The honest run carries `gameVersion()` of this checkout, the version the web build declares,
  * so it is stored only when the function was bundled from the same sources.
@@ -82,6 +83,19 @@ async function rows(table: string, query: string): Promise<Record<string, unknow
   return (await response.json()) as Record<string, unknown>[];
 }
 
+/** Stores `runs` through the server key, as the function would, without playing them. */
+async function storeRuns(runs: readonly object[]): Promise<void> {
+  const response = await fetch(`${API}/rest/v1/runs`, {
+    method: 'POST',
+    headers: { ...SERVER_HEADERS, 'content-type': 'application/json', prefer: 'return=minimal' },
+    body: JSON.stringify(runs),
+  });
+  assert.equal(response.status, 201, `storing runs: ${await response.clone().text()}`);
+}
+
+/** The play a player's runs of the last hour may hold (#235): an hour of ticks and one run. */
+const HOUR_LIMIT = 3600 * 60 + MAX_RUN_TICKS;
+
 const version = gameVersion(join(import.meta.dirname, '../../..'));
 // The hero never moves or fires: the run is lost in about 25 seconds of game time.
 const replay: Replay = {
@@ -134,5 +148,34 @@ const stale = await submit(token, {
 });
 assert.equal(stale.status, 409, 'a run of another build');
 step('a run of another build is refused with 409');
+
+// Fill the player's hour, which holds the honest run, up to the limit; one run more is too much.
+const fillers = Math.floor((HOUR_LIMIT - ticks) / MAX_RUN_TICKS);
+await storeRuns(
+  Array.from({ length: fillers + 1 }, (_, index) => ({
+    user_id: userId,
+    mode: 'classic',
+    difficulty: 'normal',
+    hero_id: 'male',
+    time_of_day: 'day',
+    speed: 100,
+    game_version: version,
+    seed: 1,
+    score: 0,
+    level: 1,
+    ticks: index < fillers ? MAX_RUN_TICKS : HOUR_LIMIT - ticks - fillers * MAX_RUN_TICKS,
+    status: 'lost',
+    state_hash: hash,
+    // One zero byte, in PostgREST's hex form for a bytea: these runs are never played.
+    replay: String.raw`\x00`,
+  })),
+);
+const tooMany = await submit(token, { replay, claimed, speed: 1 });
+assert.equal(tooMany.status, 429, `a run past an hour of play: ${await tooMany.clone().text()}`);
+assert.equal(((await tooMany.json()) as { reason: string }).reason, 'too-many-runs');
+// The wait ends when the first honest run, stored a moment ago, leaves the hour.
+const retryAfter = Number(tooMany.headers.get('retry-after'));
+assert.ok(retryAfter > 3000 && retryAfter <= 3600, `Retry-After: ${String(retryAfter)}`);
+step(`a run past an hour of play is refused with 429, to retry in ${String(retryAfter)} s`);
 
 process.stdout.write('The submit-run function works end to end.\n');
