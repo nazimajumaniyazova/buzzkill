@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.39.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.38.0...v0.39.0) (2026-11-22)
+
+
+### Features
+
+* **backend:** check nicknames by the same rules in the app and database ([#240](https://github.com/nazimajumaniyazova/buzzkill/issues/240)) ([898a716](https://github.com/nazimajumaniyazova/buzzkill/commit/898a71650f65ed8bfc6e12c8cf51feeb241efb77)), closes [#217](https://github.com/nazimajumaniyazova/buzzkill/issues/217)
+
 ## [0.38.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.37.0...v0.38.0) (2026-11-21)
 
 
