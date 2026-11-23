@@ -1,8 +1,20 @@
 // @vitest-environment node
-import type { Game, GameHud, RunResult } from '@buzzkill/game';
+import type { Game, GameHud, Replay, RunResult } from '@buzzkill/game';
 import { describe, expect, it, vi } from 'vitest';
 
 import { connectGame } from './bridge';
+
+/** The replay the fake game recorded. */
+const replay: Replay = {
+  formatVersion: 3,
+  gameVersion: 'test',
+  seed: 1,
+  heroId: 'male',
+  mode: 'day',
+  difficulty: 'normal',
+  daily: null,
+  inputs: [1, 4],
+};
 
 /** A game whose HUD the test publishes by hand, as `createGame` does once per frame. */
 function createFakeGame() {
@@ -42,7 +54,7 @@ function createFakeGame() {
     },
     nextLevel: vi.fn(),
     getHud: () => hud,
-    replay: vi.fn(),
+    replay: () => replay,
     result,
   };
   const publish = (change: Partial<GameHud>): void => {
@@ -80,7 +92,7 @@ describe('connectGame', () => {
     ]);
   });
 
-  it('reports the end of the run once, with the result of the game', () => {
+  it('reports the end of the run once, with the result and the replay of the game', () => {
     const { game, publish } = createFakeGame();
     const send = vi.fn();
     connectGame(game, send);
@@ -92,6 +104,7 @@ describe('connectGame', () => {
     expect(send).toHaveBeenCalledExactlyOnceWith({
       type: 'runEnded',
       result: { score: 7, level: 1, ticks: 100, livesLeft: 0, status: 'lost', hash: '0badf00d' },
+      replay,
     });
   });
 
@@ -105,6 +118,7 @@ describe('connectGame', () => {
     expect(send).toHaveBeenCalledExactlyOnceWith({
       type: 'runEnded',
       result: { score: 100, level: 1, ticks: 100, livesLeft: 5, status: 'won', hash: '0badf00d' },
+      replay,
     });
   });
 

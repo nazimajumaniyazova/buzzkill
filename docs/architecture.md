@@ -250,14 +250,16 @@ The flow is a state machine of our own (ADR-0006): `transition(state, event)` in
 `apps/web/src/state/machine.ts`, held by a store that React reads through `useSyncExternalStore`.
 The flow starts on the menu, before the game has downloaded; `menu` says which of its panels is
 open (the main menu, the settings or the help). `loading` holds the run the player chose while the
-game finishes loading; the five run states carry the loaded assets, the run and the time of day
+game finishes loading; the six run states carry the loaded assets, the run and the time of day
 on screen, which the page's theme follows. `levelCleared` is the screen between levels, where the
-game waits for `nextLevel`, and the two final states carry the result, so a pause dialog on the
-menu or a game over without a run cannot be written. `failed` is the error screen of a run that
-stopped on an unexpected error. `gameLoaded` is the end of the loading; `gamePaused`,
-`gameResumed`, `levelCleared` and `runEnded` are what the game reports through the bridge;
-`runFailed` comes from the error boundary around the run; the other events are the player's
-actions. A test keeps this diagram honest: it must name every state and draw exactly the
+game waits for `nextLevel`, and the two final states carry the result and the replay of the run,
+so a pause dialog on the menu or a game over without a run cannot be written. `watching` plays
+that replay over the finished run (#219): the finished game stays mounted, hidden and paused, and
+`back` returns to its very state. `failed` is the error screen of a run that stopped on an
+unexpected error. `gameLoaded` is the end of the loading; `gamePaused`, `gameResumed`,
+`levelCleared` and `runEnded` are what the game reports through the bridge, and `replayTime` is
+the time of day of the replay's level; `runFailed` comes from the error boundary around the run;
+the other events are the player's actions. A test keeps this diagram honest: it must name every state and draw exactly the
 transitions of the table.
 
 ```mermaid
@@ -282,11 +284,18 @@ stateDiagram-v2
   levelCleared --> menu: quit
   victory --> menu: quit
   gameOver --> menu: quit
+  victory --> watching: watchReplay
+  gameOver --> watching: watchReplay
+  watching --> watching: replayTime
+  watching --> victory: back
+  watching --> gameOver: back
+  watching --> menu: quit
   playing --> failed: runFailed
   paused --> failed: runFailed
   levelCleared --> failed: runFailed
   victory --> failed: runFailed
   gameOver --> failed: runFailed
+  watching --> failed: runFailed
   failed --> menu: restart
 ```
 

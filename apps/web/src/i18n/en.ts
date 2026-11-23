@@ -306,7 +306,18 @@ function english(format: Format) {
       titles: { victory: 'Victory', gameOver: 'Game over' },
       score: (score: number) => `Score: ${format.number(score)}`,
       playAgain: 'Play again',
+      watch: 'Watch the replay',
       quit: 'Back to menu',
+    },
+    replay: {
+      label: 'Replay',
+      controls: 'Replay controls',
+      pause: 'Pause',
+      play: 'Play',
+      rewind: 'Watch from the start',
+      speed: 'Speed',
+      speedOption: (speed: number) => `${format.number(speed)}×`,
+      over: 'The replay is over.',
     },
     announce: {
       levelStart: (level: number) => `Level ${format.number(level)}. Go!`,

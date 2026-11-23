@@ -1,14 +1,4 @@
-import {
-  type ActionInput,
-  applyCanvasFit,
-  computeCanvasFit,
-  createActionInput,
-  createCanvas2DRenderer,
-  createCanvasTintBuffer,
-  createRng,
-  type GameLoopHost,
-  type KeyBindings,
-} from '@buzzkill/engine';
+import { type ActionInput, createActionInput, createRng, type KeyBindings } from '@buzzkill/engine';
 import {
   createBrowserHost,
   createGamepadSource,
@@ -32,10 +22,10 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 import { useAnnounce } from './announcer';
 import { announceRun } from './game/announce-run';
 import { createGameDrawer } from './game/draw-game';
-import { createGameAudio } from './game/game-audio';
+import { createGameAudio, SOUND_SEED } from './game/game-audio';
 import { browserGamepads, canRumble, createHaptics, findVibrator } from './game/haptics';
-import { suggestsLandscape } from './game/landscape';
 import { pacedHost } from './game/paced-host';
+import { attachRunCanvas, catchingHost } from './game/run-canvas';
 import { GAME_VERSION } from './game/run-options';
 import { GameHud } from './GameHud';
 import { useI18n } from './i18n/i18n';
@@ -43,14 +33,13 @@ import { connectGame, type GameEvent } from './state/bridge';
 import type { GameAssets, Run } from './state/machine';
 import { TouchControls } from './TouchControls';
 
-/** Mixed into the run's seed for the sounds' own random numbers, apart from the particles'. */
-const SOUND_SEED = 0x85ebca6b;
-
 interface GameViewProps {
   readonly run: Run;
   readonly assets: GameAssets;
   /** The machine's word: `true` holds the game, `false` lets it go on. */
   readonly paused: boolean;
+  /** Hides the view while the replay of the finished run is on screen over it (#219). */
+  readonly hidden?: boolean;
   /** The player's keys, from the settings; a change applies to the run on screen. */
   readonly keyBindings: KeyBindings<GameAction>;
   /**
@@ -103,6 +92,7 @@ export function GameView({
   run,
   assets,
   paused,
+  hidden = false,
   keyBindings,
   reducedMotion,
   particles,
@@ -157,30 +147,8 @@ export function GameView({
     };
 
     try {
-      // A spare canvas where the renderer tints the sprite of a hit (#159).
-      const tintBuffer = createCanvasTintBuffer<CanvasImageSource>(
-        document.createElement('canvas'),
-      );
-      const renderer = createCanvas2DRenderer(
-        context,
-        tintBuffer === null ? WORLD : { ...WORLD, tintBuffer },
-      );
-      const fit = (): void => {
-        const viewport = { width: window.innerWidth, height: window.innerHeight };
-        const result = computeCanvasFit({
-          logical: WORLD,
-          viewport,
-          devicePixelRatio: window.devicePixelRatio,
-        });
-        applyCanvasFit(canvas, result);
-        renderer.setScale(result.scale);
-        setSuggestLandscape(suggestsLandscape(WORLD, viewport));
-      };
-      fit();
-      window.addEventListener('resize', fit);
-      cleanups.push(() => {
-        window.removeEventListener('resize', fit);
-      });
+      const { renderer, dispose: detach } = attachRunCanvas(canvas, context, setSuggestLandscape);
+      cleanups.push(detach);
 
       const input = createActionInput(GAME_ACTIONS);
       const keyboard = createKeyboardSource(input, bindingsRef.current);
@@ -209,18 +177,9 @@ export function GameView({
       };
 
       // The run's pace (#114): its own clock, the same ticks.
-      const browserHost = pacedHost(createBrowserHost(), run.speed);
-      const host: GameLoopHost = {
-        ...browserHost,
-        requestFrame: (callback) =>
-          browserHost.requestFrame((timeMs) => {
-            try {
-              callback(timeMs);
-            } catch (error) {
-              setCrash({ error });
-            }
-          }),
-      };
+      const host = catchingHost(pacedHost(createBrowserHost(), run.speed), (error) => {
+        setCrash({ error });
+      });
 
       // A device that can neither vibrate nor rumble a gamepad gets no haptics at all (#162, #154).
       const vibrator = findVibrator(globalThis.navigator);
@@ -358,7 +317,7 @@ export function GameView({
   return (
     // `game` is fixed over the whole window, so on a touch screen every finger lands in it, where
     // the browser's own gestures are off (#153).
-    <main aria-label={t.game.label} className="game">
+    <main aria-label={t.game.label} className="game" hidden={hidden}>
       <canvas ref={canvasRef} className="game-canvas">
         {t.game.canvas}
       </canvas>

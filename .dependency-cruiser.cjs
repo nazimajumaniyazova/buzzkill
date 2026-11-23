@@ -108,7 +108,7 @@ module.exports = {
       from: {
         path: '^apps/web/src/',
         pathNot: [
-          '^apps/web/src/(GameView|GameHud)\\.tsx$',
+          '^apps/web/src/(GameView|GameHud|ReplayView)\\.tsx$',
           '^apps/web/src/game/(game-chunk|load-assets|assets|sprites|draw-game)\\.ts$',
           '^apps/web/src/assets/manifest\\.gen\\.ts$',
           '\\.test\\.tsx?$',
@@ -116,7 +116,7 @@ module.exports = {
       },
       to: {
         path: [
-          '^apps/web/src/(GameView|GameHud)\\.tsx$',
+          '^apps/web/src/(GameView|GameHud|ReplayView)\\.tsx$',
           '^apps/web/src/game/(game-chunk|load-assets|assets|sprites|draw-game)\\.ts$',
           '^apps/web/src/assets/manifest\\.gen\\.ts$',
         ],

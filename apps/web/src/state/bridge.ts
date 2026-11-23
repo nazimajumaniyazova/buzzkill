@@ -10,7 +10,7 @@ export type GameEvent = Extract<
 
 /**
  * The bridge from a run to the machine: a pause or a resume of the game, a cleared level with the
- * time of day of the next one, and the end of the run become events. Score, lives and ammo never reach the machine; the HUD reads them from
+ * time of day of the next one, and the end of the run with its replay become events. Score, lives and ammo never reach the machine; the HUD reads them from
  * `game.getHud()` with its own `useSyncExternalStore`. Returns the function that disconnects.
  */
 export function connectGame(game: Game, send: (event: GameEvent) => void): () => void {
@@ -28,9 +28,10 @@ export function connectGame(game: Game, send: (event: GameEvent) => void): () =>
         nextTime: timeAfterLevel(hud.level, hud.mode),
       });
     }
-    // The world moves on for the picture after the end, so the status changes exactly once.
+    // The world moves on for the picture after the end, so the status changes exactly once. The
+    // replay stops at the end too, so this one is the whole run, to watch it (#219).
     if (hud.status !== last.status && isRunOver(hud.status)) {
-      send({ type: 'runEnded', result: game.result() });
+      send({ type: 'runEnded', result: game.result(), replay: game.replay() });
     }
     last = hud;
   });

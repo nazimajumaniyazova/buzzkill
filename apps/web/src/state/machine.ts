@@ -1,5 +1,5 @@
 import type { AudioMixer } from '@buzzkill/engine';
-import type { Difficulty, GameMode, GameSound, HeroId, RunResult } from '@buzzkill/game';
+import type { Difficulty, GameMode, GameSound, HeroId, Replay, RunResult } from '@buzzkill/game';
 
 import type { MusicPlayer } from '../game/music';
 import type { GameSprites } from '../game/sprites';
@@ -50,14 +50,24 @@ interface OnScreen {
   readonly time: GameMode;
 }
 
+/** How a run ended: the result, and the replay the game recorded of it (#219). */
+interface Finish {
+  readonly result: RunResult;
+  readonly replay: Replay;
+}
+
+/** The two states of a finished run, which a replay goes back to. */
+type FinishedState = Extract<AppState, { readonly name: 'victory' | 'gameOver' }>;
+
 /**
  * The flow of the shell (ADR-0006). It starts on the menu, before the game's code and files have
  * downloaded (#112); `menu` says which of its panels is open. `loading` holds the run the player
- * chose while the game finishes loading. The five run states carry the loaded assets, the run and
+ * chose while the game finishes loading. The six run states carry the loaded assets, the run and
  * the time of day on screen; `levelCleared` is the screen between levels, and the two final ones
- * carry the result. `failed` is the error screen of a run that stopped on an unexpected error
- * (#113); the run is gone by then. A pause dialog on the menu, a game over without a run or a run
- * without its assets cannot be written.
+ * carry the result and the replay. `watching` plays that replay over the finished run (#219), whose
+ * state it keeps to go back to; its time of day is the replay's. `failed` is the error screen of a
+ * run that stopped on an unexpected error (#113); the run is gone by then. A pause dialog on the
+ * menu, a game over without a run or a run without its assets cannot be written.
  */
 export type AppState =
   | { readonly name: 'menu'; readonly panel: MenuPanel }
@@ -77,8 +87,9 @@ export type AppState =
       /** The time of day of the next level. */
       readonly nextTime: GameMode;
     } & OnScreen)
-  | ({ readonly name: 'victory'; readonly result: RunResult } & OnScreen)
-  | ({ readonly name: 'gameOver'; readonly result: RunResult } & OnScreen)
+  | ({ readonly name: 'victory' } & Finish & OnScreen)
+  | ({ readonly name: 'gameOver' } & Finish & OnScreen)
+  | ({ readonly name: 'watching'; readonly finished: FinishedState } & OnScreen)
   | { readonly name: 'failed' };
 
 /** The states of a run on screen: the canvas is there and a `Game` exists. */
@@ -86,12 +97,12 @@ export type RunState = Extract<AppState, { readonly assets: GameAssets }>;
 
 /**
  * What moves the flow: the player's choices (`openSettings`, `openHelp`, `openAchievements`,
- * `selectHero`, `selectDaily`, `back`,
- * `play`, `pause`, `resume`, `nextLevel`, `quit`, `restart`), the end of the game's loading
- * (`gameLoaded`), what the game reports through the bridge (`gamePaused`, `gameResumed`,
- * `levelCleared`, `runEnded`), a gamepad lost during a run (`gamepadLost`, #154) and the error
- * boundary around the run (`runFailed`). A command and the game's own report of the same
- * fact are separate events, so the table shows who may cause what.
+ * `selectHero`, `selectDaily`, `back`, `play`, `pause`, `resume`, `nextLevel`, `quit`, `restart`,
+ * `watchReplay`), the end of the game's loading (`gameLoaded`), what the game reports through the
+ * bridge (`gamePaused`, `gameResumed`, `levelCleared`, `runEnded`), the time of day of a replay
+ * (`replayTime`), a gamepad lost during a run (`gamepadLost`, #154) and the error boundary around
+ * the run (`runFailed`). A command and the game's own report of the same fact are separate events,
+ * so the table shows who may cause what.
  */
 export type AppEvent =
   | { readonly type: 'openSettings' }
@@ -108,7 +119,7 @@ export type AppEvent =
   | { readonly type: 'gamePaused' }
   | { readonly type: 'gameResumed' }
   | { readonly type: 'gamepadLost' }
-  | { readonly type: 'runEnded'; readonly result: RunResult }
+  | ({ readonly type: 'runEnded' } & Finish)
   | {
       readonly type: 'levelCleared';
       readonly level: number;
@@ -118,7 +129,10 @@ export type AppEvent =
   | { readonly type: 'nextLevel' }
   | { readonly type: 'quit' }
   | { readonly type: 'runFailed' }
-  | { readonly type: 'restart' };
+  | { readonly type: 'restart' }
+  | { readonly type: 'watchReplay' }
+  /** The replay on screen reached a level at another time of day (ADR-0017). */
+  | { readonly type: 'replayTime'; readonly time: GameMode };
 
 export const initialState: AppState = { name: 'menu', panel: 'main' };
 
@@ -128,7 +142,8 @@ export function isRunState(state: AppState): state is RunState {
     state.name === 'paused' ||
     state.name === 'levelCleared' ||
     state.name === 'victory' ||
-    state.name === 'gameOver'
+    state.name === 'gameOver' ||
+    state.name === 'watching'
   );
 }
 
@@ -161,6 +176,9 @@ export function transition(state: AppState, event: AppEvent): AppState {
     case 'back':
       if (state.name === 'heroSelect' || (state.name === 'menu' && state.panel !== 'main')) {
         return { name: 'menu', panel: 'main' };
+      }
+      if (state.name === 'watching') {
+        return state.finished;
       }
       // The game goes on loading; Start again finds it further along.
       return state.name === 'loading' ? { name: 'heroSelect', daily: state.run.daily } : state;
@@ -212,20 +230,36 @@ export function transition(state: AppState, event: AppEvent): AppState {
       return isRunState(state) ? { name: 'failed' } : state;
     case 'restart':
       return state.name === 'failed' ? { name: 'menu', panel: 'main' } : state;
+    case 'watchReplay':
+      // The replay starts from its first level, at the time of day the run began.
+      return state.name === 'victory' || state.name === 'gameOver'
+        ? {
+            name: 'watching',
+            assets: state.assets,
+            run: state.run,
+            time: state.replay.mode,
+            finished: state,
+          }
+        : state;
+    case 'replayTime':
+      return state.name === 'watching' && state.time !== event.time
+        ? { ...state, time: event.time }
+        : state;
     case 'runEnded': {
       if (state.name !== 'playing') {
         return state;
       }
       const { assets, run, time } = state;
-      switch (event.result.status) {
+      const { result, replay } = event;
+      switch (result.status) {
         // A cleared level is not the end of a run: it comes as `levelCleared` (ADR-0017).
         case 'playing':
         case 'levelCleared':
           return state;
         case 'won':
-          return { name: 'victory', assets, run, time, result: event.result };
+          return { name: 'victory', assets, run, time, result, replay };
         case 'lost':
-          return { name: 'gameOver', assets, run, time, result: event.result };
+          return { name: 'gameOver', assets, run, time, result, replay };
       }
     }
   }

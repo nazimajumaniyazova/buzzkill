@@ -4,6 +4,8 @@ import {
   type AchievementId,
   type AchievementProgress,
   dailySeed,
+  type GameMode,
+  type Replay,
   type RunResult,
 } from '@buzzkill/game';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -44,6 +46,20 @@ function resultWith(status: RunResult['status']): RunResult {
   return { score: 42, level: 1, ticks: 600, livesLeft: 0, status, hash: '0badf00d' };
 }
 
+/** What the game would have recorded of `run`; the shell only carries it. */
+function replayOf(run: Run): Replay {
+  return {
+    formatVersion: 3,
+    gameVersion: 'test',
+    seed: run.seed,
+    heroId: run.heroId,
+    mode: run.mode,
+    difficulty: run.difficulty,
+    daily: run.daily,
+    inputs: [],
+  };
+}
+
 // The game chunk with the two modules below replaced, as a download that arrives at once. The
 // calls are counted: the menu must not download the game.
 vi.mock('./game/import-chunk', async () => {
@@ -69,6 +85,7 @@ vi.mock('./GameView', async () => {
     GameView: function FakeGameView({
       run,
       paused,
+      hidden,
       betweenLevels,
       onEvent,
       achievements,
@@ -76,6 +93,7 @@ vi.mock('./GameView', async () => {
     }: {
       run: Run;
       paused: boolean;
+      hidden: boolean;
       betweenLevels: boolean;
       onEvent: (event: GameEvent) => void;
       achievements: AchievementProgress;
@@ -86,7 +104,7 @@ vi.mock('./GameView', async () => {
         throw new Error('The game view broke');
       }
       return (
-        <main aria-label="Game">
+        <main aria-label="Game" hidden={hidden}>
           <p>
             Game view: {run.heroId} {run.mode} seed {run.seed}
             {paused ? ', held' : ''}
@@ -132,7 +150,7 @@ vi.mock('./GameView', async () => {
           <button
             type="button"
             onClick={() => {
-              onEvent({ type: 'runEnded', result: resultWith('lost') });
+              onEvent({ type: 'runEnded', result: resultWith('lost'), replay: replayOf(run) });
             }}
           >
             Lose
@@ -140,7 +158,7 @@ vi.mock('./GameView', async () => {
           <button
             type="button"
             onClick={() => {
-              onEvent({ type: 'runEnded', result: resultWith('won') });
+              onEvent({ type: 'runEnded', result: resultWith('won'), replay: replayOf(run) });
             }}
           >
             Win
@@ -166,6 +184,37 @@ vi.mock('./GameView', async () => {
     },
   };
 });
+
+// The replay view has a canvas and a loop of its own; here it says what it plays, and has the
+// buttons of a level at night and of Back.
+vi.mock('./ReplayView', () => ({
+  ReplayView: function FakeReplayView({
+    replay,
+    onTime,
+    onBack,
+  }: {
+    replay: Replay;
+    onTime: (time: GameMode) => void;
+    onBack: () => void;
+  }) {
+    return (
+      <main aria-label="Replay">
+        <p>Replay of seed {replay.seed}</p>
+        <button
+          type="button"
+          onClick={() => {
+            onTime('night');
+          }}
+        >
+          Night falls in the replay
+        </button>
+        <button type="button" onClick={onBack}>
+          Leave the replay
+        </button>
+      </main>
+    );
+  },
+}));
 
 /** A load of the files that the test finishes: its progress, then success or failure. */
 function holdTheFiles() {
@@ -670,6 +719,34 @@ describe('App', () => {
 
     click('Back to menu');
     expect(heading('Buzzkill')).toBeInTheDocument();
+  });
+
+  it('watches the replay of a finished run over it, then goes back to its dialog (#219)', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    window.history.replaceState(null, '', '/?seed=7');
+    const { container } = render(<App />);
+    await startRun();
+    click('Lose');
+
+    click('Watch the replay');
+
+    expect(await screen.findByText('Replay of seed 7')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // The finished run stays under the replay, held and hidden, to go back to.
+    expect(screen.getByText('Game view: male day seed 7, held')).not.toBeVisible();
+    expect(await axe(container)).toHaveNoViolations();
+    // The page's theme follows the time of day of the replay's level.
+    click('Night falls in the replay');
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night');
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
+    expect(screen.getByText('Game view: male day seed 7')).toBeVisible();
+    expect(document.documentElement).toHaveAttribute('data-theme', 'day');
+    click('Watch the replay');
+    click('Leave the replay');
+    expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
   });
 
   it('follows the system theme until the player picks one in the settings, then remembers it', () => {
