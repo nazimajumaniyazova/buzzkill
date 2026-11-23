@@ -28,6 +28,7 @@ hitbox
 hitboxes
 hypot
 imgproxy
+internetdisconnected
 jetpack
 jsdom
 Jumaniyazova
