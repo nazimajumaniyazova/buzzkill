@@ -76,6 +76,7 @@ export {
   type ReplayRecorder,
   type ReplayRecorderOptions,
 } from './replay/recorder';
+export { createReplayInput } from './replay/replay-input';
 export { hashGameState, type RunResult } from './replay/result';
 export { simulate, type SimulateOptions } from './replay/simulate';
 export { animationFrame, isBossEnraged, parallaxOffset } from './simulation/presentation';
