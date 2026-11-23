@@ -8,6 +8,7 @@ import { POWER_UP_RULES, POWER_UPS, type PowerUpKind } from '../config/power-ups
 import { RULES } from '../config/rules';
 import { DAILY_RUN, dailySeed } from '../daily/daily';
 import { deserializeReplay, parseReplay, type Replay, serializeReplay } from '../replay/format';
+import { createReplayInput } from '../replay/replay-input';
 import type { RunResult } from '../replay/result';
 import { simulate } from '../replay/simulate';
 import { createSimulation } from '../simulation/simulation';
@@ -648,6 +649,60 @@ describe('createGame replays', () => {
     expect(s.game.result()).toEqual(ended);
     expect(s.game.replay()).toEqual(replayAtEnd);
     expect(simulate(replayAtEnd, { maxTicks: 60 * 60 * 10 })).toEqual(ended);
+  });
+
+  it('plays a recorded run again from its replay, to the same end and the same replay (#219)', () => {
+    const s = setup(5);
+    s.game.start();
+    s.fake.frame();
+    s.input.press('moveDown', 'key:ArrowDown');
+    runUntilTick(s, 40);
+    s.input.press('fire', 'key:Space');
+    s.input.release('fire', 'key:Space');
+    runUntilTick(s, 60);
+    s.input.press('pause', 'key:Escape');
+    while (!s.game.getHud().paused) {
+      s.fake.frame();
+    }
+    s.input.release('pause', 'key:Escape');
+    s.input.release('moveDown', 'key:ArrowDown');
+    s.game.resume();
+    while (s.game.getHud().status === 'playing') {
+      s.fake.frame();
+    }
+    const recorded = s.game.replay();
+
+    const fake = createFakeHost();
+    const watched = createGame({
+      settings: {
+        heroId: recorded.heroId,
+        mode: recorded.mode,
+        difficulty: recorded.difficulty,
+        daily: recorded.daily,
+      },
+      seed: recorded.seed,
+      gameVersion: recorded.gameVersion,
+      input: createReplayInput(recorded),
+      host: fake.host,
+      renderer: { render: vi.fn() },
+      audio: { play: vi.fn() },
+    });
+    watched.start();
+    fake.frame();
+    // The one watching pauses for a while: no tick of the replay is lost or played twice.
+    for (let i = 0; i < 30; i += 1) {
+      fake.frame();
+    }
+    watched.pause();
+    fake.frame(20);
+    watched.resume();
+    while (watched.getHud().status === 'playing') {
+      fake.frame();
+    }
+
+    expect(s.game.result().status).toBe('lost');
+    expect(watched.result()).toEqual(s.game.result());
+    expect(watched.replay()).toEqual(recorded);
   });
 
   const step = fc.oneof(
