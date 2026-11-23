@@ -260,7 +260,18 @@ export const ru: Dictionary = (format): Messages => ({
     titles: { victory: 'Победа', gameOver: 'Игра окончена' },
     score: (score) => `Счёт: ${format.number(score)}`,
     playAgain: 'Играть снова',
+    watch: 'Посмотреть повтор',
     quit: 'В меню',
+  },
+  replay: {
+    label: 'Повтор',
+    controls: 'Управление повтором',
+    pause: 'Пауза',
+    play: 'Смотреть',
+    rewind: 'Смотреть с начала',
+    speed: 'Скорость',
+    speedOption: (speed) => `${format.number(speed)}×`,
+    over: 'Повтор закончился.',
   },
   announce: {
     levelStart: (level) => `Уровень ${format.number(level)}. Вперёд!`,

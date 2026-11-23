@@ -8,6 +8,12 @@ import type { GameAudio, GameSound } from '@buzzkill/game';
  * its replay are the same with or without sound. An explosion ducks the music for a moment.
  */
 
+/**
+ * Mixed into the run's seed for the sounds' own random numbers, apart from the particles', in a
+ * run and in its replay alike.
+ */
+export const SOUND_SEED = 0x85ebca6b;
+
 /** How far the pitch of a sound may wander either way, in cents (a hundredth of a semitone). */
 export const PITCH_CENTS = 60;
 

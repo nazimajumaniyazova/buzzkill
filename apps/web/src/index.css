@@ -160,6 +160,27 @@ html:has(.game) {
   text-shadow: var(--shadow-text);
 }
 
+/*
+ * The controls of a replay (#219), on a surface at the bottom of the window, over the canvas. The
+ * game view turns text selection off; the controls are plain buttons and radios on top of it.
+ */
+.replay-controls {
+  position: fixed;
+  inset: auto var(--space-inset-md) var(--space-inset-md);
+  display: grid;
+  gap: var(--space-stack-sm);
+  justify-items: center;
+  padding: var(--space-inset-md);
+  border-radius: var(--radius-surface);
+  color: var(--color-text);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.replay-controls p {
+  margin: 0;
+}
+
 .hud dl {
   display: flex;
   flex-wrap: wrap;

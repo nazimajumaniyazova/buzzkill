@@ -70,6 +70,11 @@ const whole = <T,>(value: T): T => value;
 /** The game view comes with the game chunk (#112): the menus render without its code. */
 const GameView = lazy(() => importGameChunk().then(({ GameView }) => ({ default: GameView })));
 
+/** So does the replay view (#219), which plays a replay with the same code. */
+const ReplayView = lazy(() =>
+  importGameChunk().then(({ ReplayView }) => ({ default: ReplayView })),
+);
+
 const reload = (): void => {
   window.location.reload();
 };
@@ -83,6 +88,7 @@ function backEvent(state: AppState): AppEvent | null {
       return state.panel === 'main' ? null : { type: 'back' };
     case 'heroSelect':
     case 'loading':
+    case 'watching':
       return { type: 'back' };
     case 'paused':
       return { type: 'resume' };
@@ -110,6 +116,7 @@ function musicFor(name: AppState['name']): MusicStatus {
     case 'failed':
     case 'victory':
     case 'gameOver':
+    case 'watching':
       return 'stopped';
   }
 }
@@ -232,6 +239,7 @@ export function App({
     state.name === 'heroSelect' ||
     state.name === 'loading' ||
     state.name === 'failed' ||
+    state.name === 'watching' ||
     (state.name === 'menu' && state.panel !== 'main');
   useEffect(() => {
     if (!escapeGoesBack) {
@@ -398,6 +406,7 @@ export function App({
       case 'levelCleared':
       case 'victory':
       case 'gameOver':
+      case 'watching':
         return (
           // An error in the run makes the boundary send `runFailed`, and the screen of `failed`
           // replaces this branch at once, so the boundary itself shows nothing (#113).
@@ -413,7 +422,9 @@ export function App({
               <GameView
                 run={state.run}
                 assets={state.assets}
-                paused={state.name === 'paused'}
+                // The finished run waits under its replay, to come back to it (#219).
+                paused={state.name === 'paused' || state.name === 'watching'}
+                hidden={state.name === 'watching'}
                 betweenLevels={state.name === 'levelCleared'}
                 keyBindings={settings.keyBindings}
                 reducedMotion={reducedMotion}
@@ -460,10 +471,34 @@ export function App({
                 onPlayAgain={() => {
                   play(state.run, state.run.daily);
                 }}
+                onWatch={() => {
+                  send({ type: 'watchReplay' });
+                }}
                 onQuit={() => {
                   send({ type: 'quit' });
                 }}
               />
+            )}
+            {state.name === 'watching' && (
+              // Apart from the run's own: the finished run stays mounted while this one loads.
+              <Suspense fallback={null}>
+                <ReplayView
+                  replay={state.finished.replay}
+                  assets={state.assets}
+                  effects={{
+                    reducedMotion,
+                    particles: settings.particles,
+                    screenShake: settings.screenShake,
+                    hitFlash: settings.hitFlash,
+                    squashStretch: settings.squashStretch,
+                    hitStop: settings.hitStop,
+                  }}
+                  onTime={(time) => {
+                    send({ type: 'replayTime', time });
+                  }}
+                  onBack={back}
+                />
+              </Suspense>
             )}
           </ErrorBoundary>
         );

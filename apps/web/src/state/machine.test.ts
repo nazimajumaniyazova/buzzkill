@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import type { RunResult } from '@buzzkill/game';
+import type { Replay, RunResult } from '@buzzkill/game';
 import { fc, test } from '@fast-check/vitest';
 import { describe, expect, it } from 'vitest';
 
@@ -50,6 +50,36 @@ function resultWith(status: RunResult['status']): RunResult {
   };
 }
 
+/** What the game recorded of the run (#219); the machine only carries it. */
+const replay: Replay = {
+  formatVersion: 3,
+  gameVersion: 'test',
+  seed: 1,
+  heroId: 'male',
+  mode: 'day',
+  difficulty: 'normal',
+  daily: null,
+  inputs: [12, 4],
+};
+
+const gameOver = {
+  name: 'gameOver',
+  assets,
+  run,
+  time: 'day',
+  result: resultWith('lost'),
+  replay,
+} as const;
+// The sun set after the third level, so the run that began by day ends at night.
+const victory = {
+  name: 'victory',
+  assets,
+  run,
+  time: 'night',
+  result: resultWith('won'),
+  replay,
+} as const;
+
 /** One example of every state; the `satisfies` keeps the list complete. */
 const states = {
   menu: { name: 'menu', panel: 'main' },
@@ -66,9 +96,9 @@ const states = {
     score: 120,
     nextTime: 'night',
   },
-  // The sun set after the third level, so the run that began by day ends at night.
-  victory: { name: 'victory', assets, run, time: 'night', result: resultWith('won') },
-  gameOver: { name: 'gameOver', assets, run, time: 'day', result: resultWith('lost') },
+  victory,
+  gameOver,
+  watching: { name: 'watching', assets, run, time: 'day', finished: gameOver },
   failed: { name: 'failed' },
 } satisfies Record<AppState['name'], AppState>;
 
@@ -76,6 +106,8 @@ const states = {
 const settingsMenu: AppState = { name: 'menu', panel: 'settings' };
 const helpMenu: AppState = { name: 'menu', panel: 'help' };
 const achievementsMenu: AppState = { name: 'menu', panel: 'achievements' };
+/** The replay of a won run, which goes back to the victory. */
+const watchingVictory: AppState = { ...states.watching, finished: victory };
 
 /** One example of every event; the `satisfies` keeps the list complete. */
 const events = {
@@ -92,12 +124,14 @@ const events = {
   gamePaused: { type: 'gamePaused' },
   gameResumed: { type: 'gameResumed' },
   gamepadLost: { type: 'gamepadLost' },
-  runEnded: { type: 'runEnded', result: resultWith('lost') },
+  runEnded: { type: 'runEnded', result: resultWith('lost'), replay },
   levelCleared: { type: 'levelCleared', level: 3, score: 120, nextTime: 'night' },
   nextLevel: { type: 'nextLevel' },
   quit: { type: 'quit' },
   runFailed: { type: 'runFailed' },
   restart: { type: 'restart' },
+  watchReplay: { type: 'watchReplay' },
+  replayTime: { type: 'replayTime', time: 'night' },
 } satisfies Record<AppEvent['type'], AppEvent>;
 
 interface Row {
@@ -128,7 +162,7 @@ const TRANSITIONS: readonly Row[] = [
   { from: states.levelCleared, event: events.quit, to: 'menu' },
   {
     from: states.playing,
-    event: { type: 'runEnded', result: resultWith('won') },
+    event: { type: 'runEnded', result: resultWith('won'), replay },
     to: 'victory',
   },
   { from: states.playing, event: events.runEnded, to: 'gameOver' },
@@ -140,11 +174,18 @@ const TRANSITIONS: readonly Row[] = [
   { from: states.victory, event: events.quit, to: 'menu' },
   { from: states.gameOver, event: events.play, to: 'playing' },
   { from: states.gameOver, event: events.quit, to: 'menu' },
+  { from: states.victory, event: events.watchReplay, to: 'watching' },
+  { from: states.gameOver, event: events.watchReplay, to: 'watching' },
+  { from: states.watching, event: events.replayTime, to: 'watching' },
+  { from: states.watching, event: events.back, to: 'gameOver' },
+  { from: watchingVictory, event: events.back, to: 'victory' },
+  { from: states.watching, event: events.quit, to: 'menu' },
   { from: states.playing, event: events.runFailed, to: 'failed' },
   { from: states.paused, event: events.runFailed, to: 'failed' },
   { from: states.levelCleared, event: events.runFailed, to: 'failed' },
   { from: states.victory, event: events.runFailed, to: 'failed' },
   { from: states.gameOver, event: events.runFailed, to: 'failed' },
+  { from: states.watching, event: events.runFailed, to: 'failed' },
   { from: states.failed, event: events.restart, to: 'menu' },
 ];
 
@@ -263,25 +304,15 @@ describe('transition', () => {
   it('ends a won run as a victory and a lost run as game over, with the result and the time', () => {
     const night = { ...states.playing, time: 'night' } as const;
 
-    expect(transition(night, { type: 'runEnded', result: resultWith('won') })).toEqual({
-      name: 'victory',
-      assets,
-      run,
-      time: 'night',
-      result: resultWith('won'),
-    });
-    expect(transition(states.playing, events.runEnded)).toEqual({
-      name: 'gameOver',
-      assets,
-      run,
-      time: 'day',
-      result: resultWith('lost'),
-    });
+    expect(transition(night, { type: 'runEnded', result: resultWith('won'), replay })).toEqual(
+      victory,
+    );
+    expect(transition(states.playing, events.runEnded)).toEqual(gameOver);
   });
 
   it('ignores an end report whose result says the run goes on', () => {
     for (const status of ['playing', 'levelCleared'] as const) {
-      const event: AppEvent = { type: 'runEnded', result: resultWith(status) };
+      const event: AppEvent = { type: 'runEnded', result: resultWith(status), replay };
 
       expect(transition(states.playing, event)).toBe(states.playing);
     }
@@ -294,10 +325,11 @@ describe('transition', () => {
       states.levelCleared,
       states.victory,
       states.gameOver,
+      states.watching,
     ];
     const afterFailure = runStates.map((state) => transition(state, events.runFailed));
 
-    expect(afterFailure).toEqual(Array<AppState>(5).fill({ name: 'failed' }));
+    expect(afterFailure).toEqual(Array<AppState>(6).fill({ name: 'failed' }));
     expect(transition(states.failed, events.restart)).toEqual({ name: 'menu', panel: 'main' });
     expect(transition(states.loading, events.runFailed)).toBe(states.loading);
     expect(transition(states.menu, events.restart)).toBe(states.menu);
@@ -310,15 +342,43 @@ describe('transition', () => {
       states.levelCleared,
       states.victory,
       states.gameOver,
+      states.watching,
     ];
     const afterQuit = runStates.map((state) => transition(state, events.quit));
 
-    expect(afterQuit).toEqual(Array<AppState>(5).fill({ name: 'menu', panel: 'main' }));
+    expect(afterQuit).toEqual(Array<AppState>(6).fill({ name: 'menu', panel: 'main' }));
+  });
+
+  it('keeps the replay of a finished run, to watch it (#219)', () => {
+    expect(transition(states.playing, events.runEnded)).toMatchObject({ replay });
+  });
+
+  it('watches the replay over the finished run, from the time of day it began', () => {
+    const night = { ...gameOver, time: 'night' } as const;
+
+    expect(transition(night, events.watchReplay)).toEqual({
+      name: 'watching',
+      assets,
+      run,
+      time: 'day',
+      finished: night,
+    });
+    expect(transition(victory, events.watchReplay)).toEqual(watchingVictory);
+  });
+
+  it('follows the time of day of the replay, and goes back to the very same finished run', () => {
+    const watching = transition(gameOver, events.watchReplay);
+    const atNight = transition(watching, events.replayTime);
+
+    expect(atNight).toEqual({ ...watching, time: 'night' });
+    expect(transition(atNight, events.replayTime)).toBe(atNight);
+    expect(transition(atNight, events.back)).toBe(gameOver);
+    expect(transition(watchingVictory, events.back)).toBe(victory);
   });
 });
 
 describe('isRunState', () => {
-  it('tells the five states of a run on screen from the other four', () => {
+  it('tells the six states of a run on screen from the other four', () => {
     const withRun = Object.values(states).filter(isRunState);
 
     expect(withRun.map((state) => state.name)).toEqual([
@@ -327,6 +387,7 @@ describe('isRunState', () => {
       'levelCleared',
       'victory',
       'gameOver',
+      'watching',
     ]);
   });
 });
@@ -360,6 +421,7 @@ describe('invariants of the flow', () => {
     fc.record({
       type: fc.constant('runEnded' as const),
       result: fc.constantFrom('playing', 'levelCleared', 'won', 'lost').map(resultWith),
+      replay: fc.constant(replay),
     }),
     fc.record({
       type: fc.constant('levelCleared' as const),
@@ -371,6 +433,11 @@ describe('invariants of the flow', () => {
     fc.constant(events.quit),
     fc.constant(events.runFailed),
     fc.constant(events.restart),
+    fc.constant(events.watchReplay),
+    fc.record({
+      type: fc.constant('replayTime' as const),
+      time: fc.constantFrom('day' as const, 'night' as const),
+    }),
   );
 
   /** What a step broke, or `null`. */
@@ -449,14 +516,40 @@ describe('invariants of the flow', () => {
           : `failed from ${previous.name} by ${event.type}`;
       case 'victory':
       case 'gameOver':
+        if (previous.name === 'watching') {
+          // Back from the replay to the run that was on screen before it.
+          return event.type === 'back' && state === previous.finished
+            ? null
+            : `${state.name} from the replay by ${event.type}, or another run`;
+        }
         if (previous.name !== 'playing' || event.type !== 'runEnded') {
           return `${state.name} from ${previous.name} by ${event.type}`;
         }
         return state.run === previousRun &&
           state.assets === previousAssets &&
-          state.time === previous.time
+          state.time === previous.time &&
+          state.replay === event.replay
           ? null
           : 'the end changed the run';
+      case 'watching':
+        if (previous.name === 'watching') {
+          return event.type === 'replayTime' &&
+            state.finished === previous.finished &&
+            state.run === previousRun &&
+            state.assets === previousAssets
+            ? null
+            : `the replay changed by ${event.type}`;
+        }
+        if (previous.name !== 'victory' && previous.name !== 'gameOver') {
+          return `watching from ${previous.name}`;
+        }
+        return event.type === 'watchReplay' &&
+          state.finished === previous &&
+          state.run === previousRun &&
+          state.assets === previousAssets &&
+          state.time === previous.replay.mode
+          ? null
+          : 'the replay is not the finished run';
     }
   }
 

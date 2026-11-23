@@ -17,7 +17,13 @@ const result: RunResult = {
 describe('RunOverDialog', () => {
   it('is a modal dialog with the title it is given and the score, Play again focused', async () => {
     const { baseElement } = render(
-      <RunOverDialog title="Game over" result={result} onPlayAgain={vi.fn()} onQuit={vi.fn()} />,
+      <RunOverDialog
+        title="Game over"
+        result={result}
+        onPlayAgain={vi.fn()}
+        onWatch={vi.fn()}
+        onQuit={vi.fn()}
+      />,
     );
 
     const dialog = screen.getByRole('dialog', { name: 'Game over' });
@@ -27,14 +33,16 @@ describe('RunOverDialog', () => {
     expect(await axe(baseElement)).toHaveNoViolations();
   });
 
-  it('plays again, or goes back to the menu by the button, by Escape and by the close button', () => {
+  it('plays again, watches the replay, or goes back to the menu by the button, Escape and close', () => {
     const onPlayAgain = vi.fn();
+    const onWatch = vi.fn();
     const onQuit = vi.fn();
     render(
       <RunOverDialog
         title="Level complete"
         result={{ ...result, status: 'won' }}
         onPlayAgain={onPlayAgain}
+        onWatch={onWatch}
         onQuit={onQuit}
       />,
     );
@@ -42,6 +50,8 @@ describe('RunOverDialog', () => {
     expect(screen.getByRole('dialog', { name: 'Level complete' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Watch the replay' }));
+    expect(onWatch).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: 'Back to menu' }));
     fireEvent.keyDown(document, { key: 'Escape' });
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));

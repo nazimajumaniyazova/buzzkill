@@ -9,6 +9,8 @@ interface RunOverDialogProps {
   readonly title: string;
   readonly result: RunResult;
   readonly onPlayAgain: () => void;
+  /** Plays the run again from its replay (#219). */
+  readonly onWatch: () => void;
   readonly onQuit: () => void;
 }
 
@@ -20,6 +22,7 @@ export function RunOverDialog({
   title,
   result,
   onPlayAgain,
+  onWatch,
   onQuit,
 }: RunOverDialogProps): JSX.Element {
   const { t } = useI18n();
@@ -34,6 +37,9 @@ export function RunOverDialog({
     >
       <Inline gap="lg" justify="center">
         <Button onClick={onPlayAgain}>{t.runOver.playAgain}</Button>
+        <Button variant="secondary" onClick={onWatch}>
+          {t.runOver.watch}
+        </Button>
         <Button variant="secondary" onClick={onQuit}>
           {t.runOver.quit}
         </Button>

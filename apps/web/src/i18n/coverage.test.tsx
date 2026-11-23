@@ -275,6 +275,7 @@ describe('every text on screen comes from the dictionary', () => {
         title={marked.t.runOver.titles.gameOver}
         result={{ score: 1234, level: 1, ticks: 10, livesLeft: 0, status: 'lost', hash: '0' }}
         onPlayAgain={vi.fn()}
+        onWatch={vi.fn()}
         onQuit={vi.fn()}
       />,
     );

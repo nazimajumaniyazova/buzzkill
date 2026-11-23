@@ -2,7 +2,7 @@
 import type { GameLoopHost } from '@buzzkill/engine';
 import { describe, expect, it, vi } from 'vitest';
 
-import { pacedHost } from './paced-host';
+import { adjustablePacedHost, pacedHost } from './paced-host';
 
 /** A host whose frames the test delivers at the real times it chooses. */
 function createFakeHost() {
@@ -66,5 +66,44 @@ describe('pacedHost', () => {
     for (const speed of [0, -1, 1.5, Number.NaN]) {
       expect(() => pacedHost(host, speed)).toThrow(RangeError);
     }
+  });
+});
+
+describe('adjustablePacedHost', () => {
+  /** The times the loop sees for frames at `realTimes`, at the speed set before each frame. */
+  function adjustedTimes(frames: readonly (readonly [number, number])[]): number[] {
+    const { host, frame } = createFakeHost();
+    let speed = 1;
+    const paced = adjustablePacedHost(host, () => speed);
+    const seen: number[] = [];
+    for (const [time, speedThen] of frames) {
+      speed = speedThen;
+      paced.requestFrame((timeMs) => {
+        seen.push(timeMs);
+      });
+      frame(time);
+    }
+    return seen;
+  }
+
+  it('runs the clock faster than real time, for a replay (#219)', () => {
+    expect(
+      adjustedTimes([
+        [0, 4],
+        [10, 4],
+        [30, 2],
+      ]),
+    ).toEqual([0, 40, 80]);
+  });
+
+  it('applies a new speed from the next frame, without moving the time already seen', () => {
+    expect(
+      adjustedTimes([
+        [0, 1],
+        [100, 1],
+        [200, 0.5],
+        [300, 4],
+      ]),
+    ).toEqual([0, 100, 150, 550]);
   });
 });

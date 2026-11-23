@@ -11,16 +11,23 @@ export function pacedHost(host: GameLoopHost, speed: number): GameLoopHost {
   if (!(speed > 0 && speed <= 1)) {
     throw new RangeError(`pacedHost: speed must be in (0, 1], got ${String(speed)}`);
   }
-  if (speed === 1) {
-    return host;
-  }
+  return speed === 1 ? host : adjustablePacedHost(host, () => speed);
+}
+
+/**
+ * The same clock at a speed that may change while it runs, for a replay watched at 0.5× to 4×
+ * (#219). `speed()` is read once per frame, for the time since the frame before, and must be
+ * positive; the time the loop has already seen never moves. Above 1 the loop runs several ticks a
+ * frame, as many as its `maxTicksPerAdvance` allows.
+ */
+export function adjustablePacedHost(host: GameLoopHost, speed: () => number): GameLoopHost {
   let lastRealMs: number | null = null;
   let pacedMs = 0;
   return {
     ...host,
     requestFrame: (callback) =>
       host.requestFrame((timeMs) => {
-        pacedMs += lastRealMs === null ? 0 : (timeMs - lastRealMs) * speed;
+        pacedMs += lastRealMs === null ? 0 : (timeMs - lastRealMs) * speed();
         lastRealMs = timeMs;
         callback(pacedMs);
       }),
