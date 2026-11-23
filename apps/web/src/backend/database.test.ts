@@ -27,4 +27,12 @@ describe('the database types', () => {
     expectTypeOf<Run>().toHaveProperty('state_hash').toEqualTypeOf<string>();
     expectTypeOf<Run>().toHaveProperty('daily_date').toEqualTypeOf<string | null>();
   });
+
+  it('merge the achievements of a device into the account, and read back its rows (#221)', () => {
+    type Merge = Database['public']['Functions']['merge_achievements'];
+    type Achievement = Database['public']['Tables']['achievements']['Row'];
+
+    expectTypeOf<Merge['Returns']>().toEqualTypeOf<Achievement[]>();
+    expectTypeOf<Achievement>().toHaveProperty('unlocked_at').toEqualTypeOf<string>();
+  });
 });
