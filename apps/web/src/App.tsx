@@ -29,7 +29,7 @@ import { applyMotion, reducesMotion, usePrefersReducedMotion } from './motion';
 import { PauseDialog } from './PauseDialog';
 import { RunOverDialog } from './RunOverDialog';
 import { SettingsScreen } from './SettingsScreen';
-import { loadProgress, saveProgress } from './state/achievements/progress';
+import { loadAchievements, saveAchievements } from './state/achievements/progress';
 import { createAchievementsStore } from './state/achievements/store';
 import { dailyBest, recordDailyScore } from './state/daily/best';
 import { createGameLoader } from './state/game-loader';
@@ -155,17 +155,19 @@ export function App({
 
   // The achievements of this device (#163), in a store the shell does not subscribe to: their
   // progress changes with nearly every insect (#109). The menu reads it whenever it renders.
-  const [achievements] = useState(() => createAchievementsStore(loadProgress(browserStorage())));
+  const [achievements] = useState(() =>
+    createAchievementsStore(loadAchievements(browserStorage(), new Date().toISOString())),
+  );
   const onAchievements = useCallback(
     (progress: AchievementProgress, earned: readonly AchievementId[]) => {
-      achievements.send({ type: 'counted', progress, earned });
+      achievements.send({ type: 'counted', progress, earned, at: new Date().toISOString() });
     },
     [achievements],
   );
   useEffect(
     () =>
       achievements.subscribe(() => {
-        saveProgress(achievements.getState().progress, browserStorage());
+        saveAchievements(achievements.getState(), browserStorage());
       }),
     [achievements],
   );
