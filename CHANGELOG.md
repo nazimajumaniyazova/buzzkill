@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.41.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.40.0...v0.41.0) (2026-11-24)
+
+
+### Features
+
+* **backend:** merge a device's achievements into the account's ([#248](https://github.com/nazimajumaniyazova/buzzkill/issues/248)) ([acf4f4f](https://github.com/nazimajumaniyazova/buzzkill/commit/acf4f4feab5c98ceb026435558927d3b2dd075b3)), closes [#221](https://github.com/nazimajumaniyazova/buzzkill/issues/221)
+* **web:** add the Supabase client, loaded on demand, and the player ([#252](https://github.com/nazimajumaniyazova/buzzkill/issues/252)) ([0dacd11](https://github.com/nazimajumaniyazova/buzzkill/commit/0dacd1145443e0dbb8a217b6de9c3948a8cc5f94)), closes [#217](https://github.com/nazimajumaniyazova/buzzkill/issues/217)
+* **web:** keep finished runs in a queue until the server has them ([#249](https://github.com/nazimajumaniyazova/buzzkill/issues/249)) ([f512196](https://github.com/nazimajumaniyazova/buzzkill/commit/f5121960c81826209901288f67b3b0204c669f77)), closes [#220](https://github.com/nazimajumaniyazova/buzzkill/issues/220)
+* **web:** note when achievements unlock, and merge them with an account ([#247](https://github.com/nazimajumaniyazova/buzzkill/issues/247)) ([22ab22a](https://github.com/nazimajumaniyazova/buzzkill/commit/22ab22ab117f20c117f351c8d7d95c7c7ab1007b)), closes [#221](https://github.com/nazimajumaniyazova/buzzkill/issues/221)
+
 ## [0.40.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.39.0...v0.40.0) (2026-11-23)
 
 
