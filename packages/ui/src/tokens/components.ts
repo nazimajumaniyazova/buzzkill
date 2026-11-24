@@ -47,6 +47,24 @@ export const dialog = define('dialog', {
   titleSize: text.lg,
 });
 
+/**
+ * A text field. The invalid border is `danger`, which holds 3:1 for a control but not 4.5:1 for
+ * text, so the message of an error is in the text color and says what is wrong in words.
+ */
+export const field = define('field', {
+  gap: space.stack.sm,
+  paddingBlock: space.inset.xs,
+  paddingInline: space.inset.sm,
+  radius: radius.control,
+  fontSize: text.md,
+  background: color.surface,
+  text: color.text,
+  textMuted: color.textMuted,
+  border: color.border,
+  borderInvalid: color.danger,
+  focusRing: color.focus,
+});
+
 export const menu = define('menu', {
   padding: space.inset.xs,
   radius: radius.control,

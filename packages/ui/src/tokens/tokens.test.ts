@@ -64,6 +64,7 @@ describe('design tokens', () => {
 
     expect(rings.map((token) => token.name).sort()).toEqual([
       '--button-focus-ring',
+      '--field-focus-ring',
       '--radio-focus-ring',
       '--slider-focus-ring',
       '--switch-focus-ring',
