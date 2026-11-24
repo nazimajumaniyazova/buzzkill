@@ -13,8 +13,14 @@ export const PENDING_RUNS_KEY = 'buzzkill.pending-runs';
  */
 export const MAX_PENDING_RUNS = 20;
 
-/** The stored form: the version and the request bodies, in the order the runs ended. */
+/**
+ * The stored form: the version of the form, and the runs in the order they ended, each with its
+ * request body and the version of the game that played it.
+ */
 const STORED = z.object({ version: z.literal(1), runs: z.array(z.unknown()) });
+const PENDING = z.object({ gameVersion: z.string(), body: z.string() });
+
+type PendingRun = z.infer<typeof PENDING>;
 
 /**
  * The body of a request to the submit-run function (#218) for a finished run: its replay, the
@@ -32,11 +38,12 @@ export function submissionBody(
 export type SendOutcome =
   /** The server played it, found it as claimed, and stored it under `id`. */
   | { readonly kind: 'stored'; readonly id: string }
-  /** The server will never store it: an invalid or forged run, or one of another game version. */
+  /** The server will never store it: an invalid or forged run. */
   | { readonly kind: 'refused'; readonly reason: string }
   /**
    * Not now: no network, no player signed in, the hour's play already sent (`retryAfter`, in
-   * seconds), or a failure of the server. The run waits.
+   * seconds), a server that plays another version of the game, or a failure of the server. The
+   * run waits.
    */
   | { readonly kind: 'later'; readonly retryAfter?: number };
 
@@ -47,8 +54,13 @@ const ANSWER = z.object({ id: z.optional(z.string()), reason: z.optional(z.strin
 
 /**
  * The outcome of the submit-run function's answer: `status`, the JSON `body` and the
- * `Retry-After` header. 201 stores; 400, 409, 413 and 422 refuse for good; anything else, an
- * answer that cannot be read included, is for later.
+ * `Retry-After` header. 201 stores; 400, 413 and 422 refuse for good; anything else, an answer
+ * that cannot be read included, is for later.
+ *
+ * 409 says the server plays another version of the game than the run's, but not which one is
+ * newer. The web deploys before the function, so for a few minutes a run of the new build meets
+ * the old function and must wait for the new one. A run of an old build waits too, until a reload
+ * brings the new build, whose queue forgets it.
  */
 export function outcomeOf(status: number, body: unknown, retryAfter: string | null): SendOutcome {
   const answer = ANSWER.safeParse(body);
@@ -57,7 +69,7 @@ export function outcomeOf(status: number, body: unknown, retryAfter: string | nu
       ? { kind: 'stored', id: answer.data.id }
       : { kind: 'later' };
   }
-  if (status === 400 || status === 409 || status === 413 || status === 422) {
+  if (status === 400 || status === 413 || status === 422) {
     return {
       kind: 'refused',
       reason: (answer.success ? answer.data.reason : undefined) ?? 'unknown',
@@ -88,12 +100,17 @@ export interface RunQueueOptions {
   /** `localStorage`, or `null` where there is none: the runs then wait for this visit only. */
   readonly storage: SettingsStorage | null;
   readonly send: SendRun;
+  /**
+   * The version of the game this build plays, and so of every run it adds. The runs of another
+   * version, left by an older build, are forgotten: no server plays them again.
+   */
+  readonly gameVersion: string;
   /** Without one, the queue only keeps its own tab from sending a run twice. */
   readonly lock?: QueueLock;
 }
 
 export interface RunQueue {
-  /** Puts the body of a finished run at the end of the queue. */
+  /** Puts the body of a run this build finished at the end of the queue. */
   add(body: string): void;
   /**
    * Sends the waiting runs in order until one is for later. A call during a sending returns that
@@ -112,13 +129,14 @@ export interface RunQueue {
 export function createRunQueue({
   storage,
   send,
+  gameVersion,
   lock = (work) => work(),
 }: RunQueueOptions): RunQueue {
   // The runs of this visit where the storage cannot be used.
-  let memory: readonly string[] = [];
+  let memory: readonly PendingRun[] = [];
   let sending: Promise<FlushReport> | null = null;
 
-  const read = (): readonly string[] => {
+  const read = (): readonly PendingRun[] => {
     try {
       if (storage === null) {
         return memory;
@@ -128,15 +146,23 @@ export function createRunQueue({
         return [];
       }
       const stored = STORED.safeParse(JSON.parse(json));
-      return stored.success
-        ? stored.data.runs.filter((run): run is string => typeof run === 'string')
-        : [];
+      if (!stored.success) {
+        return [];
+      }
+      const runs: PendingRun[] = [];
+      for (const item of stored.data.runs) {
+        const run = PENDING.safeParse(item);
+        if (run.success && run.data.gameVersion === gameVersion) {
+          runs.push(run.data);
+        }
+      }
+      return runs;
     } catch {
       return memory;
     }
   };
 
-  const write = (runs: readonly string[]): void => {
+  const write = (runs: readonly PendingRun[]): void => {
     memory = runs;
     try {
       storage?.setItem(PENDING_RUNS_KEY, JSON.stringify({ version: 1, runs }));
@@ -155,7 +181,7 @@ export function createRunQueue({
       }
       let outcome: SendOutcome;
       try {
-        outcome = await send(first);
+        outcome = await send(first.body);
       } catch {
         outcome = { kind: 'later' };
       }
@@ -172,14 +198,15 @@ export function createRunQueue({
       } else {
         refused += 1;
       }
-      const index = runs.indexOf(first);
+      // The same body, which another tab may have sent and removed meanwhile.
+      const index = runs.findIndex((run) => run.body === first.body);
       write(index === -1 ? runs : runs.filter((_, at) => at !== index));
     }
   };
 
   return {
     add(body) {
-      write([...read(), body].slice(-MAX_PENDING_RUNS));
+      write([...read(), { gameVersion, body }].slice(-MAX_PENDING_RUNS));
     },
     flush() {
       sending ??= lock(sendAll).finally(() => {

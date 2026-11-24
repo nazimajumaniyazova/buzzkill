@@ -57,6 +57,13 @@ function memoryStorage(initial: Record<string, string> = {}, broken = false) {
   };
 }
 
+/** The version of the game this build plays, and so the version of every run it adds. */
+const VERSION = '0.39.0+0123456789ab';
+
+/** The stored queue holding `bodies`, each of a run of `gameVersion`. */
+const queueOf = (bodies: readonly string[], gameVersion = VERSION) =>
+  JSON.stringify({ version: 1, runs: bodies.map((body) => ({ gameVersion, body })) });
+
 const stored = (id: string): SendOutcome => ({ kind: 'stored', id });
 const later = (retryAfter?: number): SendOutcome =>
   retryAfter === undefined ? { kind: 'later' } : { kind: 'later', retryAfter };
@@ -79,7 +86,6 @@ describe('outcomeOf', () => {
   it('gives up a run the function refuses for good, with its reason', () => {
     for (const [status, reason] of [
       [400, 'invalid'],
-      [409, 'stale-version'],
       [413, 'too-large'],
       [422, 'mismatch'],
     ] as const) {
@@ -89,6 +95,7 @@ describe('outcomeOf', () => {
   });
 
   it('keeps for later a run that needs a player, waits for the hour, or met a failure', () => {
+    expect(outcomeOf(409, { reason: 'stale-version' }, null)).toEqual(later());
     expect(outcomeOf(401, { reason: 'unauthorized' }, null)).toEqual(later());
     expect(outcomeOf(429, { reason: 'too-many-runs' }, '1200')).toEqual(later(1200));
     expect(outcomeOf(429, { reason: 'too-many-runs' }, 'soon')).toEqual(later());
@@ -102,9 +109,9 @@ describe('createRunQueue', () => {
     const storage = memoryStorage();
     const send = vi.fn((_body: string) => Promise.resolve(later()));
 
-    createRunQueue({ storage, send }).add('{"run":1}');
+    createRunQueue({ storage, send, gameVersion: VERSION }).add('{"run":1}');
 
-    const reloaded = createRunQueue({ storage, send });
+    const reloaded = createRunQueue({ storage, send, gameVersion: VERSION });
     expect(reloaded.size()).toBe(1);
     expect(await reloaded.flush()).toEqual({ stored: [], refused: 0, left: 1 });
     expect(send).toHaveBeenCalledWith('{"run":1}');
@@ -118,7 +125,7 @@ describe('createRunQueue', () => {
       stored('c'),
     ];
     const send = vi.fn((_body: string) => Promise.resolve(outcomes.shift() ?? later()));
-    const queue = createRunQueue({ storage, send });
+    const queue = createRunQueue({ storage, send, gameVersion: VERSION });
     queue.add('1');
     queue.add('2');
     queue.add('3');
@@ -135,7 +142,7 @@ describe('createRunQueue', () => {
   it('stops at the first run kept for later, which waits in its place with those after it', async () => {
     const outcomes: SendOutcome[] = [stored('a'), later(60)];
     const send = vi.fn((_body: string) => Promise.resolve(outcomes.shift() ?? stored('z')));
-    const queue = createRunQueue({ storage: memoryStorage(), send });
+    const queue = createRunQueue({ storage: memoryStorage(), send, gameVersion: VERSION });
     queue.add('1');
     queue.add('2');
     queue.add('3');
@@ -149,6 +156,7 @@ describe('createRunQueue', () => {
   it('keeps a run that ends while another is on its way', async () => {
     const queue = createRunQueue({
       storage: memoryStorage(),
+      gameVersion: VERSION,
       send: (body) => {
         if (body === '1') {
           queue.add('2');
@@ -164,7 +172,7 @@ describe('createRunQueue', () => {
 
   it('keeps a run whose sending throws, as a failure of the network', async () => {
     const send = vi.fn((_body: string) => Promise.reject(new TypeError('Failed to fetch')));
-    const queue = createRunQueue({ storage: memoryStorage(), send });
+    const queue = createRunQueue({ storage: memoryStorage(), send, gameVersion: VERSION });
     queue.add('1');
 
     expect(await queue.flush()).toEqual({ stored: [], refused: 0, left: 1 });
@@ -180,7 +188,7 @@ describe('createRunQueue', () => {
           };
         }),
     );
-    const queue = createRunQueue({ storage: memoryStorage(), send });
+    const queue = createRunQueue({ storage: memoryStorage(), send, gameVersion: VERSION });
     queue.add('1');
 
     const first = queue.flush();
@@ -204,7 +212,7 @@ describe('createRunQueue', () => {
       order.push('sent');
       return Promise.resolve(stored('a'));
     });
-    const queue = createRunQueue({ storage: memoryStorage(), send, lock });
+    const queue = createRunQueue({ storage: memoryStorage(), send, lock, gameVersion: VERSION });
     queue.add('1');
 
     await queue.flush();
@@ -215,8 +223,8 @@ describe('createRunQueue', () => {
   it('reads the storage again under the lock, so a run another tab sent is not sent twice', async () => {
     const storage = memoryStorage();
     const send = vi.fn((_body: string) => Promise.resolve(stored('a')));
-    const here = createRunQueue({ storage, send });
-    const there = createRunQueue({ storage, send });
+    const here = createRunQueue({ storage, send, gameVersion: VERSION });
+    const there = createRunQueue({ storage, send, gameVersion: VERSION });
     here.add('1');
 
     await there.flush();
@@ -224,34 +232,71 @@ describe('createRunQueue', () => {
     expect(send).toHaveBeenCalledTimes(1);
   });
 
+  it('forgets the runs of another version of the game, which no server plays again', async () => {
+    const storage = memoryStorage({
+      [PENDING_RUNS_KEY]: JSON.stringify({
+        version: 1,
+        runs: [
+          { gameVersion: '0.38.0+ba9876543210', body: 'old' },
+          { gameVersion: VERSION, body: 'new' },
+        ],
+      }),
+    });
+    const send = vi.fn((_body: string) => Promise.resolve(stored('a')));
+    const queue = createRunQueue({ storage, send, gameVersion: VERSION });
+
+    expect(queue.size()).toBe(1);
+    expect(await queue.flush()).toEqual({ stored: ['a'], refused: 0, left: 0 });
+    expect(send.mock.calls.map(([body]) => body)).toEqual(['new']);
+  });
+
+  it('keeps a run of this version that the server is not yet playing, until it is', async () => {
+    const storage = memoryStorage({ [PENDING_RUNS_KEY]: queueOf(['1']) });
+    const outcomes = [outcomeOf(409, { reason: 'stale-version' }, null), stored('a')];
+    const send = vi.fn((_body: string) => Promise.resolve(outcomes.shift() ?? later()));
+    const queue = createRunQueue({ storage, send, gameVersion: VERSION });
+
+    expect(await queue.flush()).toEqual({ stored: [], refused: 0, left: 1 });
+    expect(await queue.flush()).toEqual({ stored: ['a'], refused: 0, left: 0 });
+  });
+
   it(`keeps the ${String(MAX_PENDING_RUNS)} runs that ended last`, () => {
     const storage = memoryStorage();
-    const queue = createRunQueue({ storage, send: vi.fn() });
+    const queue = createRunQueue({ storage, send: vi.fn(), gameVersion: VERSION });
     for (let run = 1; run <= MAX_PENDING_RUNS + 2; run += 1) {
       queue.add(String(run));
     }
 
-    const kept = JSON.parse(storage.items.get(PENDING_RUNS_KEY) ?? 'null') as { runs: string[] };
+    const kept = JSON.parse(storage.items.get(PENDING_RUNS_KEY) ?? 'null') as {
+      runs: { gameVersion: string; body: string }[];
+    };
     expect(kept.runs).toHaveLength(MAX_PENDING_RUNS);
-    expect(kept.runs[0]).toBe('3');
-    expect(kept.runs.at(-1)).toBe(String(MAX_PENDING_RUNS + 2));
+    expect(kept.runs[0]).toEqual({ gameVersion: VERSION, body: '3' });
+    expect(kept.runs.at(-1)?.body).toBe(String(MAX_PENDING_RUNS + 2));
   });
 
   it('starts empty from what is not a queue, and keeps only the runs it can read', () => {
     const send = vi.fn();
     const broken = { [PENDING_RUNS_KEY]: '{oops' };
-    const other = { [PENDING_RUNS_KEY]: JSON.stringify({ version: 2, runs: ['1'] }) };
-    const mixed = { [PENDING_RUNS_KEY]: JSON.stringify({ version: 1, runs: ['1', 7, null, '2'] }) };
+    const other = { [PENDING_RUNS_KEY]: JSON.stringify({ version: 2, runs: [] }) };
+    const mixed = {
+      [PENDING_RUNS_KEY]: JSON.stringify({
+        version: 1,
+        runs: [{ gameVersion: VERSION, body: '1' }, '2', 7, null, { body: '3' }],
+      }),
+    };
+    const queue = (initial: Record<string, string>) =>
+      createRunQueue({ storage: memoryStorage(initial), send, gameVersion: VERSION });
 
-    expect(createRunQueue({ storage: memoryStorage(broken), send }).size()).toBe(0);
-    expect(createRunQueue({ storage: memoryStorage(other), send }).size()).toBe(0);
-    expect(createRunQueue({ storage: memoryStorage(mixed), send }).size()).toBe(2);
+    expect(queue(broken).size()).toBe(0);
+    expect(queue(other).size()).toBe(0);
+    expect(queue(mixed).size()).toBe(1);
   });
 
   it('works for the visit without a storage, or with one that throws', async () => {
     for (const storage of [null, memoryStorage({}, true)]) {
       const send = vi.fn((_body: string) => Promise.resolve(stored('a')));
-      const queue = createRunQueue({ storage, send });
+      const queue = createRunQueue({ storage, send, gameVersion: VERSION });
       queue.add('1');
       expect(queue.size()).toBe(1);
       expect(await queue.flush()).toEqual({ stored: ['a'], refused: 0, left: 0 });
