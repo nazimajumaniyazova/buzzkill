@@ -67,7 +67,18 @@ export type Database = {
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "merge_achievements":
+{ Args: { "unlocked": Json }; Returns: {
+              "achievement_id": string,
+"unlocked_at": string,
+"user_id": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "achievements"
+        isOneToOne: false
+        isSetofReturn: true
+      } }
           }
           Enums: {
             "difficulty": "easy"|"normal"|"hard","hero_id": "male"|"female"|"sam"|"leo","run_mode": "classic"|"daily","run_status": "won"|"lost","time_of_day": "day"|"night"
