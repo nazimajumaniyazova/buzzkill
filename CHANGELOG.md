@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.39.0...v0.40.0) (2026-11-23)
+
+
+### Features
+
+* **game:** play a stored run again on screen through a replay input ([#243](https://github.com/nazimajumaniyazova/buzzkill/issues/243)) ([e5a29ad](https://github.com/nazimajumaniyazova/buzzkill/commit/e5a29ad6da3bea8d1ea21c1535f09f92e0173ec4)), closes [#219](https://github.com/nazimajumaniyazova/buzzkill/issues/219)
+* **web:** watch the replay of a finished run, at 0.5× to 4× ([#244](https://github.com/nazimajumaniyazova/buzzkill/issues/244)) ([03ee0c6](https://github.com/nazimajumaniyazova/buzzkill/commit/03ee0c66da2fab7ce17e9ca347df3dfb0f08d4c8)), closes [#219](https://github.com/nazimajumaniyazova/buzzkill/issues/219)
+
 ## [0.39.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.38.0...v0.39.0) (2026-11-22)
 
 
