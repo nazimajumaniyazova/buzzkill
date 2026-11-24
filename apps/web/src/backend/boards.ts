@@ -2,6 +2,7 @@ import type { Difficulty } from '@buzzkill/game';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import * as z from 'zod/mini';
 
+import type { Backend } from './client';
 import type { Database } from './database.gen';
 
 /** How many runs a board shows. */
@@ -127,4 +128,39 @@ export async function fetchPersonalBest(
         createdAt: best.created_at,
         speed: best.speed,
       };
+}
+
+/** The player's own record of a board: whose it is, for their row on the board, and the run. */
+interface PersonalRecord {
+  /** The player of this browser, or `null` before a run of theirs was ever sent. */
+  readonly userId: string | null;
+  readonly best: PersonalBest | null;
+}
+
+/** What the boards screen reads, as promises a query can wait for; a failure rejects. */
+export interface BoardsSource {
+  board(board: Board): Promise<BoardRow[]>;
+  personalBest(board: Board): Promise<PersonalRecord>;
+}
+
+/**
+ * The boards of `backend`. The record reads the session this browser already has and never starts
+ * one: looking at the boards does not make anyone a player (#217). Without a session there is no
+ * record, and nothing is asked of the backend for it.
+ */
+export function boardsSourceOf(backend: Pick<Backend, 'client' | 'player'>): BoardsSource {
+  return {
+    board: async (board) => fetchBoard(await backend.client(), board),
+    personalBest: async (board) => {
+      const session = await backend.player.session();
+      if (!session.ok) {
+        if (session.problem === 'signed-out') {
+          return { userId: null, best: null };
+        }
+        throw new Error(`the player could not be read: ${session.problem}`);
+      }
+      const best = await fetchPersonalBest(await backend.client(), session.userId, board);
+      return { userId: session.userId, best };
+    },
+  };
 }

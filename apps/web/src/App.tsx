@@ -12,6 +12,8 @@ import { type JSX, lazy, Suspense, useCallback, useEffect, useRef, useState } fr
 
 import { AchievementsScreen } from './AchievementsScreen';
 import { AnnouncerProvider, createAnnouncer } from './announcer';
+import { type Backend, createBackend } from './backend/client';
+import { backendConfig } from './backend/config';
 import { type RunQueue, submissionBody } from './backend/run-queue';
 import { createRunUploads } from './backend/run-uploads';
 import { EarnedToasts } from './EarnedToasts';
@@ -68,6 +70,12 @@ interface AppProps {
   /** The clock, for the day of the daily challenge (#165); a test sets the day. */
   readonly now?: () => Date;
   /**
+   * The backend (ADR-0007), shared by the sending of runs and the boards, or `null` in a build
+   * without one. The app makes its own from the build's environment when none is given; a test
+   * gives a fake.
+   */
+  readonly backend?: Backend | null;
+  /**
    * The finished runs on their way to the server (#220), or `null` without a backend. The app
    * makes its own from the build's environment when none is given; a test gives a fake.
    */
@@ -88,10 +96,24 @@ const reload = (): void => {
   window.location.reload();
 };
 
+/** So do the boards (#220), with TanStack Query, when the player opens them. */
+const BackendBoards = lazy(() =>
+  import('./boards/BackendBoards').then(({ BackendBoards }) => ({ default: BackendBoards })),
+);
+
+/**
+ * The backend of this build, or `null` when its environment names none. One for the whole page:
+ * the runs and the boards share the client, and so the player's session.
+ */
+function browserBackend(): Backend | null {
+  const config = backendConfig(import.meta.env);
+  return config === null ? null : createBackend(config);
+}
+
 /** The queue of this build, or `null` when it has no backend (#220). */
-const browserRunQueue = (): RunQueue | null =>
+const browserRunQueue = (backend: Backend | null): RunQueue | null =>
   createRunUploads({
-    env: import.meta.env,
+    backend,
     storage: browserStorage(),
     fetch: (url, init) => window.fetch(url, init),
     locks: 'locks' in window.navigator ? window.navigator.locks : undefined,
@@ -159,11 +181,13 @@ export function App({
   store: givenStore,
   settings: givenSettings,
   now = systemClock,
+  backend: givenBackend,
   runQueue: givenRunQueue,
 }: AppProps): JSX.Element {
   const [ownStore] = useState(() => createAppStore());
+  const [backend] = useState(() => (givenBackend === undefined ? browserBackend() : givenBackend));
   const [runQueue] = useState(() =>
-    givenRunQueue === undefined ? browserRunQueue() : givenRunQueue,
+    givenRunQueue === undefined ? browserRunQueue(backend) : givenRunQueue,
   );
   const [ownSettings] = useState(() =>
     createSettingsStore(
@@ -401,6 +425,13 @@ export function App({
             onAchievements={() => {
               send({ type: 'openAchievements' });
             }}
+            onBoards={
+              backend === null
+                ? undefined
+                : () => {
+                    send({ type: 'openBoards' });
+                  }
+            }
             onHelp={() => {
               send({ type: 'openHelp' });
             }}
@@ -418,6 +449,17 @@ export function App({
             onBack={back}
             canVibrate={findVibrator(globalThis.navigator) !== null || canRumble(globalThis)}
           />
+        );
+      case 'boards':
+        return (
+          <Suspense fallback={<p className="screen">{i18n.t.boards.loading}</p>}>
+            <BackendBoards
+              backend={backend}
+              today={dailyDate(now())}
+              difficulty={settings.difficulty}
+              onBack={back}
+            />
+          </Suspense>
         );
       case 'help':
         return (

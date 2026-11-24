@@ -787,6 +787,35 @@ describe('App', () => {
     expect(flush).toHaveBeenCalledTimes(3);
   });
 
+  it('opens the boards from the menu in a build with a backend, and goes back (#220)', async () => {
+    const backend = {
+      config: { url: 'https://abcdefghijklmnopqrst.supabase.co', key: 'sb_publishable_0123' },
+      client: () => new Promise<never>(() => undefined),
+      player: {
+        session: () => Promise.resolve({ ok: false, problem: 'signed-out' } as const),
+        signIn: vi.fn(),
+      },
+    };
+    render(<App backend={backend} />);
+
+    click('Boards');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Boards' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Normal' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Loading the board…')).toBeInTheDocument();
+    // Looking at the boards never makes anyone a player (#217).
+    expect(backend.player.signIn).not.toHaveBeenCalled();
+
+    click('Back');
+    expect(heading('Buzzkill')).toBeInTheDocument();
+  });
+
+  it('has no boards in a build without a backend', () => {
+    render(<App backend={null} />);
+
+    expect(screen.queryByRole('button', { name: 'Boards' })).toBeNull();
+  });
+
   it('follows the system theme until the player picks one in the settings, then remembers it', () => {
     render(<App />);
     expect(document.documentElement).not.toHaveAttribute('data-theme');

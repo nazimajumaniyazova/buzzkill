@@ -106,6 +106,7 @@ const states = {
 const settingsMenu: AppState = { name: 'menu', panel: 'settings' };
 const helpMenu: AppState = { name: 'menu', panel: 'help' };
 const achievementsMenu: AppState = { name: 'menu', panel: 'achievements' };
+const boardsMenu: AppState = { name: 'menu', panel: 'boards' };
 /** The replay of a won run, which goes back to the victory. */
 const watchingVictory: AppState = { ...states.watching, finished: victory };
 
@@ -114,6 +115,7 @@ const events = {
   openSettings: { type: 'openSettings' },
   openHelp: { type: 'openHelp' },
   openAchievements: { type: 'openAchievements' },
+  openBoards: { type: 'openBoards' },
   selectHero: { type: 'selectHero' },
   selectDaily: { type: 'selectDaily', date: '2026-11-17' },
   back: { type: 'back' },
@@ -145,11 +147,13 @@ const TRANSITIONS: readonly Row[] = [
   { from: states.menu, event: events.openSettings, to: 'menu' },
   { from: states.menu, event: events.openHelp, to: 'menu' },
   { from: states.menu, event: events.openAchievements, to: 'menu' },
+  { from: states.menu, event: events.openBoards, to: 'menu' },
   { from: states.menu, event: events.selectHero, to: 'heroSelect' },
   { from: states.menu, event: events.selectDaily, to: 'heroSelect' },
   { from: settingsMenu, event: events.back, to: 'menu' },
   { from: helpMenu, event: events.back, to: 'menu' },
   { from: achievementsMenu, event: events.back, to: 'menu' },
+  { from: boardsMenu, event: events.back, to: 'menu' },
   { from: states.heroSelect, event: events.back, to: 'menu' },
   { from: states.heroSelect, event: events.play, to: 'loading' },
   { from: states.loading, event: events.gameLoaded, to: 'playing' },
@@ -262,6 +266,14 @@ describe('transition', () => {
     expect(transition(helpMenu, events.openAchievements)).toBe(helpMenu);
     expect(transition(achievementsMenu, events.openSettings)).toBe(achievementsMenu);
     expect(transition(states.playing, events.openAchievements)).toBe(states.playing);
+  });
+
+  it('opens the boards from the main menu only, and back returns to it (#220)', () => {
+    expect(transition(states.menu, events.openBoards)).toEqual(boardsMenu);
+    expect(transition(boardsMenu, events.back)).toEqual(states.menu);
+    expect(transition(helpMenu, events.openBoards)).toBe(helpMenu);
+    expect(transition(boardsMenu, events.openSettings)).toBe(boardsMenu);
+    expect(transition(states.playing, events.openBoards)).toBe(states.playing);
   });
 
   it('starts the next run at once over a finished one, with the assets it has, at its time', () => {
@@ -405,6 +417,7 @@ describe('invariants of the flow', () => {
     fc.constant(events.openSettings),
     fc.constant(events.openHelp),
     fc.constant(events.openAchievements),
+    fc.constant(events.openBoards),
     fc.constant(events.selectHero),
     fc.constant(events.selectDaily),
     fc.constant(events.back),

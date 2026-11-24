@@ -200,6 +200,9 @@ catalogs:
     '@supabase/supabase-js':
       specifier: ^2.119.2
       version: 2.119.2
+    '@tanstack/react-query':
+      specifier: ^5.108.2
+      version: 5.108.2
     '@testing-library/jest-dom':
       specifier: ^7.0.1
       version: 7.0.1
@@ -424,6 +427,9 @@ importers:
       '@supabase/supabase-js':
         specifier: 'catalog:'
         version: 2.119.2
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.108.2(@types/react@19.3.0)(react@19.3.1)
       react:
         specifier: 'catalog:'
         version: 19.3.1
@@ -2528,6 +2534,18 @@ packages:
       '@opentelemetry/api': '>=1.0.0'
     peerDependenciesMeta:
       '@opentelemetry/api':
+        optional: true
+
+  '@tanstack/query-core@5.108.2':
+    resolution: {integrity: sha512-0l+0xDKqn71hfJBKaAvFP/X7WYM0TbscEk6nK1pHaWQUWUEA+WJD0VlT8wF+HIJANMV9B/DouPWwDnX3w/l9BA==}
+
+  '@tanstack/react-query@5.108.2':
+    resolution: {integrity: sha512-wV6hEjVGTfh9rvu3uREYW0hgBfS9klDejGelhPY575jD5jg6qbAb1nzT7hR1Q+wemR66ZjtE5p9pAGUwqK8zbg==}
+    peerDependencies:
+      '@types/react': ^18 || ^19
+      react: ^18 || ^19
+    peerDependenciesMeta:
+      '@types/react':
         optional: true
 
   '@testing-library/dom@10.4.2':
@@ -6851,6 +6869,15 @@ snapshots:
       '@supabase/postgrest-js': 2.119.2
       '@supabase/realtime-js': 2.119.2
       '@supabase/storage-js': 2.119.2
+
+  '@tanstack/query-core@5.108.2': {}
+
+  '@tanstack/react-query@5.108.2(@types/react@19.3.0)(react@19.3.1)':
+    dependencies:
+      '@tanstack/query-core': 5.108.2
+      react: 19.3.1
+    optionalDependencies:
+      '@types/react': 19.3.0
 
   '@testing-library/dom@10.4.2':
     dependencies:

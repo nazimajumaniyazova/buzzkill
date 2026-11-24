@@ -5,6 +5,7 @@ import type { JSX, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AchievementsScreen } from '../AchievementsScreen';
+import { BoardsScreen } from '../boards/BoardsScreen';
 import { KEY_SYMBOLS } from '../controls';
 import { EarnedToasts } from '../EarnedToasts';
 import { ErrorScreen } from '../ErrorScreen';
@@ -266,6 +267,32 @@ describe('every text on screen comes from the dictionary', () => {
     press('Escape');
     expect(foreignText()).toEqual([]);
     fireEvent.click(screen.getByRole('button', { name: '⟦Reset keys⟧' }));
+    expect(foreignText()).toEqual([]);
+  });
+
+  it('in the boards, with a board, the player in it and a slower record', async () => {
+    renderMarked(
+      <BoardsScreen
+        source={{
+          board: () =>
+            Promise.resolve([
+              { id: 'a', userId: 'me', nickname: null, score: 900, level: 3, createdAt: '' },
+              { id: 'b', userId: 'other', nickname: null, score: 800, level: 2, createdAt: '' },
+            ]),
+          personalBest: () =>
+            Promise.resolve({
+              userId: 'me',
+              best: { id: 'a', userId: 'me', score: 950, level: 3, createdAt: '', speed: 75 },
+            }),
+        }}
+        today="2026-11-24"
+        difficulty="normal"
+        onBack={vi.fn()}
+      />,
+    );
+    await screen.findByRole('table');
+    await screen.findByText(/950/);
+
     expect(foreignText()).toEqual([]);
   });
 

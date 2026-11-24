@@ -2,7 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
-import { fetchBoard, fetchPersonalBest } from './boards';
+import { boardsSourceOf, fetchBoard, fetchPersonalBest } from './boards';
 import type { Database } from './database.gen';
 
 const URL_ROOT = 'https://abcdefghijklmnopqrst.supabase.co';
@@ -127,5 +127,57 @@ describe('fetchPersonalBest', () => {
     await expect(
       fetchPersonalBest(client, ROW.user_id, { mode: 'daily', day: '2026-11-24' }),
     ).resolves.toBeNull();
+  });
+});
+
+describe('boardsSourceOf', () => {
+  it('reads the boards and the record of the player this browser already has', async () => {
+    const { client, asked } = clientAnswering(() => json([{ ...ROW, speed: 100 }]));
+    const signIn = vi.fn();
+    const source = boardsSourceOf({
+      client: () => Promise.resolve(client),
+      player: {
+        session: () => Promise.resolve({ ok: true, token: 'token-1', userId: ROW.user_id }),
+        signIn,
+      },
+    });
+
+    await expect(source.board({ mode: 'classic', difficulty: 'easy' })).resolves.toHaveLength(1);
+    await expect(
+      source.personalBest({ mode: 'classic', difficulty: 'easy' }),
+    ).resolves.toMatchObject({ userId: ROW.user_id, best: { score: 900, speed: 100 } });
+    expect(asked().map((url) => url.pathname)).toEqual(['/rest/v1/best_runs', '/rest/v1/runs']);
+    // Looking at the boards never makes anyone a player (#217).
+    expect(signIn).not.toHaveBeenCalled();
+  });
+
+  it('has no record without a session, and asks the backend nothing for it', async () => {
+    const { client, asked } = clientAnswering(() => json([]));
+    const source = boardsSourceOf({
+      client: () => Promise.resolve(client),
+      player: {
+        session: () => Promise.resolve({ ok: false, problem: 'signed-out' }),
+        signIn: vi.fn(),
+      },
+    });
+
+    await expect(source.personalBest({ mode: 'daily', day: '2026-11-24' })).resolves.toEqual({
+      userId: null,
+      best: null,
+    });
+    expect(asked()).toEqual([]);
+  });
+
+  it('fails the record when the session cannot be read, as offline', async () => {
+    const { client } = clientAnswering(() => json([]));
+    const source = boardsSourceOf({
+      client: () => Promise.resolve(client),
+      player: {
+        session: () => Promise.resolve({ ok: false, problem: 'offline' }),
+        signIn: vi.fn(),
+      },
+    });
+
+    await expect(source.personalBest({ mode: 'daily', day: '2026-11-24' })).rejects.toThrow();
   });
 });
