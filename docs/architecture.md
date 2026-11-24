@@ -28,6 +28,7 @@ flowchart LR
   player -- "plays, submits runs" --> app
   owner -- "pushes, merges" --> github
   github -- "deploys main and previews" --> vercel
+  github -. "deploys migrations and the function of main" .-> supabase
   vercel -- "serves" --> app
   app -. "replays and scores, stage 8" .-> supabase
   app -. "events, stage 8" .-> analytics

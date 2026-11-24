@@ -314,6 +314,7 @@ describe('App', () => {
     // A load that a test started ends here, inside act, before the next test counts the calls.
     await act(() => new Promise((resolve) => setTimeout(resolve, 0)));
     vi.unstubAllGlobals();
+    vi.useRealTimers();
     Reflect.deleteProperty(navigator, 'getGamepads');
     setVolume.mockClear();
     followMusic.mockClear();
@@ -472,6 +473,8 @@ describe('App', () => {
   it('keeps what a run counts toward the achievements, and says what it earned (#163)', async () => {
     render(<App />);
     await startRun();
+    // Only the clock of `Date`, to know the moment an achievement is earned.
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-11-23T10:00:00.000Z') });
 
     click('Swat an insect');
 
@@ -479,8 +482,10 @@ describe('App', () => {
     expect(within(toasts).getByText('Achievement unlocked')).toBeInTheDocument();
     expect(within(toasts).getByText('First swat')).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('buzzkill.achievements') ?? '{}')).toMatchObject({
-      version: 1,
+      version: 2,
       progress: { firstSwat: 1, swatter: 1 },
+      // The moment it was earned, for the merge with an account (#221).
+      unlockedAt: { firstSwat: '2026-11-23T10:00:00.000Z' },
     });
 
     click('Game pauses itself');

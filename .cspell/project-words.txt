@@ -28,10 +28,12 @@ hitbox
 hitboxes
 hypot
 imgproxy
+internetdisconnected
 jetpack
 jsdom
 Jumaniyazova
 kbit
+keepalive
 Kenney
 letterbox
 letterboxed
@@ -43,6 +45,7 @@ mailpit
 miniplex
 movflags
 Nazima
+nosniff
 nvmrc
 panners
 parsererror
@@ -66,11 +69,13 @@ Tallbeard
 Turborepo
 typecheck
 typechecks
+Umami
 unhandledrejection
 unhover
 unrs
 unstub
 valuetext
+Vercel
 visibilitychange
 vite
 vitejs
