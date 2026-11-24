@@ -5,19 +5,23 @@ import {
   dailyDate,
   dailySeed,
   DIFFICULTIES,
+  type Replay,
 } from '@buzzkill/game';
 import { ToastProvider } from '@buzzkill/ui';
 import { type JSX, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { AchievementsScreen } from './AchievementsScreen';
 import { AnnouncerProvider, createAnnouncer } from './announcer';
+import { type RunQueue, submissionBody } from './backend/run-queue';
+import { createRunUploads } from './backend/run-uploads';
 import { EarnedToasts } from './EarnedToasts';
 import { ErrorBoundary } from './ErrorBoundary';
+import { reportError } from './errors/report-error';
 import { ErrorScreen } from './ErrorScreen';
 import { canRumble, findVibrator } from './game/haptics';
 import { importGameChunk } from './game/import-chunk';
 import type { MusicStatus } from './game/music';
-import { seedForRun } from './game/run-options';
+import { GAME_VERSION, seedForRun } from './game/run-options';
 import { createGamepadNavigation } from './gamepad-navigation';
 import { HelpScreen } from './HelpScreen';
 import { HeroSelectScreen } from './HeroSelectScreen';
@@ -63,6 +67,11 @@ interface AppProps {
   readonly settings?: SettingsStore;
   /** The clock, for the day of the daily challenge (#165); a test sets the day. */
   readonly now?: () => Date;
+  /**
+   * The finished runs on their way to the server (#220), or `null` without a backend. The app
+   * makes its own from the build's environment when none is given; a test gives a fake.
+   */
+  readonly runQueue?: Pick<RunQueue, 'add' | 'flush'> | null;
 }
 
 const whole = <T,>(value: T): T => value;
@@ -77,6 +86,23 @@ const ReplayView = lazy(() =>
 
 const reload = (): void => {
   window.location.reload();
+};
+
+/** The queue of this build, or `null` when it has no backend (#220). */
+const browserRunQueue = (): RunQueue | null =>
+  createRunUploads({
+    env: import.meta.env,
+    storage: browserStorage(),
+    fetch: (url, init) => window.fetch(url, init),
+    locks: 'locks' in window.navigator ? window.navigator.locks : undefined,
+    gameVersion: GAME_VERSION,
+  });
+
+/** Sends what waits; a failure of the lock itself is unexpected, as a failure to send is not. */
+const sendWaitingRuns = (queue: Pick<RunQueue, 'flush'>): void => {
+  queue.flush().catch((error: unknown) => {
+    reportError(error, { source: 'shell' });
+  });
 };
 
 /** The way back from a screen or a dialog, for Escape and the gamepad's B button; `null` without one. */
@@ -133,8 +159,12 @@ export function App({
   store: givenStore,
   settings: givenSettings,
   now = systemClock,
+  runQueue: givenRunQueue,
 }: AppProps): JSX.Element {
   const [ownStore] = useState(() => createAppStore());
+  const [runQueue] = useState(() =>
+    givenRunQueue === undefined ? browserRunQueue() : givenRunQueue,
+  );
   const [ownSettings] = useState(() =>
     createSettingsStore(
       loadSettings(browserStorage(), defaultSettings(window.navigator.languages)),
@@ -318,6 +348,33 @@ export function App({
       recordDailyScore(browserStorage(), finished.run.daily, finished.result.score);
     }
   }, [finished]);
+
+  // Every finished run goes to the server through the queue (#220), which keeps it until the
+  // server has it. Back from its replay, the same run comes back on screen: it is queued once.
+  const queuedReplay = useRef<Replay | null>(null);
+  useEffect(() => {
+    if (runQueue === null || finished === null || queuedReplay.current === finished.replay) {
+      return;
+    }
+    queuedReplay.current = finished.replay;
+    runQueue.add(submissionBody(finished, finished.run.speed));
+    sendWaitingRuns(runQueue);
+  }, [finished, runQueue]);
+
+  // What an earlier visit left, and what waited for the network, goes as soon as it can.
+  useEffect(() => {
+    if (runQueue === null) {
+      return;
+    }
+    sendWaitingRuns(runQueue);
+    const onOnline = (): void => {
+      sendWaitingRuns(runQueue);
+    };
+    window.addEventListener('online', onOnline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+    };
+  }, [runQueue]);
 
   const back = (): void => {
     send({ type: 'back' });

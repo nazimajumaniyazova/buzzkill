@@ -754,6 +754,39 @@ describe('App', () => {
     expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
   });
 
+  it('queues each finished run once and sends the queue, then again when back online (#220)', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    window.history.replaceState(null, '', '/?seed=7');
+    const add = vi.fn();
+    const flush = vi.fn(() => Promise.resolve({ stored: [], refused: 0, left: 0 }));
+    render(<App runQueue={{ add, flush }} />);
+    // The runs an earlier visit left go first.
+    expect(flush).toHaveBeenCalledTimes(1);
+    await startRun();
+
+    click('Lose');
+
+    expect(add).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(add.mock.calls[0]?.[0]))).toMatchObject({
+      replay: { seed: 7 },
+      claimed: { score: 42, level: 1, ticks: 600, hash: '0badf00d' },
+      speed: 1,
+    });
+    expect(flush).toHaveBeenCalledTimes(2);
+
+    // Back from its replay, the run is the same one: it is not queued again.
+    click('Watch the replay');
+    await screen.findByText('Replay of seed 7');
+    click('Leave the replay');
+    expect(add).toHaveBeenCalledTimes(1);
+    expect(flush).toHaveBeenCalledTimes(2);
+
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(flush).toHaveBeenCalledTimes(3);
+  });
+
   it('follows the system theme until the player picks one in the settings, then remembers it', () => {
     render(<App />);
     expect(document.documentElement).not.toHaveAttribute('data-theme');
