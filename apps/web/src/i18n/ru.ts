@@ -1,5 +1,6 @@
 import { ACHIEVEMENT_SCORE } from '@buzzkill/game';
 
+import { NICKNAME_LENGTH } from '../backend/nickname';
 import type { Dictionary, Messages } from './en';
 
 /**
@@ -272,6 +273,25 @@ export const ru: Dictionary = (format): Messages => ({
     speed: 'Скорость',
     speedOption: (speed) => `${format.number(speed)}×`,
     over: 'Повтор закончился.',
+  },
+  nickname: {
+    title: 'Ваш ник',
+    description: 'Другие игроки видят его рядом с вашими результатами.',
+    label: 'Ник',
+    rules: `От ${format.number(NICKNAME_LENGTH.min)} до ${format.number(NICKNAME_LENGTH.max)} букв, цифр, точек, дефисов или подчёркиваний, между словами по одному пробелу.`,
+    problems: {
+      'too-short': `В нике не меньше ${format.number(NICKNAME_LENGTH.min)} ${format.plural(NICKNAME_LENGTH.min, { one: 'символа', few: 'символов', many: 'символов', other: 'символа' })}.`,
+      'too-long': `В нике не больше ${format.number(NICKNAME_LENGTH.max)} ${format.plural(NICKNAME_LENGTH.max, { one: 'символа', few: 'символов', many: 'символов', other: 'символа' })}.`,
+      characters:
+        'Используйте только буквы, цифры, точки, дефисы и подчёркивания, между словами по одному пробелу.',
+    },
+    save: 'Сохранить',
+    saving: 'Сохранение…',
+    cancel: 'Отмена',
+    failures: {
+      offline: 'Нет связи, ник не сохранён. Попробуйте позже.',
+      unavailable: 'Сервер не сохранил ник. Попробуйте позже.',
+    },
   },
   announce: {
     levelStart: (level) => `Уровень ${format.number(level)}. Вперёд!`,

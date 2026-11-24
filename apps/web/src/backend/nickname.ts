@@ -16,7 +16,15 @@ export const NICKNAME_PATTERN =
 
 const NICKNAME = new RegExp(NICKNAME_PATTERN, 'u');
 
-type NicknameProblem = 'too-short' | 'too-long' | 'characters';
+/** Why a typed nickname cannot be used. */
+export type NicknameProblem = 'too-short' | 'too-long' | 'characters';
+
+/**
+ * What became of a nickname sent to the backend: saved, or not, because the backend could not be
+ * reached (`offline`) or did not take it (`unavailable`), as the player's sign-in reports them.
+ */
+export type NicknameSaved =
+  { readonly ok: true } | { readonly ok: false; readonly problem: 'offline' | 'unavailable' };
 
 export type NicknameCheck =
   | { readonly ok: true; readonly nickname: string }
