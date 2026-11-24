@@ -124,6 +124,19 @@ module.exports = {
       },
     },
     {
+      name: 'supabase-loads-on-demand',
+      severity: 'error',
+      comment:
+        'The backend never holds up the menu or a run (#222): supabase-js downloads only when ' +
+        'something asks for the client, through the dynamic import in src/backend/client.ts. A ' +
+        'static import would pull it into the main chunk. Types are free.',
+      from: { path: '^apps/web/src/', pathNot: '\\.test\\.tsx?$' },
+      to: {
+        path: 'node_modules/.*@supabase/',
+        dependencyTypesNot: ['type-only', 'dynamic-import'],
+      },
+    },
+    {
       name: 'not-to-test',
       severity: 'error',
       comment: 'Production code must not import tests, stories or test utilities.',

@@ -16,6 +16,7 @@
     "@buzzkill/engine": "workspace:*",
     "@buzzkill/game": "workspace:*",
     "@buzzkill/ui": "workspace:*",
+    "@supabase/supabase-js": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "zod": "catalog:"

@@ -36,6 +36,9 @@ catalog:
   '@codspeed/vitest-plugin': ^6.1.0
   # Runtime validation at trust boundaries: replays (ADR-0009), later settings and the API
   zod: ^4.6.7
+  # The backend's client in the browser (ADR-0007): auth, the REST API and the functions; loaded
+  # on demand, never with the menu
+  '@supabase/supabase-js': ^2.119.2
   # Storybook (#76): stories, docs, the a11y addon and interaction tests through the Vitest
   # addon, which runs stories in Playwright's Chromium (vitest browser mode)
   storybook: ^10.6.6
