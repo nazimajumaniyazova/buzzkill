@@ -1,6 +1,6 @@
 # ADR-0019: Analytics without cookies
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-23
 - **Deciders:** Nazima Jumaniyazova
 
@@ -101,7 +101,11 @@ Option A, Umami Cloud on the free plan, in the EU region:
 
 ## Decision
 
-Waiting for the owner.
+A, Umami Cloud on the free plan, in the EU region, chosen by the owner on 2026-11-24.
+
+The owner creates the account and the website in the EU region. The website id then goes to
+Vercel as an environment variable of production builds only; it is not a secret, since every page
+that sends events carries it.
 
 ## Consequences
 
