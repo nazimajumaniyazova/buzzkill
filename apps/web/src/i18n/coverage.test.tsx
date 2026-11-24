@@ -17,6 +17,7 @@ import { MenuScreen } from '../MenuScreen';
 import { PauseDialog } from '../PauseDialog';
 import { RunOverDialog } from '../RunOverDialog';
 import { SettingsScreen } from '../SettingsScreen';
+import { noAchievements } from '../state/achievements/progress';
 import { createAchievementsStore } from '../state/achievements/store';
 import type { GameLoad } from '../state/game-loader';
 import type { GameAssets } from '../state/machine';
@@ -168,7 +169,7 @@ describe('every text on screen comes from the dictionary', () => {
   });
 
   it('in the achievements, earned and not, and the toast of one earned', () => {
-    const store = createAchievementsStore(noProgress());
+    const store = createAchievementsStore(noAchievements());
     renderMarked(
       <ToastProvider label={marked.t.common.notifications}>
         <AchievementsScreen progress={{ ...noProgress(), firstSwat: 1 }} onBack={vi.fn()} />
@@ -176,7 +177,12 @@ describe('every text on screen comes from the dictionary', () => {
       </ToastProvider>,
     );
     act(() => {
-      store.send({ type: 'counted', progress: noProgress(), earned: ['regicide'] });
+      store.send({
+        type: 'counted',
+        progress: noProgress(),
+        earned: ['regicide'],
+        at: '2026-11-23T10:00:00.000Z',
+      });
     });
 
     expect(screen.getAllByText(/Achievement unlocked/)).not.toHaveLength(0);
