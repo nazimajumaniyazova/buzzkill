@@ -71,6 +71,7 @@ unhover
 unrs
 unstub
 valuetext
+Vercel
 visibilitychange
 vite
 vitejs

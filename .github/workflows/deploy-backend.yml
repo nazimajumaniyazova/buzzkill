@@ -1,0 +1,91 @@
+name: Deploy the backend
+
+# The backend follows the web (ADR-0007, #218): Vercel deploys every commit on main, and this
+# workflow brings the Supabase project to the same commit once CI has passed on it. The migrations
+# go first, so the function never writes to a table it does not have yet.
+#
+# It does nothing until the project exists. The owner sets, in the repository's settings:
+# - the variable SUPABASE_PROJECT_REF, the id in the project's URL;
+# - the secret SUPABASE_ACCESS_TOKEN, a personal access token of the Supabase account;
+# - the secret SUPABASE_DB_PASSWORD, the password of the project's database.
+# The function needs no secret of its own: the platform gives it the project's URL and keys.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, never cancelled halfway through a migration; a newer commit waits.
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+env:
+  HUSKY: 0
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  deploy:
+    name: Deploy the backend
+    # After CI passed on a push to main of this repository, not on a pull request from a fork
+    # whose branch is also called main; or by hand, from main.
+    if: >-
+      vars.SUPABASE_PROJECT_REF != '' && (
+        (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      # The commit CI passed on, not whatever main is by now.
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Node.js, pnpm and dependencies
+        uses: ./.github/actions/setup
+
+      # With the game version of this commit, which the web build of the same commit plays.
+      - name: Bundle the Edge Functions
+        run: pnpm functions:build
+
+      - name: Apply the new migrations
+        run: >-
+          pnpm exec supabase db push
+          --remote="$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
+
+      # Bundled by the platform from the entrypoint and the settings of supabase/config.toml.
+      - name: Deploy the submit-run function
+        run: >-
+          pnpm exec supabase functions deploy submit-run
+          --remote="$SUPABASE_PROJECT_REF" --use-api --yes
+
+      # The function answers the browser's preflight before anything else, without a player.
+      - name: Check that the function answers
+        run: |
+          url="https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/submit-run"
+          for attempt in 1 2 3 4 5 6; do
+            status="$(curl -sS -o /dev/null -w '%{http_code}' -X OPTIONS "$url" || true)"
+            if [ "$status" = "204" ]; then
+              echo "The function answers."
+              exit 0
+            fi
+            echo "Attempt $attempt: $status"
+            sleep 10
+          done
+          echo "::error::The deployed function does not answer its preflight."
+          exit 1

@@ -147,6 +147,18 @@ breaking changes bump the minor version.
 The action runs with the workflow's own `GITHUB_TOKEN`. Tags it creates do not trigger other
 workflows, which is fine: production deploys come from the merge commit on `main`.
 
+## Deploys
+
+Vercel deploys every commit on `main` as the web app, and every pull request as a preview. The
+backend follows once CI has passed on that commit: the workflow `deploy-backend.yml` applies the new
+migrations to the Supabase project, then deploys the submit-run function, bundled from the same
+commit, so it plays the replays of the web build it was deployed with (ADR-0009). A migration
+therefore reaches production the moment its pull request is merged, and must work with the web
+build still running until Vercel serves the new one.
+
+The workflow does nothing until the repository has the variable `SUPABASE_PROJECT_REF` and the
+secrets `SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD`. It can also be run by hand from `main`.
+
 ## Dependencies
 
 Renovate opens update pull requests every Monday, grouped by tool (eslint, vitest, react, …), and
