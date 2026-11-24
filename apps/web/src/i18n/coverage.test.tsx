@@ -14,6 +14,7 @@ import { HelpScreen } from '../HelpScreen';
 import { HeroSelectScreen } from '../HeroSelectScreen';
 import { LoadingScreen } from '../LoadingScreen';
 import { MenuScreen } from '../MenuScreen';
+import { NicknameDialog } from '../NicknameDialog';
 import { PauseDialog } from '../PauseDialog';
 import { RunOverDialog } from '../RunOverDialog';
 import { SettingsScreen } from '../SettingsScreen';
@@ -272,6 +273,15 @@ describe('every text on screen comes from the dictionary', () => {
   it('in the pause dialog', () => {
     renderMarked(<PauseDialog onResume={vi.fn()} onQuit={vi.fn()} />);
 
+    expect(foreignText()).toEqual([]);
+  });
+
+  it('in the nickname dialog, with an error', () => {
+    renderMarked(<NicknameDialog nickname={null} onSave={vi.fn()} onClose={vi.fn()} />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'B' } });
+    fireEvent.submit(screen.getByRole('textbox'));
+
+    expect(screen.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true');
     expect(foreignText()).toEqual([]);
   });
 

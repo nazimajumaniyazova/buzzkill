@@ -142,6 +142,17 @@
   --dialog-border: var(--color-border);
   --dialog-backdrop: var(--color-overlay);
   --dialog-title-size: var(--text-lg);
+  --field-gap: var(--space-stack-sm);
+  --field-padding-block: var(--space-inset-xs);
+  --field-padding-inline: var(--space-inset-sm);
+  --field-radius: var(--radius-control);
+  --field-font-size: var(--text-md);
+  --field-background: var(--color-surface);
+  --field-text: var(--color-text);
+  --field-text-muted: var(--color-text-muted);
+  --field-border: var(--color-border);
+  --field-border-invalid: var(--color-danger);
+  --field-focus-ring: var(--color-focus);
   --menu-padding: var(--space-inset-xs);
   --menu-radius: var(--radius-control);
   --menu-shadow: var(--shadow-raised);

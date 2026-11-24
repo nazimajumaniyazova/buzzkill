@@ -1,0 +1,46 @@
+.field {
+  display: grid;
+  gap: var(--field-gap);
+}
+
+.label {
+  text-align: start;
+}
+
+.description {
+  margin: 0;
+  color: var(--field-text-muted);
+  text-align: start;
+}
+
+.input {
+  min-inline-size: 0;
+  margin: 0;
+  padding-block: var(--field-padding-block);
+  padding-inline: var(--field-padding-inline);
+  border: 1px solid var(--field-border);
+  border-radius: var(--field-radius);
+  font: inherit;
+  font-size: var(--field-font-size);
+  color: var(--field-text);
+  background: var(--field-background);
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--field-focus-ring);
+  outline-offset: 2px;
+}
+
+/* A thicker border too, so the state does not rest on the hue alone. */
+.input[aria-invalid='true'] {
+  border-color: var(--field-border-invalid);
+  border-width: 2px;
+}
+
+.error {
+  margin: 0;
+  padding-inline-start: var(--field-padding-inline);
+  border-inline-start: 2px solid var(--field-border-invalid);
+  color: var(--field-text);
+  text-align: start;
+}
