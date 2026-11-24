@@ -21,6 +21,7 @@ const FOCUSABLE = [
   'Slider/Slider.module.css',
   'Switch/Switch.module.css',
   'Tabs/Tabs.module.css',
+  'TextField/TextField.module.css',
 ];
 
 /** The visible ring: a 2px outline in the component's focus token or the semantic one. */

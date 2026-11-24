@@ -30,6 +30,7 @@ export { Slider, type SliderProps } from './components/Slider/Slider';
 export { Stack, type StackAlign, type StackGap, type StackProps } from './components/Stack/Stack';
 export { Switch, type SwitchProps } from './components/Switch/Switch';
 export { type TabItem, Tabs, type TabsActivation, type TabsProps } from './components/Tabs/Tabs';
+export { TextField, type TextFieldProps } from './components/TextField/TextField';
 export {
   type ToastContextValue,
   type ToastOptions,

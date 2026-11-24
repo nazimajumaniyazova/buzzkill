@@ -8,6 +8,7 @@ import {
   type HeroId,
 } from '@buzzkill/game';
 
+import { NICKNAME_LENGTH, type NicknameProblem } from '../backend/nickname';
 import type { ErrorArea } from '../errors/report-error';
 import type { MotionChoice } from '../motion';
 import type { ThemeChoice } from '../theme';
@@ -340,6 +341,25 @@ function english(format: Format) {
         `Your best: ${format.number(score)}, level ${format.number(level)}.`,
       slower: (speed: number) => `Played at ${format.percent(speed)} speed, so only you see it.`,
       noRecord: 'Your best run of this board appears here once one is stored.',
+    },
+    nickname: {
+      title: 'Your nickname',
+      description: 'Other players see it next to your scores.',
+      label: 'Nickname',
+      rules: `${format.number(NICKNAME_LENGTH.min)} to ${format.number(NICKNAME_LENGTH.max)} letters, digits, dots, dashes or underscores, with one space between words.`,
+      problems: {
+        'too-short': `A nickname has at least ${format.number(NICKNAME_LENGTH.min)} characters.`,
+        'too-long': `A nickname has at most ${format.number(NICKNAME_LENGTH.max)} characters.`,
+        characters:
+          'Use only letters, digits, dots, dashes and underscores, with one space between words.',
+      } satisfies Record<NicknameProblem, string>,
+      save: 'Save',
+      saving: 'Saving…',
+      cancel: 'Cancel',
+      failures: {
+        offline: 'No connection, so the nickname is not saved. Try again later.',
+        unavailable: 'The server did not save the nickname. Try again later.',
+      },
     },
     announce: {
       levelStart: (level: number) => `Level ${format.number(level)}. Go!`,

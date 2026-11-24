@@ -1,4 +1,14 @@
-import { button, dialog, menu, radio, slider, switchControl, tabs, toast } from './components';
+import {
+  button,
+  dialog,
+  field,
+  menu,
+  radio,
+  slider,
+  switchControl,
+  tabs,
+  toast,
+} from './components';
 import { duration, easing, font, layer, palette, radius, shadow, spacing } from './primitives';
 import {
   motion,
@@ -30,7 +40,7 @@ export const tokens = {
     text,
   },
   /** Layer 3: per component, defined over the semantic layer. */
-  components: { button, dialog, menu, switch: switchControl, slider, radio, tabs, toast },
+  components: { button, dialog, field, menu, switch: switchControl, slider, radio, tabs, toast },
   /** Semantic tokens replaced under a user preference (#75); same names, other primitives. */
   preferences,
 } as const;
