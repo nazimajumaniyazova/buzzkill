@@ -27,9 +27,10 @@ export interface GameEvents {
   enemyDestroyed: { readonly x: number; readonly y: number; readonly value: number };
   /**
    * An enemy flew into the hero, or a sting or the boss's charge struck the hero, and took a life;
-   * a shield takes the blow without this event.
+   * a shield takes the blow without this event. `cause` names what struck: the enemy's `id` in the
+   * configuration, `sting` or `charge` (#223). It changes nothing in the simulation.
    */
-  playerHit: { readonly livesLeft: number };
+  playerHit: { readonly livesLeft: number; readonly cause: string };
   /** The hero collected a power-up centered on this point (#151). */
   powerUpCollected: { readonly kind: PowerUpKind; readonly x: number; readonly y: number };
   /** The boss arrived at the right edge with this much health (#152). */

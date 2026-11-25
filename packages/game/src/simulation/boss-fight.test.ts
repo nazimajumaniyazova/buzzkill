@@ -283,7 +283,7 @@ describe('her stings', () => {
     sim.step(IDLE);
 
     expect(sim.state.lives).toBe(4);
-    expect(hit.mock.calls).toEqual([[{ livesLeft: 4 }]]);
+    expect(hit.mock.calls).toEqual([[{ livesLeft: 4, cause: 'sting' }]]);
     expect(world.isAlive(sting)).toBe(false);
   });
 
@@ -386,7 +386,7 @@ describe('her charge', () => {
     expect(world.vx[id]).toBe(-BOSS.charge.speed);
 
     runUntil(sim, inPhase('returning'));
-    expect(hit.mock.calls).toEqual([[{ livesLeft: 4 }]]);
+    expect(hit.mock.calls).toEqual([[{ livesLeft: 4, cause: 'charge' }]]);
     expect(world.prevX[id]).toBe(WORLD.width);
 
     runUntil(sim, inPhase('enraged'));
