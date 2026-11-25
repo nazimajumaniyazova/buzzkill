@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.42.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.41.0...v0.42.0) (2026-11-24)
+
+
+### Features
+
+* **web:** add the dialog where a player picks a nickname ([#255](https://github.com/nazimajumaniyazova/buzzkill/issues/255)) ([16bb904](https://github.com/nazimajumaniyazova/buzzkill/commit/16bb904c4a0b898e30104d894886f2bc6379d79f)), closes [#217](https://github.com/nazimajumaniyazova/buzzkill/issues/217)
+* **web:** send each finished run to submit-run as the player ([#254](https://github.com/nazimajumaniyazova/buzzkill/issues/254)) ([cd2bbc2](https://github.com/nazimajumaniyazova/buzzkill/commit/cd2bbc269d4cf533d4b70f7af4fd48a337afcf3c)), closes [#220](https://github.com/nazimajumaniyazova/buzzkill/issues/220)
+
 ## [0.41.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.40.0...v0.41.0) (2026-11-24)
 
 
