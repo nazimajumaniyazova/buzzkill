@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.44.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.43.0...v0.44.0) (2026-11-26)
+
+
+### Features
+
+* **web:** count the six events of ADR-0019 as the game plays ([#264](https://github.com/nazimajumaniyazova/buzzkill/issues/264)) ([8c87025](https://github.com/nazimajumaniyazova/buzzkill/commit/8c87025e45262b6ac6f69ce70fdd0e5b01f5a759)), closes [#223](https://github.com/nazimajumaniyazova/buzzkill/issues/223)
+* **web:** join the device's achievements with the player's account ([#263](https://github.com/nazimajumaniyazova/buzzkill/issues/263)) ([d054145](https://github.com/nazimajumaniyazova/buzzkill/commit/d054145be39e197c2ba93ae99a3dc3fc13f00b71)), closes [#221](https://github.com/nazimajumaniyazova/buzzkill/issues/221)
+* **web:** tell the player what became of the runs sent ([#262](https://github.com/nazimajumaniyazova/buzzkill/issues/262)) ([849687c](https://github.com/nazimajumaniyazova/buzzkill/commit/849687c8eb0ff158bdbfb4d43a9cefdd3fc222f5)), closes [#222](https://github.com/nazimajumaniyazova/buzzkill/issues/222)
+
 ## [0.43.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.42.0...v0.43.0) (2026-11-26)
 
 
