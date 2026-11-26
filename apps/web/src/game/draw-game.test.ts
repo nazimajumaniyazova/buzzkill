@@ -449,7 +449,7 @@ describe('the screen shake of the run', () => {
     drawer.listen?.(events);
 
     drawer.render(sim.state, 0);
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     drawer.render(sim.state, 0.5);
 
     expect(cameras[0]).toEqual(IDENTITY_CAMERA);
@@ -587,7 +587,7 @@ describe('hit-stop', () => {
     const drawer = createGameDrawer(renderer, SPRITES, { ...options, now: () => now });
     drawer.listen?.(events);
 
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     drawer.render(sim.state, 0);
     now = 30;
     sim.state.tick += 2;

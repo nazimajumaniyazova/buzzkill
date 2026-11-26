@@ -289,7 +289,7 @@ function collisionSystem(state: GameState): void {
     if (overlaps(state, player, enemy)) {
       world.kill(enemy);
       spawnExplosion(state, enemy);
-      hurtHero(state);
+      hurtHero(state, state.enemies[world.variant[enemy] as number]?.id ?? 'enemy');
       continue;
     }
     for (let j = 0; j < world.count; j += 1) {
@@ -337,13 +337,13 @@ const headX = (state: GameState, projectile: EntityId): number =>
 const headY = (state: GameState, projectile: EntityId): number =>
   (state.world.y[projectile] as number) + (state.world.height[projectile] as number) * 0.5;
 
-/** A blow to the hero: a life, unless a shield takes it. */
-function hurtHero(state: GameState): void {
+/** A blow to the hero by `cause`: a life, unless a shield takes it. */
+function hurtHero(state: GameState, cause: string): void {
   if (state.shieldTicks > 0) {
     return;
   }
   state.lives = livesAfterHit(state.lives);
-  state.events.emit('playerHit', { livesLeft: state.lives });
+  state.events.emit('playerHit', { livesLeft: state.lives, cause });
 }
 
 /**
@@ -368,12 +368,12 @@ function bossCollisionSystem(state: GameState): void {
       overlaps(state, player, sting)
     ) {
       world.kill(sting);
-      hurtHero(state);
+      hurtHero(state, 'sting');
     }
   }
   if (boss.phase === 'charging' && !boss.struck && overlaps(state, player, id)) {
     boss.struck = true;
-    hurtHero(state);
+    hurtHero(state, 'charge');
   }
   for (let index = 0; index < world.count && (world.health[id] as number) > 0; index += 1) {
     const shot = world.at(index);

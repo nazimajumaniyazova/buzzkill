@@ -45,7 +45,7 @@ describe('createShakeEffects', () => {
 
   it('shakes on a hit on the hero, within the reach of its trauma squared', () => {
     shake.advance(0);
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
 
     const camera = shake.advance(0);
     expect(camera).not.toEqual(IDENTITY_CAMERA);
@@ -68,7 +68,7 @@ describe('createShakeEffects', () => {
 
   it('settles back to still as the trauma drains, faster than a second for a hit', () => {
     shake.advance(0);
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
 
     let time = 0;
     while (shake.advance(time) !== IDENTITY_CAMERA && time < 600) {
@@ -95,7 +95,7 @@ describe('createShakeEffects', () => {
     enabled = false;
 
     expect(shake.advance(1)).toEqual(IDENTITY_CAMERA);
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     enabled = true;
     expect(shake.advance(2)).toEqual(IDENTITY_CAMERA);
   });
@@ -103,7 +103,7 @@ describe('createShakeEffects', () => {
   it('does not shake at all while motion is reduced', () => {
     reduced = true;
     shake.advance(0);
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     expect(shake.advance(0)).toEqual(IDENTITY_CAMERA);
 
     events.emit('bossDefeated', { x: 1, y: 2, value: 60 });
