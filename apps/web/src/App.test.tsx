@@ -12,6 +12,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
+import type { Analytics } from './analytics/analytics';
 import { App } from './App';
 import type { AchievementSync } from './backend/achievement-sync';
 import { reportError } from './errors/report-error';
@@ -753,6 +754,34 @@ describe('App', () => {
     click('Watch the replay');
     click('Leave the replay');
     expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
+  });
+
+  it('counts the start of each run, a daily run and a replay watched (#223)', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    window.history.replaceState(null, '', '/?seed=7');
+    const track = vi.fn<Analytics['track']>();
+    render(<App analytics={{ track }} />);
+
+    await startRun();
+    expect(track.mock.calls).toEqual([
+      ['game_start', { difficulty: 'normal', hero: 'male', slower: false }],
+    ]);
+
+    click('Lose');
+    click('Watch the replay');
+    await screen.findByText('Replay of seed 7');
+    expect(track).toHaveBeenLastCalledWith('replay_watched', {});
+    click('Leave the replay');
+
+    track.mockClear();
+    click('Back to menu');
+    click('Daily challenge');
+    click('Start');
+    await gameView();
+    expect(track.mock.calls).toEqual([
+      ['game_start', { difficulty: 'normal', hero: 'male', slower: false }],
+      ['daily_played', {}],
+    ]);
   });
 
   it('queues each finished run once and sends the queue, then again when back online (#220)', async () => {
