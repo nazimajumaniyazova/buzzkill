@@ -1,11 +1,12 @@
 import type { Difficulty } from '@buzzkill/game';
 import { Button, Stack, type TabItem, Tabs } from '@buzzkill/ui';
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type JSX, useId, useState } from 'react';
 
 import { type Board, BOARD_SIZE, type BoardRow, type BoardsSource } from '../backend/boards';
 import { noonOf } from '../i18n/format';
 import { useI18n } from '../i18n/i18n';
+import { NicknameDialog } from '../NicknameDialog';
 
 const DIFFICULTIES = ['easy', 'normal', 'hard'] as const satisfies readonly Difficulty[];
 
@@ -162,6 +163,51 @@ function BoardPanel({ source, board, caption, onWatch }: BoardPanelProps): JSX.E
 }
 
 /**
+ * The player's nickname under the boards (#217), and the dialog that picks it. Only a player, who
+ * has sent a run, has one to pick. A saved nickname makes the boards read again, so the player's
+ * rows show it at once.
+ */
+function NicknamePanel({ source }: { readonly source: BoardsSource }): JSX.Element | null {
+  const { t } = useI18n();
+  const queryClient = useQueryClient();
+  const [picking, setPicking] = useState(false);
+  const profile = useQuery({ queryKey: ['profile'], queryFn: () => source.profile() });
+
+  if (!profile.isSuccess || profile.data === null) {
+    return null;
+  }
+  const { nickname } = profile.data;
+  return (
+    <Stack gap="sm" align="center">
+      <p>{nickname === null ? t.boards.noNicknameYet : t.boards.nicknameIs(nickname)}</p>
+      <Button
+        variant="secondary"
+        onClick={() => {
+          setPicking(true);
+        }}
+      >
+        {nickname === null ? t.boards.pickNickname : t.boards.changeNickname}
+      </Button>
+      {picking && (
+        <NicknameDialog
+          nickname={nickname}
+          onSave={async (picked) => {
+            const saved = await source.saveNickname(picked);
+            if (saved.ok) {
+              await queryClient.invalidateQueries();
+            }
+            return saved;
+          }}
+          onClose={() => {
+            setPicking(false);
+          }}
+        />
+      )}
+    </Stack>
+  );
+}
+
+/**
  * The `boards` panel of the menu (#220): the top runs of each difficulty and of today's daily
  * challenge, and the player's own record of each. It downloads as a chunk of its own, with
  * TanStack Query, when the player opens it; the menu never waits for it.
@@ -204,6 +250,7 @@ export function BoardsScreen({
               panel('today', t.boards.dailyCaption(BOARD_SIZE, noonOf(today))),
             ]}
           />
+          <NicknamePanel source={source} />
           <Button variant="secondary" onClick={onBack}>
             {t.common.back}
           </Button>

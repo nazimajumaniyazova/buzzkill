@@ -4,6 +4,8 @@ import * as z from 'zod/mini';
 
 import type { Backend } from './client';
 import type { Database } from './database.gen';
+import type { NicknameSaved } from './nickname';
+import { fetchNickname, saveNickname } from './profile';
 
 /** How many runs a board shows. */
 export const BOARD_SIZE = 10;
@@ -137,16 +139,27 @@ interface PersonalRecord {
   readonly best: PersonalBest | null;
 }
 
+/** The player of this browser and the nickname the boards show for them (#217). */
+interface PlayerProfile {
+  readonly userId: string;
+  readonly nickname: string | null;
+}
+
 /** What the boards screen reads, as promises a query can wait for; a failure rejects. */
 export interface BoardsSource {
   board(board: Board): Promise<BoardRow[]>;
   personalBest(board: Board): Promise<PersonalRecord>;
+  /** The player's profile, or `null` before a run of theirs was ever sent. */
+  profile(): Promise<PlayerProfile | null>;
+  /** Saves the player's nickname; a browser without a player cannot. Never rejects. */
+  saveNickname(nickname: string): Promise<NicknameSaved>;
 }
 
 /**
  * The boards of `backend`. The record reads the session this browser already has and never starts
  * one: looking at the boards does not make anyone a player (#217). Without a session there is no
- * record, and nothing is asked of the backend for it.
+ * record and no profile, and nothing is asked of the backend for them; a nickname cannot be
+ * picked either, since runs make a player and a nickname alone does not.
  */
 export function boardsSourceOf(backend: Pick<Backend, 'client' | 'player'>): BoardsSource {
   return {
@@ -161,6 +174,28 @@ export function boardsSourceOf(backend: Pick<Backend, 'client' | 'player'>): Boa
       }
       const best = await fetchPersonalBest(await backend.client(), session.userId, board);
       return { userId: session.userId, best };
+    },
+    profile: async () => {
+      const session = await backend.player.session();
+      if (!session.ok) {
+        if (session.problem === 'signed-out') {
+          return null;
+        }
+        throw new Error(`the player could not be read: ${session.problem}`);
+      }
+      const nickname = await fetchNickname(await backend.client(), session.userId);
+      return { userId: session.userId, nickname };
+    },
+    saveNickname: async (nickname) => {
+      try {
+        const session = await backend.player.session();
+        if (!session.ok) {
+          return { ok: false, problem: session.problem === 'offline' ? 'offline' : 'unavailable' };
+        }
+        return await saveNickname(await backend.client(), session.userId, nickname);
+      } catch {
+        return { ok: false, problem: 'offline' };
+      }
     },
   };
 }
