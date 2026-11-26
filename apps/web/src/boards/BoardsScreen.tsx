@@ -19,6 +19,8 @@ export interface BoardsScreenProps {
   readonly today: string;
   /** The difficulty of the player's settings, whose board opens first. */
   readonly difficulty: Difficulty;
+  /** Opens the replay of a run (#219); without it, the boards offer none. */
+  readonly onWatch?: (runId: string) => void;
   readonly onBack: () => void;
   /** The cache of the boards; the screen makes its own when none is given. */
   readonly queryClient?: QueryClient;
@@ -53,10 +55,11 @@ interface BoardPanelProps {
   readonly source: BoardsSource;
   readonly board: Board;
   readonly caption: string;
+  readonly onWatch: ((runId: string) => void) | undefined;
 }
 
 /** One board: its table of the top runs, and the player's own record under it. */
-function BoardPanel({ source, board, caption }: BoardPanelProps): JSX.Element {
+function BoardPanel({ source, board, caption, onWatch }: BoardPanelProps): JSX.Element {
   const { t, format } = useI18n();
   const runs = useQuery({
     queryKey: ['board', ...keyOf(board)],
@@ -104,6 +107,7 @@ function BoardPanel({ source, board, caption }: BoardPanelProps): JSX.Element {
             <th scope="col">{t.boards.columns.player}</th>
             <th scope="col">{t.boards.columns.score}</th>
             <th scope="col">{t.boards.columns.level}</th>
+            {onWatch !== undefined && <th scope="col">{t.boards.columns.replay}</th>}
           </tr>
         </thead>
         <tbody>
@@ -113,6 +117,21 @@ function BoardPanel({ source, board, caption }: BoardPanelProps): JSX.Element {
               <td>{playerName(row)}</td>
               <td>{format.number(row.score)}</td>
               <td>{format.number(row.level)}</td>
+              {onWatch !== undefined && (
+                <td>
+                  {/* The label names the player: a list of buttons all named Watch says nothing. */}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    aria-label={t.boards.watchRun(playerName(row))}
+                    onClick={() => {
+                      onWatch(row.id);
+                    }}
+                  >
+                    {t.boards.watch}
+                  </Button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -197,6 +216,7 @@ export function BoardsScreen({
   source,
   today,
   difficulty,
+  onWatch,
   onBack,
   queryClient,
 }: BoardsScreenProps): JSX.Element {
@@ -207,7 +227,9 @@ export function BoardsScreen({
   const panel = (tab: BoardTab, caption: string): TabItem<BoardTab> => ({
     value: tab,
     label: tab === 'today' ? t.boards.today : t.settings.difficulties[tab],
-    panel: <BoardPanel source={source} board={boardOf(tab, today)} caption={caption} />,
+    panel: (
+      <BoardPanel source={source} board={boardOf(tab, today)} caption={caption} onWatch={onWatch} />
+    ),
   });
 
   return (

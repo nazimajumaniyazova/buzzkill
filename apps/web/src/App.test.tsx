@@ -6,6 +6,7 @@ import {
   dailySeed,
   type GameMode,
   type Replay,
+  REPLAY_FORMAT_VERSION,
   type RunResult,
 } from '@buzzkill/game';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -15,6 +16,7 @@ import { axe } from 'vitest-axe';
 import type { Analytics } from './analytics/analytics';
 import { App } from './App';
 import type { AchievementSync } from './backend/achievement-sync';
+import type { StoredReplay } from './backend/replays';
 import { reportError } from './errors/report-error';
 import { importGameChunk } from './game/import-chunk';
 import type { GameAssetsResult } from './game/load-assets';
@@ -815,6 +817,71 @@ describe('App', () => {
       window.dispatchEvent(new Event('online'));
     });
     expect(flush).toHaveBeenCalledTimes(3);
+  });
+
+  it('watches a run of the boards, says why it cannot, tries again and goes back (#219)', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    const RUN_ID = '11111111-1111-4111-8111-111111111111';
+    const stored: Replay = {
+      formatVersion: REPLAY_FORMAT_VERSION,
+      gameVersion: 'test',
+      seed: 31,
+      heroId: 'female',
+      mode: 'night',
+      difficulty: 'hard',
+      daily: null,
+      inputs: [],
+    };
+    const fetchReplay = vi
+      .fn<(runId: string) => Promise<StoredReplay>>()
+      .mockResolvedValueOnce({ ok: false, problem: 'offline' })
+      .mockResolvedValueOnce({ ok: true, replay: stored });
+    const store = createAppStore({ name: 'menu', panel: 'boards' });
+    const track = vi.fn<Analytics['track']>();
+    render(<App store={store} backend={null} fetchReplay={fetchReplay} analytics={{ track }} />);
+
+    act(() => {
+      store.send({ type: 'watchRun', runId: RUN_ID });
+    });
+    expect(screen.getByText('Loading the replay…')).toHaveAttribute('role', 'status');
+    // The address is the replay's link, to share it.
+    expect(window.location.pathname).toBe(`/replay/${RUN_ID}`);
+
+    expect(
+      await screen.findByText(
+        'The replay cannot be loaded right now. Check the connection and try again.',
+      ),
+    ).toBeInTheDocument();
+    click('Try again');
+
+    // The game loads while the replay comes, then the replay plays at its time of day.
+    expect(await screen.findByText('Replay of seed 31')).toBeInTheDocument();
+    expect(fetchReplay.mock.calls).toEqual([[RUN_ID], [RUN_ID]]);
+    // Counted once it plays, not for the failed try (#223).
+    expect(track.mock.calls).toEqual([['replay_watched', {}]]);
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night');
+
+    click('Leave the replay');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Boards' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+  });
+
+  it('opens the replay of its link at /replay/:runId, and goes back to the main menu (#219)', async () => {
+    const RUN_ID = '33333333-3333-4333-8333-333333333333';
+    window.history.replaceState(null, '', `/replay/${RUN_ID}`);
+    const fetchReplay = vi
+      .fn<(runId: string) => Promise<StoredReplay>>()
+      .mockResolvedValue({ ok: false, problem: 'not-found' });
+    render(<App backend={null} fetchReplay={fetchReplay} />);
+
+    expect(await screen.findByText('This run is no longer on the boards.')).toBeInTheDocument();
+    expect(fetchReplay).toHaveBeenCalledExactlyOnceWith(RUN_ID);
+    // A run that is gone stays gone: nothing to try again.
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+
+    click('Back');
+    expect(heading('Buzzkill')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
   });
 
   it("joins the account's achievements on load and after a run is stored, and Sam follows (#221)", async () => {
