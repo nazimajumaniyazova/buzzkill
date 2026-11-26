@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { App } from './App';
+import type { AchievementSync } from './backend/achievement-sync';
 import { reportError } from './errors/report-error';
 import { importGameChunk } from './game/import-chunk';
 import type { GameAssetsResult } from './game/load-assets';
@@ -785,6 +786,45 @@ describe('App', () => {
       window.dispatchEvent(new Event('online'));
     });
     expect(flush).toHaveBeenCalledTimes(3);
+  });
+
+  it("joins the account's achievements on load and after a run is stored, and Sam follows (#221)", async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    const QUEEN_FELL = '2026-11-20T10:00:00.000Z';
+    const sync = vi
+      .fn<AchievementSync>()
+      .mockResolvedValueOnce({
+        kind: 'merged',
+        account: [{ id: 'regicide', unlockedAt: QUEEN_FELL }],
+      })
+      .mockResolvedValue({ kind: 'failed' });
+    const flush = vi
+      .fn<() => Promise<{ stored: string[]; refused: number; left: number }>>()
+      .mockResolvedValueOnce({ stored: [], refused: 0, left: 0 })
+      .mockResolvedValue({ stored: ['run-1'], refused: 0, left: 0 });
+    render(<App runQueue={{ add: vi.fn(), flush }} achievementSync={sync} />);
+
+    await waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('buzzkill.achievements') ?? '{}')).toMatchObject({
+        progress: { regicide: 1 },
+        unlockedAt: { regicide: QUEEN_FELL },
+      });
+    });
+    expect(sync).toHaveBeenCalledTimes(1);
+
+    // The account had beaten the queen, so this device unlocks Sam too (#164).
+    click('Play');
+    expect(screen.getByRole('radio', { name: 'Sam' })).toBeEnabled();
+    click('Start');
+    await gameView();
+    click('Lose');
+
+    // The run reached the server, so there is a player: the achievements go along.
+    await waitFor(() => {
+      expect(sync).toHaveBeenCalledTimes(2);
+    });
+    expect(sync.mock.calls[1]?.[0].unlockedAt).toEqual({ regicide: QUEEN_FELL });
+    expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
   });
 
   it('opens the boards from the menu in a build with a backend, and goes back (#220)', async () => {

@@ -12,6 +12,7 @@ import { type JSX, lazy, Suspense, useCallback, useEffect, useRef, useState } fr
 
 import { AchievementsScreen } from './AchievementsScreen';
 import { AnnouncerProvider, createAnnouncer } from './announcer';
+import { type AchievementSync, createAchievementSync } from './backend/achievement-sync';
 import { type Backend, createBackend } from './backend/client';
 import { backendConfig } from './backend/config';
 import { type RunQueue, submissionBody } from './backend/run-queue';
@@ -80,6 +81,11 @@ interface AppProps {
    * makes its own from the build's environment when none is given; a test gives a fake.
    */
   readonly runQueue?: Pick<RunQueue, 'add' | 'flush'> | null;
+  /**
+   * The sync of the device's achievements with the player's account (#221), or `null` without a
+   * backend. The app makes its own from the backend when none is given; a test gives a fake.
+   */
+  readonly achievementSync?: AchievementSync | null;
 }
 
 const whole = <T,>(value: T): T => value;
@@ -120,11 +126,21 @@ const browserRunQueue = (backend: Backend | null): RunQueue | null =>
     gameVersion: GAME_VERSION,
   });
 
-/** Sends what waits; a failure of the lock itself is unexpected, as a failure to send is not. */
-const sendWaitingRuns = (queue: Pick<RunQueue, 'flush'>): void => {
-  queue.flush().catch((error: unknown) => {
-    reportError(error, { source: 'shell' });
-  });
+/**
+ * Sends what waits; a failure of the lock itself is unexpected, as a failure to send is not. A
+ * send that stored runs had a player, so `onStored` follows it with what needs one.
+ */
+const sendWaitingRuns = (queue: Pick<RunQueue, 'flush'>, onStored: () => void): void => {
+  queue.flush().then(
+    (report) => {
+      if (report.stored.length > 0) {
+        onStored();
+      }
+    },
+    (error: unknown) => {
+      reportError(error, { source: 'shell' });
+    },
+  );
 };
 
 /** The way back from a screen or a dialog, for Escape and the gamepad's B button; `null` without one. */
@@ -183,11 +199,19 @@ export function App({
   now = systemClock,
   backend: givenBackend,
   runQueue: givenRunQueue,
+  achievementSync: givenAchievementSync,
 }: AppProps): JSX.Element {
   const [ownStore] = useState(() => createAppStore());
   const [backend] = useState(() => (givenBackend === undefined ? browserBackend() : givenBackend));
   const [runQueue] = useState(() =>
     givenRunQueue === undefined ? browserRunQueue(backend) : givenRunQueue,
+  );
+  const [achievementSync] = useState(() =>
+    givenAchievementSync !== undefined
+      ? givenAchievementSync
+      : backend === null
+        ? null
+        : createAchievementSync(backend),
   );
   const [ownSettings] = useState(() =>
     createSettingsStore(
@@ -225,6 +249,28 @@ export function App({
       }),
     [achievements],
   );
+
+  // The device's achievements and the account's become one set (#221): on load, when this
+  // browser already has a player, and after each send that stored runs. Without a network the
+  // device keeps its own, and the next sync sends them.
+  const syncAchievements = useCallback(() => {
+    if (achievementSync === null) {
+      return;
+    }
+    achievementSync(achievements.getState()).then(
+      (outcome) => {
+        if (outcome.kind === 'merged') {
+          achievements.send({ type: 'merged', account: outcome.account });
+        }
+      },
+      (error: unknown) => {
+        reportError(error, { source: 'shell' });
+      },
+    );
+  }, [achievementSync, achievements]);
+  useEffect(() => {
+    syncAchievements();
+  }, [syncAchievements]);
 
   // The theme of the page (#75): the player's setting on the menus, the time of day on screen
   // while a run is there, so the HUD and the dialogs match the sky as the levels change it.
@@ -382,23 +428,23 @@ export function App({
     }
     queuedReplay.current = finished.replay;
     runQueue.add(submissionBody(finished, finished.run.speed));
-    sendWaitingRuns(runQueue);
-  }, [finished, runQueue]);
+    sendWaitingRuns(runQueue, syncAchievements);
+  }, [finished, runQueue, syncAchievements]);
 
   // What an earlier visit left, and what waited for the network, goes as soon as it can.
   useEffect(() => {
     if (runQueue === null) {
       return;
     }
-    sendWaitingRuns(runQueue);
+    sendWaitingRuns(runQueue, syncAchievements);
     const onOnline = (): void => {
-      sendWaitingRuns(runQueue);
+      sendWaitingRuns(runQueue, syncAchievements);
     };
     window.addEventListener('online', onOnline);
     return () => {
       window.removeEventListener('online', onOnline);
     };
-  }, [runQueue]);
+  }, [runQueue, syncAchievements]);
 
   const back = (): void => {
     send({ type: 'back' });

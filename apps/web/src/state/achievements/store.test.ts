@@ -56,4 +56,51 @@ describe('createAchievementsStore', () => {
     store.send({ type: 'counted', progress: queen, earned: ['firstSwat', 'regicide'], at: LATER });
     expect(store.getState().unlockedAt).toEqual({ firstSwat: FIRST, regicide: LATER });
   });
+
+  it("joins the account's achievements, merged with what the device has now (#221)", () => {
+    const store = createAchievementsStore({
+      progress: { ...noProgress(), swatter: 3, firstSwat: 1 },
+      unlockedAt: { firstSwat: LATER },
+    });
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    store.send({
+      type: 'merged',
+      account: [
+        { id: 'firstSwat', unlockedAt: FIRST },
+        { id: 'regicide', unlockedAt: LATER },
+      ],
+    });
+
+    expect(store.getState()).toEqual({
+      progress: { ...noProgress(), swatter: 3, firstSwat: 1, regicide: 1 },
+      unlockedAt: { firstSwat: FIRST, regicide: LATER },
+      // Nothing was earned here: the account had it already.
+      earned: { ids: [], serial: 0 },
+    });
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    // The same account again changes nothing.
+    store.send({ type: 'merged', account: [{ id: 'regicide', unlockedAt: LATER }] });
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps what a merge brought while a run counts from the progress it started with', () => {
+    const store = createAchievementsStore(noAchievements());
+    // The run starts from no progress; meanwhile the account brings the queen's defeat.
+    store.send({ type: 'merged', account: [{ id: 'regicide', unlockedAt: FIRST }] });
+
+    const run = { ...noProgress(), swatter: 1, regicide: 1 };
+    store.send({ type: 'counted', progress: run, earned: ['regicide'], at: LATER });
+
+    expect(store.getState().progress).toEqual({ ...noProgress(), swatter: 1, regicide: 1 });
+    expect(store.getState().unlockedAt).toEqual({ regicide: FIRST });
+    // It was unlocked already, so no toast tells of it again.
+    expect(store.getState().earned).toEqual({ ids: [], serial: 0 });
+
+    const lower = { ...noProgress(), swatter: 0 };
+    store.send({ type: 'counted', progress: lower, earned: [], at: LATER });
+    expect(store.getState().progress).toMatchObject({ swatter: 1, regicide: 1 });
+  });
 });
