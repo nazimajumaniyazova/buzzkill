@@ -19,6 +19,8 @@ import {
 } from '@buzzkill/game';
 import { type JSX, useEffect, useRef, useState } from 'react';
 
+import type { Analytics } from './analytics/analytics';
+import { followRunAnalytics } from './analytics/run-analytics';
 import { useAnnounce } from './announcer';
 import { announceRun } from './game/announce-run';
 import { createGameDrawer } from './game/draw-game';
@@ -66,6 +68,8 @@ interface GameViewProps {
     progress: AchievementProgress,
     earned: readonly AchievementId[],
   ) => void;
+  /** Counts what happens in the run (ADR-0019); counts nothing when not given. */
+  readonly track?: Analytics['track'];
   /**
    * The machine shows the screen between levels. The game holds itself on a cleared level; when
    * this turns false again, the next level starts (ADR-0017).
@@ -74,6 +78,9 @@ interface GameViewProps {
   /** Where the game's own reports go: the pause, the resume and the end of the run. */
   readonly onEvent: (event: GameEvent) => void;
 }
+
+/** Analytics for a view given none: tests, and builds that count nothing. */
+const ignoreEvent: Analytics['track'] = () => undefined;
 
 /**
  * The canvas and one run of the game on it. The effect that the run keys creates everything the
@@ -103,6 +110,7 @@ export function GameView({
   vibration,
   achievements,
   onAchievements,
+  track = ignoreEvent,
   betweenLevels,
   onEvent,
 }: GameViewProps): JSX.Element {
@@ -128,6 +136,7 @@ export function GameView({
   const onEventRef = useRef(onEvent);
   const achievementsRef = useRef(achievements);
   const onAchievementsRef = useRef(onAchievements);
+  const trackRef = useRef(track);
   const [crash, setCrash] = useState<{ readonly error: unknown } | null>(null);
 
   useEffect(() => {
@@ -217,6 +226,14 @@ export function GameView({
               },
             });
           },
+          (events) => {
+            followRunAnalytics(events, {
+              slower: run.speed < 1,
+              track: (name, data) => {
+                trackRef.current(name, data);
+              },
+            });
+          },
         ],
         audio: createGameAudio(assets.audio, {
           random: () => soundRng.nextFloat(),
@@ -287,6 +304,10 @@ export function GameView({
     achievementsRef.current = achievements;
     onAchievementsRef.current = onAchievements;
   }, [achievements, onAchievements]);
+
+  useEffect(() => {
+    trackRef.current = track;
+  }, [track]);
 
   // The bridge: what the game reports becomes events of the machine.
   useEffect(() => (game === null ? undefined : connectGame(game, onEvent)), [game, onEvent]);
