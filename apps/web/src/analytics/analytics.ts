@@ -51,8 +51,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const NOTHING: Analytics = { track: () => undefined };
 
-/** The website id of a production build, or `null`: only production counts (ADR-0019). */
-function websiteIdOf(env: Readonly<Record<string, unknown>>): string | null {
+/**
+ * The website id of a production build, or `null`: only production counts (ADR-0019). The build's
+ * content security policy asks the same question.
+ */
+export function websiteIdOf(env: Readonly<Record<string, unknown>>): string | null {
   const id = env['VITE_UMAMI_WEBSITE_ID'];
   if (typeof id !== 'string') {
     return null;
