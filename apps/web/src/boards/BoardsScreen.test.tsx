@@ -74,6 +74,43 @@ describe('BoardsScreen', () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it('offers to watch each run, named by its player, when it can (#219)', async () => {
+    const onWatch = vi.fn();
+    const { container } = render(
+      <BoardsScreen
+        source={{
+          board: () => Promise.resolve([row(1, 'Bob'), row(2, null), row(3, 'Ann', ME)]),
+          personalBest: () => Promise.resolve({ userId: ME, best: null }),
+        }}
+        today="2026-11-24"
+        difficulty="normal"
+        onWatch={onWatch}
+        onBack={vi.fn()}
+        queryClient={testClient()}
+      />,
+    );
+
+    const table = await screen.findByRole('table', { name: 'Top 10, Normal' });
+    expect(
+      within(table)
+        .getAllByRole('columnheader')
+        .map((th) => th.textContent),
+    ).toEqual(['Place', 'Player', 'Score', 'Level', 'Replay']);
+    expect(
+      within(table)
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label')),
+    ).toEqual([
+      'Watch the run of Bob',
+      'Watch the run of A player without a nickname',
+      'Watch the run of Ann (you)',
+    ]);
+
+    fireEvent.click(within(table).getByRole('button', { name: 'Watch the run of Ann (you)' }));
+    expect(onWatch).toHaveBeenCalledExactlyOnceWith('run-3');
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
   it('shows the run waiting to be sent in its place, over the stored one it beats (#220)', async () => {
     const { container } = render(
       <BoardsScreen
@@ -83,6 +120,7 @@ describe('BoardsScreen', () => {
         }}
         today="2026-11-24"
         difficulty="normal"
+        onWatch={vi.fn()}
         waiting={[
           { board: { mode: 'classic', difficulty: 'normal' }, score: 950, level: 6, speed: 1 },
         ]}
@@ -96,10 +134,13 @@ describe('BoardsScreen', () => {
     const rows = within(table).getAllByRole('row').slice(1);
     expect(rows.map((tr) => tr.textContent)).toEqual([
       '1Your run, waiting to be sent9506',
-      '2Bob9003',
-      '3A player without a nickname7003',
+      '2Bob9003Watch',
+      '3A player without a nickname7003Watch',
     ]);
     expect(rows[0]).toHaveAttribute('data-mine', 'true');
+    // Not on the server yet: nothing to watch on its row, while the others have their button.
+    expect(within(rows[0] as HTMLElement).queryByRole('button')).toBeNull();
+    expect(within(table).getAllByRole('button')).toHaveLength(2);
     expect(await axe(container)).toHaveNoViolations();
   });
 

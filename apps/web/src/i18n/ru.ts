@@ -274,6 +274,15 @@ export const ru: Dictionary = (format): Messages => ({
     speed: 'Скорость',
     speedOption: (speed) => `${format.number(speed)}×`,
     over: 'Повтор закончился.',
+    loading: 'Загружаем повтор…',
+    problems: {
+      'not-found': 'Этой игры больше нет в таблицах.',
+      offline: 'Повтор сейчас не загрузить. Проверьте соединение и попробуйте ещё раз.',
+      unreadable: 'Этот повтор не прочитать.',
+      'other-version':
+        'Эта игра сыграна в другой версии, которая играет иначе, поэтому её не посмотреть.',
+    },
+    retry: 'Повторить',
   },
   boards: {
     title: 'Рекорды',
@@ -282,7 +291,9 @@ export const ru: Dictionary = (format): Messages => ({
     today: 'Сегодня',
     caption: (size, difficulty) => `Топ-${format.number(size)}: ${difficulty}`,
     dailyCaption: (size, date) => `Топ-${format.number(size)} за ${format.date(date)}`,
-    columns: { place: 'Место', player: 'Игрок', score: 'Счёт', level: 'Уровень' },
+    columns: { place: 'Место', player: 'Игрок', score: 'Счёт', level: 'Уровень', replay: 'Повтор' },
+    watch: 'Смотреть',
+    watchRun: (name) => `Смотреть игру: ${name}`,
     noNickname: 'Игрок без ника',
     you: (name) => `${name} (вы)`,
     loading: 'Загружаем таблицу…',

@@ -25,6 +25,7 @@ import { createAchievementsStore } from '../state/achievements/store';
 import type { GameLoad } from '../state/game-loader';
 import type { GameAssets } from '../state/machine';
 import { DEFAULT_SETTINGS } from '../state/settings/schema';
+import { StoredReplayScreen } from '../StoredReplayScreen';
 import { UploadToasts } from '../UploadToasts';
 import { en, type Messages } from './en';
 import { createI18n, I18nProvider, LANGUAGE_NAMES } from './i18n';
@@ -309,6 +310,7 @@ describe('every text on screen comes from the dictionary', () => {
         waiting={[
           { board: { mode: 'classic', difficulty: 'normal' }, score: 990, level: 4, speed: 1 },
         ]}
+        onWatch={vi.fn()}
         onBack={vi.fn()}
       />,
     );
@@ -317,6 +319,23 @@ describe('every text on screen comes from the dictionary', () => {
     await screen.findByText(/950/);
 
     expect(foreignText()).toEqual([]);
+  });
+
+  it('in the wait for a stored replay, and each reason it cannot be watched (#219)', () => {
+    const view = renderMarked(
+      <StoredReplayScreen problem={null} onRetry={vi.fn()} onBack={vi.fn()} />,
+    );
+    expect(foreignText()).toEqual([]);
+
+    for (const problem of ['not-found', 'offline', 'unreadable', 'other-version'] as const) {
+      view.rerender(
+        <I18nProvider i18n={marked}>
+          <StoredReplayScreen problem={problem} onRetry={vi.fn()} onBack={vi.fn()} />
+        </I18nProvider>,
+      );
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(foreignText()).toEqual([]);
+    }
   });
 
   it('in the pause dialog', () => {
