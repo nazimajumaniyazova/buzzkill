@@ -159,6 +159,85 @@ build still running until Vercel serves the new one.
 The workflow does nothing until the repository has the variable `SUPABASE_PROJECT_REF` and the
 secrets `SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD`. It can also be run by hand from `main`.
 
+### Setting up the hosted services
+
+The owner does this once, in the order below; everything is on free plans. Until it is done,
+production plays without a backend and counts nothing, as previews and development do.
+
+**1. The Supabase project** (#214).
+
+1. Create a project on supabase.com, in a region near the players. Keep its database password: it
+   becomes the secret `SUPABASE_DB_PASSWORD`.
+2. Note the project's reference, the subdomain of its URL `https://<ref>.supabase.co`.
+3. In **Authentication → Sign In / Providers**:
+   - turn on anonymous sign-ins: a player gets an anonymous session when they send a first run;
+   - turn on manual linking (beta), which linking GitHub (#217) needs.
+4. Under **Settings → API Keys**, or in the project's **Connect** dialog, copy the publishable key,
+   `sb_publishable_…`. It is safe in a browser, since Row Level Security guards every table. Never
+   give the web app the secret key: it bypasses Row Level Security, and `backendConfig` refuses a
+   key that starts with `sb_secret_`.
+5. Create a personal access token at
+   [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens). It
+   becomes the secret `SUPABASE_ACCESS_TOKEN`.
+
+The submit-run function needs no secret of ours. Supabase gives a deployed function its project's
+URL and keys (`SUPABASE_URL`, `SUPABASE_SECRET_KEYS`), and `supabaseConfigFromEnv` reads them.
+
+**2. The GitHub repository.** Open **Settings → Secrets and variables → Actions**.
+
+1. Add the variable `SUPABASE_PROJECT_REF` with the project's reference, as a **repository**
+   variable. The workflow reads it in its job's `if`, before the job's environment exists, so a
+   variable of the `production` environment would not be seen.
+2. Add the secrets `SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD`, to the repository or to
+   the `production` environment.
+3. Run **Deploy the backend** by hand from `main`, under Actions. It applies every migration,
+   deploys submit-run and waits until the function answers. From then on it runs after CI passes
+   on `main`.
+
+**3. Vercel.** In the project's **Settings → Environment Variables**, add these for
+**Production** only:
+
+- `VITE_SUPABASE_URL`: `https://<ref>.supabase.co`;
+- `VITE_SUPABASE_PUBLISHABLE_KEY`: the publishable key.
+
+A preview with them would send its runs to the production database. Redeploy production
+afterwards: Vite writes the variables into the build.
+
+Then check production:
+
+- a finished run reaches the boards;
+- `/replay/<a run's id>` opens the replay rather than a 404;
+- the built page's `connect-src` names the Supabase project.
+
+**4. GitHub sign-in** (#217), for linking an anonymous player to a GitHub account.
+
+1. Register an OAuth app at [github.com/settings/developers](https://github.com/settings/developers):
+   - the homepage is the production site;
+   - the authorization callback URL is `https://<ref>.supabase.co/auth/v1/callback`.
+2. In Supabase, under **Authentication → Sign In / Providers → GitHub**:
+   - turn it on;
+   - enter the app's client ID and client secret;
+   - save.
+3. In **Authentication → URL Configuration**, set the site URL to the production site, where a
+   link returns.
+
+**5. Umami Cloud** (ADR-0019).
+
+1. Sign up at umami.is and pick the **EU** data region during setup. The region cannot be changed
+   afterwards without Umami's support.
+2. Under **Websites → Add website**, add the site:
+   - the name is free;
+   - the domain is production's.
+3. Copy the website ID: it is in the tracking code that **Edit** shows for the website.
+4. In Vercel, add `VITE_UMAMI_WEBSITE_ID` for **Production** only, and redeploy.
+
+The game sends its events to `https://gateway.umami.is/api/send`, the host Umami's documentation
+names for Umami Cloud. It names no other host for the EU region, whose choice applies to where the
+data is stored.
+
+A free Supabase project pauses after a week of low activity. Until it wakes, the boards say they
+are offline and the runs wait in the queue.
+
 ## Dependencies
 
 Renovate opens update pull requests every Monday, grouped by tool (eslint, vitest, react, …), and
