@@ -234,7 +234,7 @@ describe('power-ups', () => {
     addEnemy(sim, 30, 110, 3);
     sim.step(IDLE);
     expect(sim.state.lives).toBe(4);
-    expect(hits).toHaveBeenCalledExactlyOnceWith({ livesLeft: 4 });
+    expect(hits).toHaveBeenCalledExactlyOnceWith({ livesLeft: 4, cause: 'day-1' });
   });
 
   it('start the time of a shield over when another is collected, without adding them up', () => {
