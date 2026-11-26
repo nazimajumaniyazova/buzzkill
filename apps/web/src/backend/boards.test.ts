@@ -151,6 +151,37 @@ describe('boardsSourceOf', () => {
     expect(signIn).not.toHaveBeenCalled();
   });
 
+  it("reads and saves the player's nickname, and has none without a session (#217)", async () => {
+    const { client, asked } = clientAnswering(() => json([{ nickname: 'Ann' }]));
+    const signIn = vi.fn();
+    const source = boardsSourceOf({
+      client: () => Promise.resolve(client),
+      player: {
+        session: () => Promise.resolve({ ok: true, token: 'token-1', userId: ROW.user_id }),
+        signIn,
+      },
+    });
+    await expect(source.profile()).resolves.toEqual({ userId: ROW.user_id, nickname: 'Ann' });
+    expect(asked().map((url) => url.pathname)).toEqual(['/rest/v1/profiles']);
+
+    const signedOut = clientAnswering(() => json([]));
+    const nobody = boardsSourceOf({
+      client: () => Promise.resolve(signedOut.client),
+      player: {
+        session: () => Promise.resolve({ ok: false, problem: 'signed-out' }),
+        signIn,
+      },
+    });
+    await expect(nobody.profile()).resolves.toBeNull();
+    // A nickname needs a player, and picking one never makes one: runs do (#217).
+    await expect(nobody.saveNickname('Ann')).resolves.toEqual({
+      ok: false,
+      problem: 'unavailable',
+    });
+    expect(signedOut.asked()).toEqual([]);
+    expect(signIn).not.toHaveBeenCalled();
+  });
+
   it('has no record without a session, and asks the backend nothing for it', async () => {
     const { client, asked } = clientAnswering(() => json([]));
     const source = boardsSourceOf({

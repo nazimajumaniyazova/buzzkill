@@ -303,6 +303,8 @@ describe('every text on screen comes from the dictionary', () => {
               userId: 'me',
               best: { id: 'a', userId: 'me', score: 950, level: 3, createdAt: '', speed: 75 },
             }),
+          profile: () => Promise.resolve({ userId: 'me', nickname: null }),
+          saveNickname: vi.fn(),
         }}
         today="2026-11-24"
         difficulty="normal"
@@ -311,6 +313,7 @@ describe('every text on screen comes from the dictionary', () => {
     );
     await screen.findByRole('table');
     await screen.findByText(/950/);
+    await screen.findByRole('button', { name: '⟦Pick a nickname⟧' });
 
     expect(foreignText()).toEqual([]);
   });

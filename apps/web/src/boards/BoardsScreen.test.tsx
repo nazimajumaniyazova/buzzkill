@@ -32,10 +32,19 @@ const best = (speed: number): PersonalBest => ({
 const testClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
 
-function renderScreen(source: BoardsSource, onBack = vi.fn()) {
+/** A player who never sent a run: no profile, and no nickname to pick. */
+const NO_PROFILE = {
+  profile: () => Promise.resolve(null),
+  saveNickname: () => Promise.resolve({ ok: false, problem: 'unavailable' } as const),
+};
+
+function renderScreen(
+  source: Omit<BoardsSource, keyof typeof NO_PROFILE> & Partial<BoardsSource>,
+  onBack = vi.fn(),
+) {
   return render(
     <BoardsScreen
-      source={source}
+      source={{ ...NO_PROFILE, ...source }}
       today="2026-11-24"
       difficulty="normal"
       onBack={onBack}
@@ -72,6 +81,48 @@ describe('BoardsScreen', () => {
     ).toEqual(['Place', 'Player', 'Score', 'Level']);
     expect(await screen.findByText('Your best: 1,234, level 5.')).toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it('lets a player pick a nickname, then shows it on the boards (#217)', async () => {
+    let nickname: string | null = null;
+    const board = vi.fn(() => Promise.resolve([row(1, nickname, ME)]));
+    const saveNickname = vi.fn((name: string) => {
+      nickname = name;
+      return Promise.resolve({ ok: true } as const);
+    });
+    const { container } = renderScreen({
+      board,
+      personalBest: () => Promise.resolve({ userId: ME, best: null }),
+      profile: () => Promise.resolve({ userId: ME, nickname }),
+      saveNickname,
+    });
+
+    expect(await screen.findByText('You have no nickname yet.')).toBeInTheDocument();
+    expect(await axe(container)).toHaveNoViolations();
+    fireEvent.click(screen.getByRole('button', { name: 'Pick a nickname' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Your nickname' });
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Nickname' }), {
+      target: { value: 'Ann' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('Your nickname: Ann.')).toBeInTheDocument();
+    expect(saveNickname).toHaveBeenCalledExactlyOnceWith('Ann');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // The boards read again, with the new name.
+    expect(await screen.findByText('Ann (you)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change the nickname' })).toBeInTheDocument();
+  });
+
+  it('offers no nickname to a player who never sent a run', async () => {
+    renderScreen({
+      board: () => Promise.resolve([row(1, 'Bob')]),
+      personalBest: () => Promise.resolve({ userId: null, best: null }),
+    });
+
+    await screen.findByRole('table');
+    expect(screen.queryByRole('button', { name: /nickname/ })).toBeNull();
   });
 
   it("shows today's board of the daily challenge on its tab", async () => {
