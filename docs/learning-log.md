@@ -396,3 +396,75 @@ repository grew from 969 to 1460._
   file, 2,352,154, so the loop keeps its length; the AAC copy weighs 0.87 MB. The music takes 1,658
   of its 3,000 kB, the images and sounds stayed at 967 kB, and the main chunk stayed at 101.31 kB
   gzip. The AAC copy has not yet been heard in a browser that needs it, such as Safari.
+
+## Stage 8 — Backend
+
+_The code of the stage was complete on 2026-11-28, before the hosted Supabase project and the
+Umami account exist: the deploy, the GitHub link and the balancing numbers wait for them. The three
+answers are the owner's; the STAR drafts below are facts gathered from the pull requests of the
+stage (#224 to #269): 34 pull requests and 10 releases (v0.35.0 to v0.44.0) over nine days, and
+the tests of the repository grew from 1460 to 1831._
+
+### What did I learn?
+
+### What was hard?
+
+### What would I do differently?
+
+### STAR stories
+
+#### ADR-0007: The backend
+
+- **Situation:** The plan's stage 8 gives the game boards of verified records: a record counts only
+  when the server plays its replay again with the same `@buzzkill/game` as the browser and finds
+  the same score and state hash (ADR-0009). The plan named Supabase, Firebase and an API of our own
+  on Cloudflare Workers. A full campaign of 16,386 ticks took 125 to 187 ms of CPU in a fresh Node
+  process on the owner's laptop, and a run cannot be cut short from outside.
+- **Task:** Choose a backend whose function can play a whole run within its CPU limit, with SQL
+  migrations, Row Level Security, generated types and anonymous accounts that can be linked to
+  GitHub later.
+- **Action:** Of the three options, the owner chose Supabase on the free plan (2026-11-20): 2 s of
+  CPU per request on every plan, against 10 ms on the free plan of Workers and a card for
+  Firebase. The work that followed:
+  - `packages/server` verifies a submitted run by playing it again. It refuses a stale game
+    version, a daily run of a day other than today or yesterday and a run past 15 minutes, and logs a run that plays to
+    another result as suspicious.
+  - The submit-run Edge Function is an esbuild bundle of it. The game version is the release plus
+    a hash of the simulation's sources, so the browser and the function prove they play the same
+    code.
+  - The database has versioned migrations and Row Level Security in which only the function writes
+    a run, an hour of play per hour per player (429 beyond it), nickname rules shared with the
+    client, a view of each player's best run per board and a function that merges achievements.
+    pgTAP tests them in CI, and a smoke test plays runs through the function on a local stack.
+  - The client loads supabase-js on demand, starts an anonymous session only when a run is sent,
+    and queues runs in `localStorage` until the server has them. It reads the boards with TanStack
+    Query in a chunk of their own, and plays any stored replay, also from its link.
+- **Result:** Measured as wall-clock time in a fresh process, the campaign plays again in 50 to
+  60 ms and the longest allowed run in about 0.18 s, a tenth of the 2 s limit. The game stays
+  fully playable offline and signed out, which an end-to-end test checks with every request to
+  the backend blocked. The main chunk grew from 101.3 kB to 110.4 kB gzipped, as Vite reports it,
+  against a budget of 150 kB; supabase-js (57.8 kB gzipped) and the boards (13 kB) download only
+  when they are used. The deploy
+  workflow is unproven until the owner creates the hosted project.
+
+#### ADR-0019: Analytics without cookies
+
+- **Situation:** To balance the game, the project needs to know where players lose, without
+  cookies or personal data. The plan named Plausible and Umami, each in the cloud or self-hosted.
+  The game reported a blow to the hero, but not what struck it, and the page had no content
+  security policy.
+- **Task:** Count six aggregated events, with the level and the cause of a death, send nothing
+  under Do Not Track or Global Privacy Control, and allow the analytics domain and nothing more.
+- **Action:** Of three options (Umami Cloud's free plan, Plausible's Business plan at $19 a month,
+  counters of our own in Supabase), the owner chose Umami Cloud in the EU region (2026-11-24).
+  - Each event is one `fetch` from the game's own code, with no script of another site and no
+    cookie. The website id exists only in production builds, and both privacy signals are read
+    once when the page starts.
+  - `playerHit` gained its cause, an enemy's id, a sting or the queen's charge, without changing
+    the simulation or the golden replays.
+  - The build writes a `connect-src` policy into the page from its own environment: its origin,
+    its Supabase project and the Umami host. It is a meta tag rather than a header, as an amendment
+    of 2026-11-25 explains, and an end-to-end test plays a run under it.
+- **Result:** The analytics module and its wiring cost 0.5 kB gzipped in the main chunk. The README
+  says what is counted and that nothing personal is. The balancing section waits for the account
+  and its first numbers.
