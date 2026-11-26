@@ -46,8 +46,10 @@ import {
   type AppState,
   type AppStore,
   createAppStore,
+  initialStateFor,
   isRunState,
   type MenuPanel,
+  replayPath,
   type RunChoice,
 } from './state/machine';
 import { defaultSettings } from './state/settings/schema';
@@ -227,7 +229,8 @@ export function App({
   runQueue: givenRunQueue,
   fetchReplay: givenFetchReplay,
 }: AppProps): JSX.Element {
-  const [ownStore] = useState(() => createAppStore());
+  // The page opens where its address says: the replay of a run at its link (#219).
+  const [ownStore] = useState(() => createAppStore(initialStateFor(window.location.pathname)));
   const [backend] = useState(() => (givenBackend === undefined ? browserBackend() : givenBackend));
   const [runQueue] = useState(() =>
     givenRunQueue === undefined ? browserRunQueue(backend) : givenRunQueue,
@@ -320,6 +323,16 @@ export function App({
       send({ type: 'gameLoaded', assets: gameLoad.assets });
     }
   }, [waitsForGame, gameLoad, send]);
+
+  // The address is the link of the stored replay on screen, to share it, and the root anywhere
+  // else (#219). It replaces the entry rather than adding one: the shell has no history to go
+  // back through.
+  const path = state.name === 'storedReplay' ? replayPath(state.runId) : '/';
+  useEffect(() => {
+    if (window.location.pathname !== path) {
+      window.history.replaceState(window.history.state, '', `${path}${window.location.search}`);
+    }
+  }, [path]);
 
   // The replay of a run of the boards is fetched while the game loads, if it has not (#219). An
   // answer for a run no longer on screen is ignored by the machine.

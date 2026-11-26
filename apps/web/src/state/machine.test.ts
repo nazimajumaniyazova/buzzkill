@@ -11,6 +11,7 @@ import {
   type AppState,
   type GameAssets,
   initialState,
+  initialStateFor,
   isRunState,
   type Run,
   transition,
@@ -101,7 +102,12 @@ const states = {
   victory,
   gameOver,
   watching: { name: 'watching', assets, run, time: 'day', finished: gameOver },
-  storedReplay: { name: 'storedReplay', runId: RUN_ID, load: { status: 'fetching' } },
+  storedReplay: {
+    name: 'storedReplay',
+    runId: RUN_ID,
+    from: 'boards',
+    load: { status: 'fetching' },
+  },
   failed: { name: 'failed' },
 } satisfies Record<AppState['name'], AppState>;
 
@@ -116,16 +122,19 @@ const watchingVictory: AppState = { ...states.watching, finished: victory };
 const failedReplay: AppState = {
   name: 'storedReplay',
   runId: RUN_ID,
+  from: 'boards',
   load: { status: 'failed', problem: 'offline' },
 };
 const fetchedReplay: AppState = {
   name: 'storedReplay',
   runId: RUN_ID,
+  from: 'boards',
   load: { status: 'fetched', replay },
 };
 const readyReplay: AppState = {
   name: 'storedReplay',
   runId: RUN_ID,
+  from: 'boards',
   load: { status: 'ready', replay, assets, time: 'day' },
 };
 
@@ -431,6 +440,7 @@ describe('a stored run of the boards (#219)', () => {
     expect(ready).toEqual({
       name: 'storedReplay',
       runId: RUN_ID,
+      from: 'boards',
       load: { status: 'ready', replay, assets: otherAssets, time: replay.mode },
     });
 
@@ -461,6 +471,24 @@ describe('a stored run of the boards (#219)', () => {
     expect(transition(states.storedReplay, { ...events.replayFailed, runId: other })).toBe(
       states.storedReplay,
     );
+  });
+
+  it('opens from its link at /replay/:runId, and goes back to the main menu', () => {
+    const linked = initialStateFor(`/replay/${RUN_ID}`);
+    expect(linked).toEqual({ ...states.storedReplay, from: 'link' });
+    expect(initialStateFor(`/replay/${RUN_ID}/`)).toEqual(linked);
+
+    // After a failure, trying again keeps where the replay came from.
+    const failed = transition(linked, events.replayFailed);
+    expect(transition(failed, events.watchRun)).toEqual(linked);
+
+    expect(transition(linked, events.back)).toEqual(initialState);
+  });
+
+  it('starts on the main menu at any other address', () => {
+    for (const path of ['/', '/replay', '/replay/', '/replay/not-a-run', `/replay/${RUN_ID}/x`]) {
+      expect(initialStateFor(path)).toBe(initialState);
+    }
   });
 
   it('waits for the replay before the game: a loaded game alone starts nothing', () => {
