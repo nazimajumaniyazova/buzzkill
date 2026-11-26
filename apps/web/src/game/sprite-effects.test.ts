@@ -64,7 +64,7 @@ describe('createSpriteEffects', () => {
 
   it('flashes the hero when hit, and the queen when a shot strikes her', () => {
     const queen = add(Kind.boss);
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     events.emit('bossHit', { healthLeft: 10, x: 900, y: 300 });
     frame(50);
 
@@ -113,7 +113,7 @@ describe('createSpriteEffects', () => {
 
   it('flashes softer while motion is reduced', () => {
     reduced = true;
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     frame(10);
 
     expect(effects.flash(sim.state, sim.state.player, 10)).toBe(FLASH.reducedAmount);
@@ -128,7 +128,7 @@ describe('createSpriteEffects', () => {
     frame(11);
     expect(effects.flash(sim.state, insect, 11)).toBe(0);
 
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     frame(12);
     flashes = true;
     frame(13);
