@@ -787,6 +787,35 @@ describe('App', () => {
     expect(flush).toHaveBeenCalledTimes(3);
   });
 
+  it('tells the player what became of the runs sent, and never shows an error screen (#222)', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    window.history.replaceState(null, '', '/?seed=7');
+    const flush = vi
+      .fn<() => Promise<{ stored: string[]; refused: number; left: number }>>()
+      // An earlier visit left two runs, and the network is back.
+      .mockResolvedValueOnce({ stored: ['run-1', 'run-2'], refused: 0, left: 0 })
+      // The server refuses one, and the run just played waits.
+      .mockResolvedValueOnce({ stored: [], refused: 1, left: 1 });
+    render(<App runQueue={{ add: vi.fn(), flush }} />);
+
+    // Each toast is read out in the live region too, so its words are on the page twice.
+    expect(await screen.findAllByText('Sent 2 runs that waited for the network.')).not.toHaveLength(
+      0,
+    );
+
+    await startRun();
+    click('Lose');
+
+    expect(await screen.findAllByText('Run kept on this device')).not.toHaveLength(0);
+    expect(
+      screen.getAllByText('It goes to the boards once the game reaches the server.'),
+    ).not.toHaveLength(0);
+    expect(
+      screen.getAllByText('The server could not confirm a run, so it is not on the boards.'),
+    ).not.toHaveLength(0);
+    expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
+  });
+
   it('opens the boards from the menu in a build with a backend, and goes back (#220)', async () => {
     const backend = {
       config: { url: 'https://abcdefghijklmnopqrst.supabase.co', key: 'sb_publishable_0123' },
