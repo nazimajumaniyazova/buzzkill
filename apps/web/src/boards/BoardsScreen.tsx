@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tan
 import { type JSX, useId, useState } from 'react';
 
 import { type Board, BOARD_SIZE, type BoardRow, type BoardsSource } from '../backend/boards';
+import { rowsWithWaiting, sameBoard, type WaitingRun } from '../backend/waiting-runs';
 import { noonOf } from '../i18n/format';
 import { useI18n } from '../i18n/i18n';
 import { NicknameDialog } from '../NicknameDialog';
@@ -12,6 +13,8 @@ const DIFFICULTIES = ['easy', 'normal', 'hard'] as const satisfies readonly Diff
 
 type BoardTab = Difficulty | 'today';
 
+const NONE_WAITING: readonly WaitingRun[] = [];
+
 export interface BoardsScreenProps {
   /** Where the boards come from: the backend, or a fake in a test. */
   readonly source: BoardsSource;
@@ -19,6 +22,8 @@ export interface BoardsScreenProps {
   readonly today: string;
   /** The difficulty of the player's settings, whose board opens first. */
   readonly difficulty: Difficulty;
+  /** The player's runs still in the queue (#220), shown where the server will rank them. */
+  readonly waiting?: readonly WaitingRun[];
   /** Opens the replay of a run (#219); without it, the boards offer none. */
   readonly onWatch?: (runId: string) => void;
   readonly onBack: () => void;
@@ -55,11 +60,12 @@ interface BoardPanelProps {
   readonly source: BoardsSource;
   readonly board: Board;
   readonly caption: string;
+  readonly waiting: readonly WaitingRun[];
   readonly onWatch: ((runId: string) => void) | undefined;
 }
 
 /** One board: its table of the top runs, and the player's own record under it. */
-function BoardPanel({ source, board, caption, onWatch }: BoardPanelProps): JSX.Element {
+function BoardPanel({ source, board, caption, waiting, onWatch }: BoardPanelProps): JSX.Element {
   const { t, format } = useI18n();
   const runs = useQuery({
     queryKey: ['board', ...keyOf(board)],
@@ -95,9 +101,10 @@ function BoardPanel({ source, board, caption, onWatch }: BoardPanelProps): JSX.E
         </Button>
       </Stack>
     );
-  } else if (runs.data.length === 0) {
+  } else if (runs.data.length === 0 && !waiting.some((run) => sameBoard(run.board, board))) {
     table = <p>{t.boards.empty}</p>;
   } else {
+    const shown = rowsWithWaiting(runs.data, waiting, board, me);
     table = (
       <table className="board">
         <caption>{caption}</caption>
@@ -111,29 +118,40 @@ function BoardPanel({ source, board, caption, onWatch }: BoardPanelProps): JSX.E
           </tr>
         </thead>
         <tbody>
-          {runs.data.map((row, index) => (
-            <tr key={row.id} data-mine={row.userId === me}>
-              <td>{format.number(index + 1)}</td>
-              <td>{playerName(row)}</td>
-              <td>{format.number(row.score)}</td>
-              <td>{format.number(row.level)}</td>
-              {onWatch !== undefined && (
-                <td>
-                  {/* The label names the player: a list of buttons all named Watch says nothing. */}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    aria-label={t.boards.watchRun(playerName(row))}
-                    onClick={() => {
-                      onWatch(row.id);
-                    }}
-                  >
-                    {t.boards.watch}
-                  </Button>
-                </td>
-              )}
-            </tr>
-          ))}
+          {shown.map((item, index) =>
+            item.waiting ? (
+              // Not on the server yet, so it has no id, and no replay to watch.
+              <tr key="waiting" data-mine>
+                <td>{format.number(index + 1)}</td>
+                <td>{t.boards.waitingRun}</td>
+                <td>{format.number(item.score)}</td>
+                <td>{format.number(item.level)}</td>
+                {onWatch !== undefined && <td />}
+              </tr>
+            ) : (
+              <tr key={item.row.id} data-mine={item.row.userId === me}>
+                <td>{format.number(index + 1)}</td>
+                <td>{playerName(item.row)}</td>
+                <td>{format.number(item.row.score)}</td>
+                <td>{format.number(item.row.level)}</td>
+                {onWatch !== undefined && (
+                  <td>
+                    {/* The label names the player: a list of buttons all named Watch says nothing. */}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      aria-label={t.boards.watchRun(playerName(item.row))}
+                      onClick={() => {
+                        onWatch(item.row.id);
+                      }}
+                    >
+                      {t.boards.watch}
+                    </Button>
+                  </td>
+                )}
+              </tr>
+            ),
+          )}
         </tbody>
       </table>
     );
@@ -216,6 +234,7 @@ export function BoardsScreen({
   source,
   today,
   difficulty,
+  waiting = NONE_WAITING,
   onWatch,
   onBack,
   queryClient,
@@ -228,7 +247,13 @@ export function BoardsScreen({
     value: tab,
     label: tab === 'today' ? t.boards.today : t.settings.difficulties[tab],
     panel: (
-      <BoardPanel source={source} board={boardOf(tab, today)} caption={caption} onWatch={onWatch} />
+      <BoardPanel
+        source={source}
+        board={boardOf(tab, today)}
+        caption={caption}
+        waiting={waiting}
+        onWatch={onWatch}
+      />
     ),
   });
 

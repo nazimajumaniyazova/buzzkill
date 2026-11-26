@@ -309,11 +309,15 @@ describe('every text on screen comes from the dictionary', () => {
         }}
         today="2026-11-24"
         difficulty="normal"
+        waiting={[
+          { board: { mode: 'classic', difficulty: 'normal' }, score: 990, level: 4, speed: 1 },
+        ]}
         onWatch={vi.fn()}
         onBack={vi.fn()}
       />,
     );
     await screen.findByRole('table');
+    await screen.findByText('⟦Your run, waiting to be sent⟧');
     await screen.findByText(/950/);
     await screen.findByRole('button', { name: '⟦Pick a nickname⟧' });
 
