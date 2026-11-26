@@ -293,6 +293,7 @@ export const ru: Dictionary = (format): Messages => ({
       `Ваш рекорд: ${format.number(score)}, уровень ${format.number(level)}.`,
     slower: (speed) => `Сыгран на скорости ${format.percent(speed)}, поэтому виден только вам.`,
     noRecord: 'Ваша лучшая игра в этой таблице появится здесь, когда она будет сохранена.',
+    waitingRun: 'Ваша игра, ждёт отправки',
   },
   uploads: {
     kept: 'Игра сохранена на этом устройстве',

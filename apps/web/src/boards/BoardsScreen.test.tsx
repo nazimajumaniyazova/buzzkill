@@ -74,6 +74,35 @@ describe('BoardsScreen', () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it('shows the run waiting to be sent in its place, over the stored one it beats (#220)', async () => {
+    const { container } = render(
+      <BoardsScreen
+        source={{
+          board: () => Promise.resolve([row(1, 'Bob'), row(2, 'Ann', ME), row(3, null)]),
+          personalBest: () => Promise.resolve({ userId: ME, best: null }),
+        }}
+        today="2026-11-24"
+        difficulty="normal"
+        waiting={[
+          { board: { mode: 'classic', difficulty: 'normal' }, score: 950, level: 6, speed: 1 },
+        ]}
+        onBack={vi.fn()}
+        queryClient={testClient()}
+      />,
+    );
+
+    const table = await screen.findByRole('table', { name: 'Top 10, Normal' });
+    await screen.findByText('Your run, waiting to be sent');
+    const rows = within(table).getAllByRole('row').slice(1);
+    expect(rows.map((tr) => tr.textContent)).toEqual([
+      '1Your run, waiting to be sent9506',
+      '2Bob9003',
+      '3A player without a nickname7003',
+    ]);
+    expect(rows[0]).toHaveAttribute('data-mine', 'true');
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
   it("shows today's board of the daily challenge on its tab", async () => {
     const board = vi.fn((_board: Board) => Promise.resolve([row(1, 'Bob')]));
     renderScreen({

@@ -4,12 +4,15 @@ import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-quer
 import { type JSX, useId, useState } from 'react';
 
 import { type Board, BOARD_SIZE, type BoardRow, type BoardsSource } from '../backend/boards';
+import { rowsWithWaiting, sameBoard, type WaitingRun } from '../backend/waiting-runs';
 import { noonOf } from '../i18n/format';
 import { useI18n } from '../i18n/i18n';
 
 const DIFFICULTIES = ['easy', 'normal', 'hard'] as const satisfies readonly Difficulty[];
 
 type BoardTab = Difficulty | 'today';
+
+const NONE_WAITING: readonly WaitingRun[] = [];
 
 export interface BoardsScreenProps {
   /** Where the boards come from: the backend, or a fake in a test. */
@@ -18,6 +21,8 @@ export interface BoardsScreenProps {
   readonly today: string;
   /** The difficulty of the player's settings, whose board opens first. */
   readonly difficulty: Difficulty;
+  /** The player's runs still in the queue (#220), shown where the server will rank them. */
+  readonly waiting?: readonly WaitingRun[];
   readonly onBack: () => void;
   /** The cache of the boards; the screen makes its own when none is given. */
   readonly queryClient?: QueryClient;
@@ -52,10 +57,11 @@ interface BoardPanelProps {
   readonly source: BoardsSource;
   readonly board: Board;
   readonly caption: string;
+  readonly waiting: readonly WaitingRun[];
 }
 
 /** One board: its table of the top runs, and the player's own record under it. */
-function BoardPanel({ source, board, caption }: BoardPanelProps): JSX.Element {
+function BoardPanel({ source, board, caption, waiting }: BoardPanelProps): JSX.Element {
   const { t, format } = useI18n();
   const runs = useQuery({
     queryKey: ['board', ...keyOf(board)],
@@ -91,9 +97,10 @@ function BoardPanel({ source, board, caption }: BoardPanelProps): JSX.Element {
         </Button>
       </Stack>
     );
-  } else if (runs.data.length === 0) {
+  } else if (runs.data.length === 0 && !waiting.some((run) => sameBoard(run.board, board))) {
     table = <p>{t.boards.empty}</p>;
   } else {
+    const shown = rowsWithWaiting(runs.data, waiting, board, me);
     table = (
       <table className="board">
         <caption>{caption}</caption>
@@ -106,14 +113,24 @@ function BoardPanel({ source, board, caption }: BoardPanelProps): JSX.Element {
           </tr>
         </thead>
         <tbody>
-          {runs.data.map((row, index) => (
-            <tr key={row.id} data-mine={row.userId === me}>
-              <td>{format.number(index + 1)}</td>
-              <td>{playerName(row)}</td>
-              <td>{format.number(row.score)}</td>
-              <td>{format.number(row.level)}</td>
-            </tr>
-          ))}
+          {shown.map((item, index) =>
+            item.waiting ? (
+              // Not on the server yet, so it has no id: the queue sends it when it can.
+              <tr key="waiting" data-mine>
+                <td>{format.number(index + 1)}</td>
+                <td>{t.boards.waitingRun}</td>
+                <td>{format.number(item.score)}</td>
+                <td>{format.number(item.level)}</td>
+              </tr>
+            ) : (
+              <tr key={item.row.id} data-mine={item.row.userId === me}>
+                <td>{format.number(index + 1)}</td>
+                <td>{playerName(item.row)}</td>
+                <td>{format.number(item.row.score)}</td>
+                <td>{format.number(item.row.level)}</td>
+              </tr>
+            ),
+          )}
         </tbody>
       </table>
     );
@@ -151,6 +168,7 @@ export function BoardsScreen({
   source,
   today,
   difficulty,
+  waiting = NONE_WAITING,
   onBack,
   queryClient,
 }: BoardsScreenProps): JSX.Element {
@@ -161,7 +179,9 @@ export function BoardsScreen({
   const panel = (tab: BoardTab, caption: string): TabItem<BoardTab> => ({
     value: tab,
     label: tab === 'today' ? t.boards.today : t.settings.difficulties[tab],
-    panel: <BoardPanel source={source} board={boardOf(tab, today)} caption={caption} />,
+    panel: (
+      <BoardPanel source={source} board={boardOf(tab, today)} caption={caption} waiting={waiting} />
+    ),
   });
 
   return (

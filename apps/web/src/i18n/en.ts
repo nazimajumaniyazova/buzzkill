@@ -341,6 +341,7 @@ function english(format: Format) {
         `Your best: ${format.number(score)}, level ${format.number(level)}.`,
       slower: (speed: number) => `Played at ${format.percent(speed)} speed, so only you see it.`,
       noRecord: 'Your best run of this board appears here once one is stored.',
+      waitingRun: 'Your run, waiting to be sent',
     },
     uploads: {
       kept: 'Run kept on this device',
