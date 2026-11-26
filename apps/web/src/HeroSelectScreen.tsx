@@ -11,6 +11,7 @@ import {
 import { Button, Inline, RadioGroup, type RadioOption, Stack } from '@buzzkill/ui';
 import { type JSX, type SubmitEvent, useId, useState } from 'react';
 
+import { noonOf } from './i18n/format';
 import { labelled, useI18n } from './i18n/i18n';
 import type { RunChoice } from './state/machine';
 
@@ -26,15 +27,6 @@ interface HeroSelectScreenProps {
 // The keys of the configuration are the hero ids, in the order the screen lists them.
 const HERO_IDS = Object.keys(HEROES) as HeroId[];
 const MODES = ['day', 'night'] as const satisfies readonly GameMode[];
-
-/**
- * The UTC date `YYYY-MM-DD` as a moment the language writes as that date in any time zone: noon of
- * that day, local time.
- */
-function noonOf(date: string): Date {
-  const [year = 0, month = 1, day = 1] = date.split('-').map(Number);
-  return new Date(year, month - 1, day, 12);
-}
 
 /**
  * The `heroSelect` state: the hero and the time of day, then Start. For the daily run (#165) the

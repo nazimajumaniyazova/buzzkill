@@ -22,6 +22,8 @@ describe('createBackend', () => {
     const load = vi.fn(() => Promise.resolve(module));
     const backend = createBackend(config, load);
     expect(load).not.toHaveBeenCalled();
+    // The sender of runs needs the project's URL and key too (#220).
+    expect(backend.config).toEqual(config);
 
     const [first, second] = await Promise.all([backend.client(), backend.client()]);
 

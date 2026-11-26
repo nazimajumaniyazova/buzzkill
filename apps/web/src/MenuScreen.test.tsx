@@ -33,6 +33,33 @@ describe('MenuScreen', () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it('offers the boards after the daily challenge in a build with a backend only (#220)', () => {
+    const onBoards = vi.fn();
+    render(
+      <MenuScreen
+        onPlay={vi.fn()}
+        onDaily={vi.fn()}
+        onPreload={vi.fn()}
+        onSettings={vi.fn()}
+        onAchievements={vi.fn()}
+        onHelp={vi.fn()}
+        onBoards={onBoards}
+        dailyBest={null}
+      />,
+    );
+
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
+      'Play',
+      'Daily challenge',
+      'Boards',
+      'Settings',
+      'Achievements',
+      'Help',
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Boards' }));
+    expect(onBoards).toHaveBeenCalledOnce();
+  });
+
   it('reports each choice', () => {
     const { onPlay, onSettings, onAchievements, onHelp } = setup();
 
