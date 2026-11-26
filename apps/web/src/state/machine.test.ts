@@ -19,6 +19,8 @@ import {
 // The machine carries the assets and the result without reading into them, so empty objects do.
 const assets = { sprites: {}, audio: {} } as GameAssets;
 const otherAssets = { sprites: {}, audio: {} } as GameAssets;
+/** A run of the boards (#219). */
+const RUN_ID = '11111111-1111-4111-8111-111111111111';
 
 const run: Run = {
   heroId: 'male',
@@ -99,6 +101,7 @@ const states = {
   victory,
   gameOver,
   watching: { name: 'watching', assets, run, time: 'day', finished: gameOver },
+  storedReplay: { name: 'storedReplay', runId: RUN_ID, load: { status: 'fetching' } },
   failed: { name: 'failed' },
 } satisfies Record<AppState['name'], AppState>;
 
@@ -109,6 +112,22 @@ const achievementsMenu: AppState = { name: 'menu', panel: 'achievements' };
 const boardsMenu: AppState = { name: 'menu', panel: 'boards' };
 /** The replay of a won run, which goes back to the victory. */
 const watchingVictory: AppState = { ...states.watching, finished: victory };
+/** A stored run of the boards, at each step of its loading (#219). */
+const failedReplay: AppState = {
+  name: 'storedReplay',
+  runId: RUN_ID,
+  load: { status: 'failed', problem: 'offline' },
+};
+const fetchedReplay: AppState = {
+  name: 'storedReplay',
+  runId: RUN_ID,
+  load: { status: 'fetched', replay },
+};
+const readyReplay: AppState = {
+  name: 'storedReplay',
+  runId: RUN_ID,
+  load: { status: 'ready', replay, assets, time: 'day' },
+};
 
 /** One example of every event; the `satisfies` keeps the list complete. */
 const events = {
@@ -134,6 +153,9 @@ const events = {
   restart: { type: 'restart' },
   watchReplay: { type: 'watchReplay' },
   replayTime: { type: 'replayTime', time: 'night' },
+  watchRun: { type: 'watchRun', runId: RUN_ID },
+  replayFetched: { type: 'replayFetched', runId: RUN_ID, replay },
+  replayFailed: { type: 'replayFailed', runId: RUN_ID, problem: 'offline' },
 } satisfies Record<AppEvent['type'], AppEvent>;
 
 interface Row {
@@ -191,6 +213,14 @@ const TRANSITIONS: readonly Row[] = [
   { from: states.gameOver, event: events.runFailed, to: 'failed' },
   { from: states.watching, event: events.runFailed, to: 'failed' },
   { from: states.failed, event: events.restart, to: 'menu' },
+  { from: boardsMenu, event: events.watchRun, to: 'storedReplay' },
+  { from: states.storedReplay, event: events.replayFetched, to: 'storedReplay' },
+  { from: states.storedReplay, event: events.replayFailed, to: 'storedReplay' },
+  { from: failedReplay, event: events.watchRun, to: 'storedReplay' },
+  { from: fetchedReplay, event: events.gameLoaded, to: 'storedReplay' },
+  { from: readyReplay, event: events.replayTime, to: 'storedReplay' },
+  { from: states.storedReplay, event: events.back, to: 'menu' },
+  { from: readyReplay, event: events.runFailed, to: 'failed' },
 ];
 
 const allowed = new Set(TRANSITIONS.map(({ from, event }) => `${from.name} ${event.type}`));
@@ -389,6 +419,55 @@ describe('transition', () => {
   });
 });
 
+describe('a stored run of the boards (#219)', () => {
+  it('fetches its replay, waits for the game, then plays it at the time of day it began', () => {
+    const fetching = transition(boardsMenu, events.watchRun);
+    expect(fetching).toEqual(states.storedReplay);
+
+    const fetched = transition(fetching, events.replayFetched);
+    expect(fetched).toEqual(fetchedReplay);
+
+    const ready = transition(fetched, events.gameLoaded);
+    expect(ready).toEqual({
+      name: 'storedReplay',
+      runId: RUN_ID,
+      load: { status: 'ready', replay, assets: otherAssets, time: replay.mode },
+    });
+
+    const night = transition(ready, events.replayTime);
+    expect(night).toMatchObject({ load: { status: 'ready', time: 'night' } });
+    // The same time again changes nothing.
+    expect(transition(night, events.replayTime)).toBe(night);
+
+    expect(transition(night, events.back)).toEqual(boardsMenu);
+  });
+
+  it('opens from the boards only', () => {
+    expect(transition(states.menu, events.watchRun)).toBe(states.menu);
+    expect(transition(states.gameOver, events.watchRun)).toBe(states.gameOver);
+  });
+
+  it('says why a replay cannot be watched, tries again, and ignores news of another run', () => {
+    const failed = transition(states.storedReplay, events.replayFailed);
+    expect(failed).toEqual(failedReplay);
+
+    expect(transition(failed, events.watchRun)).toEqual(states.storedReplay);
+    expect(transition(failed, events.back)).toEqual(boardsMenu);
+
+    const other = '22222222-2222-4222-8222-222222222222';
+    expect(transition(states.storedReplay, { ...events.replayFetched, runId: other })).toBe(
+      states.storedReplay,
+    );
+    expect(transition(states.storedReplay, { ...events.replayFailed, runId: other })).toBe(
+      states.storedReplay,
+    );
+  });
+
+  it('waits for the replay before the game: a loaded game alone starts nothing', () => {
+    expect(transition(states.storedReplay, events.gameLoaded)).toBe(states.storedReplay);
+  });
+});
+
 describe('isRunState', () => {
   it('tells the six states of a run on screen from the other four', () => {
     const withRun = Object.values(states).filter(isRunState);
@@ -451,6 +530,9 @@ describe('invariants of the flow', () => {
       type: fc.constant('replayTime' as const),
       time: fc.constantFrom('day' as const, 'night' as const),
     }),
+    fc.constant(events.watchRun),
+    fc.constant(events.replayFetched),
+    fc.constant(events.replayFailed),
   );
 
   /** What a step broke, or `null`. */
@@ -463,7 +545,10 @@ describe('invariants of the flow', () => {
     switch (state.name) {
       case 'menu':
         if (state.panel !== 'main') {
-          return previous.name === 'menu' && previous.panel === 'main'
+          // Back from a stored replay returns to the boards it was opened from (#219).
+          const fromReplay =
+            previous.name === 'storedReplay' && event.type === 'back' && state.panel === 'boards';
+          return (previous.name === 'menu' && previous.panel === 'main') || fromReplay
             ? null
             : `${state.panel} opened from ${previous.name}`;
         }
@@ -524,9 +609,20 @@ describe('invariants of the flow', () => {
           ? null
           : `${state.name} changed the run`;
       case 'failed':
-        return isRunState(previous) && event.type === 'runFailed'
+        return (isRunState(previous) ||
+          (previous.name === 'storedReplay' && previous.load.status === 'ready')) &&
+          event.type === 'runFailed'
           ? null
           : `failed from ${previous.name} by ${event.type}`;
+      case 'storedReplay':
+        if (previous.name === 'menu') {
+          return previous.panel === 'boards' && event.type === 'watchRun'
+            ? null
+            : `a stored replay from the ${previous.panel} menu by ${event.type}`;
+        }
+        return previous.name === 'storedReplay' && state.runId === previous.runId
+          ? null
+          : `a stored replay from ${previous.name}, or of another run`;
       case 'victory':
       case 'gameOver':
         if (previous.name === 'watching') {

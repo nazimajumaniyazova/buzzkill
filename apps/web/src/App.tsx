@@ -16,6 +16,7 @@ import { AnnouncerProvider, createAnnouncer } from './announcer';
 import { type AchievementSync, createAchievementSync } from './backend/achievement-sync';
 import { type Backend, createBackend } from './backend/client';
 import { backendConfig } from './backend/config';
+import type { StoredReplay } from './backend/replays';
 import { type RunQueue, submissionBody } from './backend/run-queue';
 import { createRunUploads } from './backend/run-uploads';
 import { createUploadNews, type SendReason, type UploadNews } from './backend/upload-notices';
@@ -61,6 +62,7 @@ import {
   volumeOf,
 } from './state/settings/store';
 import { useStore } from './state/use-store';
+import { StoredReplayScreen } from './StoredReplayScreen';
 import { applyTheme } from './theme';
 import { UploadToasts } from './UploadToasts';
 
@@ -85,6 +87,11 @@ interface AppProps {
    * makes its own from the build's environment when none is given; a test gives a fake.
    */
   readonly runQueue?: Pick<RunQueue, 'add' | 'flush'> | null;
+  /**
+   * Fetches the replay of a run of the boards (#219). The app reads it from its backend when none
+   * is given; a test gives a fake.
+   */
+  readonly fetchReplay?: (runId: string) => Promise<StoredReplay>;
   /**
    * What the game counts (ADR-0019). The app makes its own from the build's environment and the
    * browser's privacy signals when none is given; a test gives a fake.
@@ -123,6 +130,25 @@ const BackendBoards = lazy(() =>
 function browserBackend(): Backend | null {
   const config = backendConfig(import.meta.env);
   return config === null ? null : createBackend(config);
+}
+
+/**
+ * The replay of a run of the boards, from `backend` (#219). The code that reads it downloads with
+ * it, and anything that goes wrong on the way counts as the backend out of reach.
+ */
+async function fetchFromBackend(backend: Backend | null, runId: string): Promise<StoredReplay> {
+  if (backend === null) {
+    return { ok: false, problem: 'offline' };
+  }
+  try {
+    const [client, { fetchReplay }] = await Promise.all([
+      backend.client(),
+      import('./backend/replays'),
+    ]);
+    return await fetchReplay(client, runId, GAME_VERSION);
+  } catch {
+    return { ok: false, problem: 'offline' };
+  }
 }
 
 /**
@@ -187,6 +213,7 @@ function backEvent(state: AppState): AppEvent | null {
     case 'heroSelect':
     case 'loading':
     case 'watching':
+    case 'storedReplay':
       return { type: 'back' };
     case 'paused':
       return { type: 'resume' };
@@ -215,6 +242,7 @@ function musicFor(name: AppState['name']): MusicStatus {
     case 'victory':
     case 'gameOver':
     case 'watching':
+    case 'storedReplay':
       return 'stopped';
   }
 }
@@ -233,6 +261,7 @@ export function App({
   now = systemClock,
   backend: givenBackend,
   runQueue: givenRunQueue,
+  fetchReplay: givenFetchReplay,
   analytics: givenAnalytics,
   achievementSync: givenAchievementSync,
 }: AppProps): JSX.Element {
@@ -264,8 +293,20 @@ export function App({
   const gameLoad = useStore(gameLoader, whole);
   const { send } = store;
   const rootRef = useRef<HTMLDivElement>(null);
-  const assets = isRunState(state) ? state.assets : null;
-  const time = isRunState(state) ? state.time : null;
+  // A stored replay draws with the game's files and sets the theme as a run does (#219).
+  const storedReady =
+    state.name === 'storedReplay' && state.load.status === 'ready' ? state.load : null;
+  const assets = isRunState(state) ? state.assets : (storedReady?.assets ?? null);
+  const time = isRunState(state) ? state.time : (storedReady?.time ?? null);
+
+  // A stored replay counts as watched once it plays, once each time it opens (ADR-0019).
+  const playingStoredRun =
+    storedReady !== null && state.name === 'storedReplay' ? state.runId : null;
+  useEffect(() => {
+    if (playingStoredRun !== null) {
+      analytics.track('replay_watched', {});
+    }
+  }, [playingStoredRun, analytics]);
   const i18n = i18nFor(settings.language);
 
   // The achievements of this device (#163), in a store the shell does not subscribe to: their
@@ -347,12 +388,43 @@ export function App({
     music?.follow(musicStatus);
   }, [music, musicStatus]);
 
-  // The chosen run starts as soon as the game has loaded, or at once when it already had.
+  // The chosen run starts as soon as the game has loaded, or at once when it already had; so does
+  // the replay of a run of the boards, once it has come (#219).
+  const waitsForGame =
+    state.name === 'loading' || (state.name === 'storedReplay' && state.load.status === 'fetched');
   useEffect(() => {
-    if (state.name === 'loading' && gameLoad.status === 'ready') {
+    if (waitsForGame && gameLoad.status === 'ready') {
       send({ type: 'gameLoaded', assets: gameLoad.assets });
     }
-  }, [state.name, gameLoad, send]);
+  }, [waitsForGame, gameLoad, send]);
+
+  // The replay of a run of the boards is fetched while the game loads, if it has not (#219). An
+  // answer for a run no longer on screen is ignored by the machine.
+  const fetchingRunId =
+    state.name === 'storedReplay' && state.load.status === 'fetching' ? state.runId : null;
+  useEffect(() => {
+    if (fetchingRunId === null) {
+      return;
+    }
+    gameLoader.load();
+    const fetched =
+      givenFetchReplay === undefined
+        ? fetchFromBackend(backend, fetchingRunId)
+        : givenFetchReplay(fetchingRunId);
+    fetched.then(
+      (stored) => {
+        send(
+          stored.ok
+            ? { type: 'replayFetched', runId: fetchingRunId, replay: stored.replay }
+            : { type: 'replayFailed', runId: fetchingRunId, problem: stored.problem },
+        );
+      },
+      (error: unknown) => {
+        reportError(error, { source: 'shell' });
+        send({ type: 'replayFailed', runId: fetchingRunId, problem: 'offline' });
+      },
+    );
+  }, [fetchingRunId, givenFetchReplay, backend, gameLoader, send]);
 
   // The loop does not sample input while paused, so the player's pause key resumes from here.
   const pauseKeys = settings.keyBindings.pause;
@@ -544,6 +616,9 @@ export function App({
               backend={backend}
               today={dailyDate(now())}
               difficulty={settings.difficulty}
+              onWatch={(runId) => {
+                send({ type: 'watchRun', runId });
+              }}
               onBack={back}
             />
           </Suspense>
@@ -559,9 +634,61 @@ export function App({
     }
   };
 
+  const replayEffects = {
+    reducedMotion,
+    particles: settings.particles,
+    screenShake: settings.screenShake,
+    hitFlash: settings.hitFlash,
+    squashStretch: settings.squashStretch,
+    hitStop: settings.hitStop,
+  };
+
   const loadingScreen = (
     <LoadingScreen load={gameLoad} onRetry={gameLoader.load} onReload={reload} onBack={back} />
   );
+
+  const storedReplayScreen = (
+    stored: Extract<AppState, { readonly name: 'storedReplay' }>,
+  ): JSX.Element => {
+    switch (stored.load.status) {
+      case 'fetching':
+      case 'failed':
+        return (
+          <StoredReplayScreen
+            problem={stored.load.status === 'failed' ? stored.load.problem : null}
+            onRetry={() => {
+              send({ type: 'watchRun', runId: stored.runId });
+            }}
+            onBack={back}
+          />
+        );
+      case 'fetched':
+        return loadingScreen;
+      case 'ready':
+        return (
+          // An error in the replay makes the boundary send `runFailed`, as in a run (#113).
+          <ErrorBoundary
+            area="game"
+            fallback={null}
+            onError={() => {
+              send({ type: 'runFailed' });
+            }}
+          >
+            <Suspense fallback={loadingScreen}>
+              <ReplayView
+                replay={stored.load.replay}
+                assets={stored.load.assets}
+                effects={replayEffects}
+                onTime={(time) => {
+                  send({ type: 'replayTime', time });
+                }}
+                onBack={back}
+              />
+            </Suspense>
+          </ErrorBoundary>
+        );
+    }
+  };
 
   const screen = (): JSX.Element => {
     switch (state.name) {
@@ -580,6 +707,8 @@ export function App({
         );
       case 'loading':
         return loadingScreen;
+      case 'storedReplay':
+        return storedReplayScreen(state);
       case 'failed':
         return (
           <ErrorScreen
@@ -675,14 +804,7 @@ export function App({
                 <ReplayView
                   replay={state.finished.replay}
                   assets={state.assets}
-                  effects={{
-                    reducedMotion,
-                    particles: settings.particles,
-                    screenShake: settings.screenShake,
-                    hitFlash: settings.hitFlash,
-                    squashStretch: settings.squashStretch,
-                    hitStop: settings.hitStop,
-                  }}
+                  effects={replayEffects}
                   onTime={(time) => {
                     send({ type: 'replayTime', time });
                   }}
