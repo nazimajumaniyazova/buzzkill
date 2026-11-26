@@ -103,7 +103,7 @@ describe('followAchievements', () => {
 
   it('earns untouched for a level cleared without a life lost in it, not before', () => {
     const game = run();
-    game.emit('playerHit', { livesLeft: 2 });
+    game.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     game.emit('levelCleared', { level: 1, score: 10 });
     expect(game.progress.untouched).toBe(0);
 
@@ -145,7 +145,7 @@ describe('followAchievements', () => {
 
   it('earns flawless for a run won without a life lost in it', () => {
     const scarred = run();
-    scarred.emit('playerHit', { livesLeft: 4 });
+    scarred.emit('playerHit', { livesLeft: 4, cause: 'night-bat' });
     scarred.emit('levelStarted', { level: 2, mode: 'day' });
     scarred.emit('gameOver', { result: 'won', score: 300 });
     const clean = run();

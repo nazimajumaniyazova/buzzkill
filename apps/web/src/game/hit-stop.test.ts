@@ -39,7 +39,7 @@ describe('createHitStop', () => {
   });
 
   it('draws the frame of a hit on the hero, then holds it for its time while the clock goes on', () => {
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
 
     expect(frame()).toBe(false);
     now += 16;
@@ -67,7 +67,7 @@ describe('createHitStop', () => {
   });
 
   it('runs one hit-stop at a time: what happens while it holds is let go', () => {
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     frame();
     now += 10;
     events.emit('bossDefeated', { x: 1, y: 2, value: 60 });
@@ -84,13 +84,13 @@ describe('createHitStop', () => {
   });
 
   it('never holds while it is off, and lets go of a hold when turned off', () => {
-    events.emit('playerHit', { livesLeft: 2 });
+    events.emit('playerHit', { livesLeft: 2, cause: 'day-1' });
     frame();
     enabled = false;
     now += 1;
     expect(frame()).toBe(false);
 
-    events.emit('playerHit', { livesLeft: 1 });
+    events.emit('playerHit', { livesLeft: 1, cause: 'day-1' });
     frame();
     enabled = true;
     now += 1;

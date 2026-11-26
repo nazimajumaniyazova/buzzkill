@@ -228,14 +228,30 @@ describe('createSimulation', () => {
     }
 
     expect(hits.mock.calls.map(([payload]) => payload)).toEqual([
-      { livesLeft: 4 },
-      { livesLeft: 3 },
-      { livesLeft: 2 },
-      { livesLeft: 1 },
-      { livesLeft: 0 },
+      { livesLeft: 4, cause: 'day-1' },
+      { livesLeft: 3, cause: 'day-1' },
+      { livesLeft: 2, cause: 'day-1' },
+      { livesLeft: 1, cause: 'day-1' },
+      { livesLeft: 0, cause: 'day-1' },
     ]);
     expect(sim.state.status).toBe('lost');
     expect(over).toHaveBeenCalledExactlyOnceWith({ result: 'lost', score: 0 });
+  });
+
+  it('names the enemy that struck the hero by its id, for the analytics of deaths (#223)', () => {
+    const sim = setup();
+    const hits = vi.fn<(payload: GameEvents['playerHit']) => void>();
+    sim.state.events.on('playerHit', hits);
+
+    const enemy = addEnemy(sim, 30, 110, 1);
+    sim.state.world.variant[enemy] = 2;
+    sim.step(IDLE);
+
+    expect(hits).toHaveBeenCalledExactlyOnceWith({
+      livesLeft: 4,
+      cause: sim.state.enemies[2]?.id,
+    });
+    expect(sim.state.enemies[2]?.id).toBe('day-3');
   });
 
   it('sends each wave at its pace, with the calm before each wave', () => {
