@@ -17,6 +17,7 @@
     "@buzzkill/game": "workspace:*",
     "@buzzkill/ui": "workspace:*",
     "@supabase/supabase-js": "catalog:",
+    "@tanstack/react-query": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "zod": "catalog:"

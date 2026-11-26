@@ -137,6 +137,25 @@ module.exports = {
       },
     },
     {
+      name: 'boards-load-on-demand',
+      severity: 'error',
+      comment:
+        'The boards are a chunk of their own that downloads when the player opens them (#220). ' +
+        'The shell reaches src/boards only through a dynamic import; a static one would pull ' +
+        'the screen and TanStack Query into the main chunk. Types are free.',
+      from: { path: '^apps/web/src/', pathNot: ['^apps/web/src/boards/', '\\.test\\.tsx?$'] },
+      to: { path: '^apps/web/src/boards/', dependencyTypesNot: ['type-only', 'dynamic-import'] },
+    },
+    {
+      name: 'tanstack-loads-with-the-boards',
+      severity: 'error',
+      comment:
+        'TanStack Query holds the server state of the boards (#220) and downloads with them: only ' +
+        'src/boards imports it.',
+      from: { path: '^apps/web/src/', pathNot: ['^apps/web/src/boards/', '\\.test\\.tsx?$'] },
+      to: { path: 'node_modules/.*@tanstack/', dependencyTypesNot: ['type-only'] },
+    },
+    {
       name: 'not-to-test',
       severity: 'error',
       comment: 'Production code must not import tests, stories or test utilities.',

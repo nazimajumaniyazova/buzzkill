@@ -5,11 +5,6 @@ import type { Backend } from './client';
 import { PENDING_RUNS_KEY } from './run-queue';
 import { createRunUploads } from './run-uploads';
 
-const ENV = {
-  VITE_SUPABASE_URL: 'https://abcdefghijklmnopqrst.supabase.co',
-  VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_0123',
-};
-
 function memoryStorage() {
   const items = new Map<string, string>();
   return {
@@ -24,6 +19,7 @@ function memoryStorage() {
 }
 
 const backend = {
+  config: { url: 'https://abcdefghijklmnopqrst.supabase.co', key: 'sb_publishable_0123' },
   client: () => Promise.reject(new Error('the uploads only need the player')),
   player: {
     session: () => Promise.resolve({ ok: true, token: 'token-1', userId: 'user-1' }),
@@ -32,19 +28,16 @@ const backend = {
 } satisfies Backend;
 
 describe('createRunUploads', () => {
-  it('is off without a backend in the build, and makes none', () => {
-    const makeBackend = vi.fn(() => backend);
+  it('is off in a build without a backend', () => {
     expect(
       createRunUploads({
-        env: {},
+        backend: null,
         storage: memoryStorage(),
         fetch: () => Promise.reject(new Error('no request without a backend')),
         locks: undefined,
         gameVersion: '1.0.0+test',
-        makeBackend,
       }),
     ).toBeNull();
-    expect(makeBackend).not.toHaveBeenCalled();
   });
 
   it('sends the runs of this version as the player, under the lock of the queue', async () => {
@@ -58,27 +51,21 @@ describe('createRunUploads', () => {
         return work();
       },
     };
-    const makeBackend = vi.fn(() => backend);
     const storage = memoryStorage();
 
     const uploads = createRunUploads({
-      env: ENV,
+      backend,
       storage,
       fetch,
       locks,
       gameVersion: '1.0.0+test',
-      makeBackend,
     });
     uploads?.add('{"replay":1}');
 
     await expect(uploads?.flush()).resolves.toEqual({ stored: ['run-1'], refused: 0, left: 0 });
-    expect(makeBackend).toHaveBeenCalledWith({
-      url: ENV.VITE_SUPABASE_URL,
-      key: 'sb_publishable_0123',
-    });
     expect(request).toHaveBeenCalledWith(PENDING_RUNS_KEY, expect.any(Function));
     expect(fetch).toHaveBeenCalledWith(
-      `${ENV.VITE_SUPABASE_URL}/functions/v1/submit-run`,
+      `${backend.config.url}/functions/v1/submit-run`,
       expect.objectContaining({ body: '{"replay":1}' }),
     );
     expect(JSON.parse(storage.getItem(PENDING_RUNS_KEY) ?? '{}')).toEqual({ version: 1, runs: [] });
@@ -86,12 +73,11 @@ describe('createRunUploads', () => {
 
   it('keeps the queue to its own tab where the browser has no locks', async () => {
     const uploads = createRunUploads({
-      env: ENV,
+      backend,
       storage: memoryStorage(),
       fetch: () => Promise.resolve(new Response(JSON.stringify({ id: 'run-2' }), { status: 201 })),
       locks: undefined,
       gameVersion: '1.0.0+test',
-      makeBackend: () => backend,
     });
     uploads?.add('{"replay":2}');
 

@@ -14,6 +14,8 @@ interface MenuScreenProps {
   readonly onDaily: () => void;
   /** This device's best score in today's daily challenge, or `null` before one. */
   readonly dailyBest: number | null;
+  /** Opens the boards (#220); a build without a backend has none, and no button for them. */
+  readonly onBoards?: (() => void) | undefined;
   readonly onSettings: () => void;
   /** Opens the list of achievements (#163). */
   readonly onAchievements: () => void;
@@ -29,6 +31,7 @@ export function MenuScreen({
   onPreload,
   onDaily,
   dailyBest,
+  onBoards,
   onSettings,
   onAchievements,
   onHelp,
@@ -61,6 +64,11 @@ export function MenuScreen({
             <p id={dailyId} className="menu-note">
               {dailyBest === null ? t.menu.dailyNotPlayed : t.menu.dailyBest(dailyBest)}
             </p>
+            {onBoards === undefined ? null : (
+              <Button variant="secondary" onClick={onBoards}>
+                {t.menu.boards}
+              </Button>
+            )}
             <Button variant="secondary" onClick={onSettings}>
               {t.menu.settings}
             </Button>

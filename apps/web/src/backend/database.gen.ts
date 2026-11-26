@@ -64,7 +64,15 @@ export type Database = {
                 }
           }
           Views: {
-            [_ in never]: never
+            "best_runs": {
+                  Row: {
+                    "created_at": string,"daily_date": string | null,"difficulty": Database["public"]['Enums']["difficulty"],"hero_id": Database["public"]['Enums']["hero_id"],"id": string,"level": number,"mode": Database["public"]['Enums']["run_mode"],"nickname": string | null,"score": number,"status": Database["public"]['Enums']["run_status"],"ticks": number,"user_id": string
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
+                  ]
+                }
           }
           Functions: {
             "merge_achievements":

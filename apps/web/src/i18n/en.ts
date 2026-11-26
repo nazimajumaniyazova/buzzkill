@@ -78,6 +78,7 @@ function english(format: Format) {
       /** The best score of this device in today's daily challenge (#165), under its button. */
       dailyBest: (score: number) => `Today's best: ${format.number(score)}`,
       dailyNotPlayed: 'Not played today yet',
+      boards: 'Boards',
       settings: 'Settings',
       help: 'Help',
       achievements: 'Achievements',
@@ -319,6 +320,27 @@ function english(format: Format) {
       speed: 'Speed',
       speedOption: (speed: number) => `${format.number(speed)}×`,
       over: 'The replay is over.',
+    },
+    boards: {
+      title: 'Boards',
+      intro: `Each player's best run at ${format.percent(1)} speed. A slower run is only your own record.`,
+      tabs: 'Board',
+      today: 'Today',
+      caption: (size: number, difficulty: string) => `Top ${format.number(size)}, ${difficulty}`,
+      dailyCaption: (size: number, date: Date) =>
+        `Top ${format.number(size)} of ${format.date(date)}`,
+      columns: { place: 'Place', player: 'Player', score: 'Score', level: 'Level' },
+      noNickname: 'A player without a nickname',
+      you: (name: string) => `${name} (you)`,
+      loading: 'Loading the board…',
+      offline:
+        'The board cannot be loaded right now. Your runs are kept and go out when the network is back.',
+      retry: 'Try again',
+      empty: 'No runs on this board yet.',
+      personalBest: (score: number, level: number) =>
+        `Your best: ${format.number(score)}, level ${format.number(level)}.`,
+      slower: (speed: number) => `Played at ${format.percent(speed)} speed, so only you see it.`,
+      noRecord: 'Your best run of this board appears here once one is stored.',
     },
     nickname: {
       title: 'Your nickname',

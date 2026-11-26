@@ -32,3 +32,12 @@ export function createFormat(locale: string): Format {
     plural: (count, forms) => forms[plurals.select(count)] ?? forms.other,
   };
 }
+
+/**
+ * The UTC date `YYYY-MM-DD` of a daily run (#165) as a moment that `date` writes as that date in
+ * any time zone: noon of that day, local time.
+ */
+export function noonOf(date: string): Date {
+  const [year = 0, month = 1, day = 1] = date.split('-').map(Number);
+  return new Date(year, month - 1, day, 12);
+}
