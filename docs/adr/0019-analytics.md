@@ -147,3 +147,19 @@ shape.
   - The context diagram of `docs/architecture.md` loses the "planned" mark of the analytics.
   - `docs/balancing.md` starts once there are numbers to read: where players lose most, and what
     the balance configuration changed because of it.
+
+## Amendment, 2026-11-25: the policy is a meta tag
+
+The consequences above say #223 adds the policy as a header. It is a
+`<meta http-equiv="Content-Security-Policy">` instead, which the build of `apps/web` writes right
+after the charset of `index.html` (`apps/web/scripts/content-security-policy.ts`):
+
+- **The hosts come from each build.** The Supabase project and the analytics are listed only when
+  the build's environment gives them, by the same checks the app makes before using them. A
+  header in `vercel.json` is the same for every deployment, so it could only name every Supabase
+  project (`*.supabase.co`), or one project written into the repository by hand.
+- **Every build has the policy.** The end-to-end tests play a built game under it, so a request to
+  any other host fails them.
+- **What a meta tag cannot do.** It cannot carry `frame-ancestors` or a report address. The
+  headers of `vercel.json` already refuse framing, and stage 10 decides how the strict policy is
+  delivered.
