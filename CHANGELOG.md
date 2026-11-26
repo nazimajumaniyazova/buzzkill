@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.43.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.42.0...v0.43.0) (2026-11-26)
+
+
+### Features
+
+* **game:** say what struck the hero in playerHit ([#259](https://github.com/nazimajumaniyazova/buzzkill/issues/259)) ([69eeb3c](https://github.com/nazimajumaniyazova/buzzkill/commit/69eeb3c3b87f9afe87166d8c8891ff4a915b6135)), closes [#223](https://github.com/nazimajumaniyazova/buzzkill/issues/223)
+* **web:** add the analytics module, which counts nothing it may not ([#258](https://github.com/nazimajumaniyazova/buzzkill/issues/258)) ([c203d22](https://github.com/nazimajumaniyazova/buzzkill/commit/c203d22b33ccba95f4e4f15cf5e2254617718320)), closes [#223](https://github.com/nazimajumaniyazova/buzzkill/issues/223)
+* **web:** let the built page connect only to its backend and analytics ([#260](https://github.com/nazimajumaniyazova/buzzkill/issues/260)) ([f1d895a](https://github.com/nazimajumaniyazova/buzzkill/commit/f1d895a14c12bddc8bd9fa63dabf848b177db1ab)), closes [#223](https://github.com/nazimajumaniyazova/buzzkill/issues/223)
+* **web:** show the boards and the player's own record in the menu ([#257](https://github.com/nazimajumaniyazova/buzzkill/issues/257)) ([87b47bb](https://github.com/nazimajumaniyazova/buzzkill/commit/87b47bbbd0e962288db118d20b6bc6a637202fe3)), closes [#220](https://github.com/nazimajumaniyazova/buzzkill/issues/220)
+
 ## [0.42.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.41.0...v0.42.0) (2026-11-24)
 
 

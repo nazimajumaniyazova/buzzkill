@@ -17,6 +17,7 @@ import { type Backend, createBackend } from './backend/client';
 import { backendConfig } from './backend/config';
 import { type RunQueue, submissionBody } from './backend/run-queue';
 import { createRunUploads } from './backend/run-uploads';
+import { createUploadNews, type SendReason, type UploadNews } from './backend/upload-notices';
 import { EarnedToasts } from './EarnedToasts';
 import { ErrorBoundary } from './ErrorBoundary';
 import { reportError } from './errors/report-error';
@@ -59,6 +60,7 @@ import {
 } from './state/settings/store';
 import { useStore } from './state/use-store';
 import { applyTheme } from './theme';
+import { UploadToasts } from './UploadToasts';
 
 interface AppProps {
   /** The store of the flow. The app creates its own when none is given; a test starts anywhere. */
@@ -127,12 +129,19 @@ const browserRunQueue = (backend: Backend | null): RunQueue | null =>
   });
 
 /**
- * Sends what waits; a failure of the lock itself is unexpected, as a failure to send is not. A
- * send that stored runs had a player, so `onStored` follows it with what needs one.
+ * Sends what waits and tells the player what became of it (#222). A failure to send is a report
+ * like any other; only a failure of the lock itself is unexpected. A send that stored runs had a
+ * player, so `onStored` follows it with what needs one.
  */
-const sendWaitingRuns = (queue: Pick<RunQueue, 'flush'>, onStored: () => void): void => {
+const sendWaitingRuns = (
+  queue: Pick<RunQueue, 'flush'>,
+  news: UploadNews,
+  reason: SendReason,
+  onStored: () => void,
+): void => {
   queue.flush().then(
     (report) => {
+      news.report(report, reason);
       if (report.stored.length > 0) {
         onStored();
       }
@@ -213,6 +222,7 @@ export function App({
         ? null
         : createAchievementSync(backend),
   );
+  const [uploadNews] = useState(() => createUploadNews());
   const [ownSettings] = useState(() =>
     createSettingsStore(
       loadSettings(browserStorage(), defaultSettings(window.navigator.languages)),
@@ -428,23 +438,23 @@ export function App({
     }
     queuedReplay.current = finished.replay;
     runQueue.add(submissionBody(finished, finished.run.speed));
-    sendWaitingRuns(runQueue, syncAchievements);
-  }, [finished, runQueue, syncAchievements]);
+    sendWaitingRuns(runQueue, uploadNews, 'finished', syncAchievements);
+  }, [finished, runQueue, uploadNews, syncAchievements]);
 
   // What an earlier visit left, and what waited for the network, goes as soon as it can.
   useEffect(() => {
     if (runQueue === null) {
       return;
     }
-    sendWaitingRuns(runQueue, syncAchievements);
+    sendWaitingRuns(runQueue, uploadNews, 'waiting', syncAchievements);
     const onOnline = (): void => {
-      sendWaitingRuns(runQueue, syncAchievements);
+      sendWaitingRuns(runQueue, uploadNews, 'waiting', syncAchievements);
     };
     window.addEventListener('online', onOnline);
     return () => {
       window.removeEventListener('online', onOnline);
     };
-  }, [runQueue, syncAchievements]);
+  }, [runQueue, uploadNews, syncAchievements]);
 
   const back = (): void => {
     send({ type: 'back' });
@@ -660,6 +670,7 @@ export function App({
         </div>
         <ToastProvider label={i18n.t.common.notifications}>
           <EarnedToasts store={achievements} />
+          <UploadToasts news={uploadNews} />
         </ToastProvider>
       </AnnouncerProvider>
     </I18nProvider>
