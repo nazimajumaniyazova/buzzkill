@@ -193,7 +193,9 @@ describe('ReplayView', () => {
     expect(screen.getByRole('button', { name: 'Pause' })).toBeInTheDocument();
   });
 
-  it('plays at the speed chosen', () => {
+  // It plays the whole replay three times, which takes a few seconds when the full suite runs in
+  // parallel, past the default 5 s.
+  it('plays at the speed chosen', { timeout: 15_000 }, () => {
     const atSpeed = (label: string | null): number => {
       const frames = installFrames();
       const view = renderView();

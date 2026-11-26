@@ -37,7 +37,7 @@ export interface Run extends RunChoice {
 export type PauseReason = 'player' | 'gamepadLost';
 
 /** The screens of the menu: the main menu and the three it opens. */
-export type MenuPanel = 'main' | 'settings' | 'help' | 'achievements';
+export type MenuPanel = 'main' | 'settings' | 'help' | 'achievements' | 'boards';
 
 /** What every state of a run on screen holds. */
 interface OnScreen {
@@ -97,17 +97,18 @@ export type RunState = Extract<AppState, { readonly assets: GameAssets }>;
 
 /**
  * What moves the flow: the player's choices (`openSettings`, `openHelp`, `openAchievements`,
- * `selectHero`, `selectDaily`, `back`, `play`, `pause`, `resume`, `nextLevel`, `quit`, `restart`,
- * `watchReplay`), the end of the game's loading (`gameLoaded`), what the game reports through the
- * bridge (`gamePaused`, `gameResumed`, `levelCleared`, `runEnded`), the time of day of a replay
- * (`replayTime`), a gamepad lost during a run (`gamepadLost`, #154) and the error boundary around
- * the run (`runFailed`). A command and the game's own report of the same fact are separate events,
- * so the table shows who may cause what.
+ * `openBoards`, `selectHero`, `selectDaily`, `back`, `play`, `pause`, `resume`, `nextLevel`,
+ * `quit`, `restart`, `watchReplay`), the end of the game's loading (`gameLoaded`), what the game
+ * reports through the bridge (`gamePaused`, `gameResumed`, `levelCleared`, `runEnded`), the time of
+ * day of a replay (`replayTime`), a gamepad lost during a run (`gamepadLost`, #154) and the error
+ * boundary around the run (`runFailed`). A command and the game's own report of the same fact are
+ * separate events, so the table shows who may cause what.
  */
 export type AppEvent =
   | { readonly type: 'openSettings' }
   | { readonly type: 'openHelp' }
   | { readonly type: 'openAchievements' }
+  | { readonly type: 'openBoards' }
   | { readonly type: 'selectHero' }
   /** The daily challenge of `date`, the UTC date when the player chose it (#165). */
   | { readonly type: 'selectDaily'; readonly date: string }
@@ -164,6 +165,10 @@ export function transition(state: AppState, event: AppEvent): AppState {
     case 'openAchievements':
       return state.name === 'menu' && state.panel === 'main'
         ? { ...state, panel: 'achievements' }
+        : state;
+    case 'openBoards':
+      return state.name === 'menu' && state.panel === 'main'
+        ? { ...state, panel: 'boards' }
         : state;
     case 'selectHero':
       return state.name === 'menu' && state.panel === 'main'
