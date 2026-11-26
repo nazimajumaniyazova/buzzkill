@@ -320,6 +320,15 @@ function english(format: Format) {
       speed: 'Speed',
       speedOption: (speed: number) => `${format.number(speed)}×`,
       over: 'The replay is over.',
+      loading: 'Loading the replay…',
+      problems: {
+        'not-found': 'This run is no longer on the boards.',
+        offline: 'The replay cannot be loaded right now. Check the connection and try again.',
+        unreadable: 'This replay cannot be read.',
+        'other-version':
+          'This run was played on another version of the game, which plays differently, so it cannot be watched.',
+      },
+      retry: 'Try again',
     },
     boards: {
       title: 'Boards',
@@ -329,7 +338,15 @@ function english(format: Format) {
       caption: (size: number, difficulty: string) => `Top ${format.number(size)}, ${difficulty}`,
       dailyCaption: (size: number, date: Date) =>
         `Top ${format.number(size)} of ${format.date(date)}`,
-      columns: { place: 'Place', player: 'Player', score: 'Score', level: 'Level' },
+      columns: {
+        place: 'Place',
+        player: 'Player',
+        score: 'Score',
+        level: 'Level',
+        replay: 'Replay',
+      },
+      watch: 'Watch',
+      watchRun: (name: string) => `Watch the run of ${name}`,
       noNickname: 'A player without a nickname',
       you: (name: string) => `${name} (you)`,
       loading: 'Loading the board…',

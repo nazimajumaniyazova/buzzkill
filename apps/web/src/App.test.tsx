@@ -6,6 +6,7 @@ import {
   dailySeed,
   type GameMode,
   type Replay,
+  REPLAY_FORMAT_VERSION,
   type RunResult,
 } from '@buzzkill/game';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -13,6 +14,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { App } from './App';
+import type { StoredReplay } from './backend/replays';
 import { reportError } from './errors/report-error';
 import { importGameChunk } from './game/import-chunk';
 import type { GameAssetsResult } from './game/load-assets';
@@ -785,6 +787,47 @@ describe('App', () => {
       window.dispatchEvent(new Event('online'));
     });
     expect(flush).toHaveBeenCalledTimes(3);
+  });
+
+  it('watches a run of the boards, says why it cannot, tries again and goes back (#219)', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    const RUN_ID = '11111111-1111-4111-8111-111111111111';
+    const stored: Replay = {
+      formatVersion: REPLAY_FORMAT_VERSION,
+      gameVersion: 'test',
+      seed: 31,
+      heroId: 'female',
+      mode: 'night',
+      difficulty: 'hard',
+      daily: null,
+      inputs: [],
+    };
+    const fetchReplay = vi
+      .fn<(runId: string) => Promise<StoredReplay>>()
+      .mockResolvedValueOnce({ ok: false, problem: 'offline' })
+      .mockResolvedValueOnce({ ok: true, replay: stored });
+    const store = createAppStore({ name: 'menu', panel: 'boards' });
+    render(<App store={store} backend={null} fetchReplay={fetchReplay} />);
+
+    act(() => {
+      store.send({ type: 'watchRun', runId: RUN_ID });
+    });
+    expect(screen.getByText('Loading the replay…')).toHaveAttribute('role', 'status');
+
+    expect(
+      await screen.findByText(
+        'The replay cannot be loaded right now. Check the connection and try again.',
+      ),
+    ).toBeInTheDocument();
+    click('Try again');
+
+    // The game loads while the replay comes, then the replay plays at its time of day.
+    expect(await screen.findByText('Replay of seed 31')).toBeInTheDocument();
+    expect(fetchReplay.mock.calls).toEqual([[RUN_ID], [RUN_ID]]);
+    expect(document.documentElement).toHaveAttribute('data-theme', 'night');
+
+    click('Leave the replay');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Boards' })).toBeInTheDocument();
   });
 
   it('opens the boards from the menu in a build with a backend, and goes back (#220)', async () => {

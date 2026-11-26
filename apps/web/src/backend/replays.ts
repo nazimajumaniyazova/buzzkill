@@ -13,7 +13,7 @@ type Client = SupabaseClient<Database>;
  * - `other-version`: the run was played on another version of the game, which would not play it
  *   the same way (ADR-0009).
  */
-type ReplayProblem = 'not-found' | 'offline' | 'unreadable' | 'other-version';
+export type ReplayProblem = 'not-found' | 'offline' | 'unreadable' | 'other-version';
 
 export type StoredReplay =
   | { readonly ok: true; readonly replay: Replay }
