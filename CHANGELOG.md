@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.45.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.44.0...v0.45.0) (2026-11-26)
+
+
+### Features
+
+* **web:** let a player pick the nickname the boards show ([#268](https://github.com/nazimajumaniyazova/buzzkill/issues/268)) ([faaf6d7](https://github.com/nazimajumaniyazova/buzzkill/commit/faaf6d7dde9df7ff8f1a43e9f30d9eddd2949cfa)), closes [#217](https://github.com/nazimajumaniyazova/buzzkill/issues/217)
+* **web:** open the replay of a run from its link at /replay/:runId ([#267](https://github.com/nazimajumaniyazova/buzzkill/issues/267)) ([f44ed77](https://github.com/nazimajumaniyazova/buzzkill/commit/f44ed7753cc25eae5717c23b94a988bd8221c04d)), closes [#219](https://github.com/nazimajumaniyazova/buzzkill/issues/219)
+* **web:** show the player's runs still waiting to be sent on the boards ([#269](https://github.com/nazimajumaniyazova/buzzkill/issues/269)) ([6faefa3](https://github.com/nazimajumaniyazova/buzzkill/commit/6faefa3445547d4ca98e669858cc1ae165e87940)), closes [#220](https://github.com/nazimajumaniyazova/buzzkill/issues/220)
+* **web:** watch any run of the boards from its row ([#266](https://github.com/nazimajumaniyazova/buzzkill/issues/266)) ([ce4f263](https://github.com/nazimajumaniyazova/buzzkill/commit/ce4f263bbc0c2afb67fd157604778bfe907c6bb7)), closes [#219](https://github.com/nazimajumaniyazova/buzzkill/issues/219)
+
 ## [0.44.0](https://github.com/nazimajumaniyazova/buzzkill/compare/v0.43.0...v0.44.0) (2026-11-26)
 
 
