@@ -305,6 +305,10 @@ export const ru: Dictionary = (format): Messages => ({
     slower: (speed) => `Сыгран на скорости ${format.percent(speed)}, поэтому виден только вам.`,
     noRecord: 'Ваша лучшая игра в этой таблице появится здесь, когда она будет сохранена.',
     waitingRun: 'Ваша игра, ждёт отправки',
+    noNicknameYet: 'У вас пока нет ника.',
+    nicknameIs: (nickname) => `Ваш ник: ${nickname}.`,
+    pickNickname: 'Выбрать ник',
+    changeNickname: 'Сменить ник',
   },
   uploads: {
     kept: 'Игра сохранена на этом устройстве',

@@ -11,6 +11,8 @@ import { BoardsScreen, type BoardsScreenProps } from './BoardsScreen';
 const NO_BACKEND: BoardsSource = {
   board: () => Promise.reject(new Error('this build has no backend')),
   personalBest: () => Promise.reject(new Error('this build has no backend')),
+  profile: () => Promise.reject(new Error('this build has no backend')),
+  saveNickname: () => Promise.resolve({ ok: false, problem: 'offline' }),
 };
 
 interface BackendBoardsProps extends Omit<BoardsScreenProps, 'source' | 'queryClient' | 'waiting'> {

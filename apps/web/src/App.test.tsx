@@ -844,6 +844,8 @@ describe('App', () => {
       store.send({ type: 'watchRun', runId: RUN_ID });
     });
     expect(screen.getByText('Loading the replay…')).toHaveAttribute('role', 'status');
+    // The address is the replay's link, to share it.
+    expect(window.location.pathname).toBe(`/replay/${RUN_ID}`);
 
     expect(
       await screen.findByText(
@@ -861,6 +863,25 @@ describe('App', () => {
 
     click('Leave the replay');
     expect(await screen.findByRole('heading', { level: 1, name: 'Boards' })).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+  });
+
+  it('opens the replay of its link at /replay/:runId, and goes back to the main menu (#219)', async () => {
+    const RUN_ID = '33333333-3333-4333-8333-333333333333';
+    window.history.replaceState(null, '', `/replay/${RUN_ID}`);
+    const fetchReplay = vi
+      .fn<(runId: string) => Promise<StoredReplay>>()
+      .mockResolvedValue({ ok: false, problem: 'not-found' });
+    render(<App backend={null} fetchReplay={fetchReplay} />);
+
+    expect(await screen.findByText('This run is no longer on the boards.')).toBeInTheDocument();
+    expect(fetchReplay).toHaveBeenCalledExactlyOnceWith(RUN_ID);
+    // A run that is gone stays gone: nothing to try again.
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+
+    click('Back');
+    expect(heading('Buzzkill')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
   });
 
   it("joins the account's achievements on load and after a run is stored, and Sam follows (#221)", async () => {

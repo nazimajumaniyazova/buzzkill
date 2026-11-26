@@ -82,8 +82,8 @@ type FinishedState = Extract<AppState, { readonly name: 'victory' | 'gameOver' }
  * the time of day on screen; `levelCleared` is the screen between levels, and the two final ones
  * carry the result and the replay. `watching` plays that replay over the finished run (#219), whose
  * state it keeps to go back to; its time of day is the replay's. `storedReplay` plays the replay of
- * a run of the boards, by its id, and goes back to them. `failed` is the error screen of a
- * run that stopped on an unexpected error (#113); the run is gone by then. A pause dialog on the
+ * a run of the boards, by its id, and goes back to them, or to the main menu when the page opened
+ * on its link. `failed` is the error screen of a run that stopped on an unexpected error (#113); the run is gone by then. A pause dialog on the
  * menu, a game over without a run or a run without its assets cannot be written.
  */
 export type AppState =
@@ -107,7 +107,13 @@ export type AppState =
   | ({ readonly name: 'victory' } & Finish & OnScreen)
   | ({ readonly name: 'gameOver' } & Finish & OnScreen)
   | ({ readonly name: 'watching'; readonly finished: FinishedState } & OnScreen)
-  | { readonly name: 'storedReplay'; readonly runId: string; readonly load: StoredReplayLoad }
+  | {
+      readonly name: 'storedReplay';
+      readonly runId: string;
+      /** Where it was opened: the boards, or its link at `/replay/:runId`, where back leads. */
+      readonly from: 'boards' | 'link';
+      readonly load: StoredReplayLoad;
+    }
   | { readonly name: 'failed' };
 
 /** The states of a run on screen: the canvas is there and a `Game` exists. */
@@ -160,6 +166,26 @@ export type AppEvent =
 
 export const initialState: AppState = { name: 'menu', panel: 'main' };
 
+const FETCHING: StoredReplayLoad = { status: 'fetching' };
+
+/** The address of a stored run's replay (#219): `/replay/` and the run's id. */
+const REPLAY_PATH =
+  /^\/replay\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/?$/i;
+
+/** The address of the replay of a run (#219), which opens it. */
+export const replayPath = (runId: string): string => `/replay/${runId}`;
+
+/**
+ * Where the page starts for the path it was opened at: the replay of a run at its link (#219),
+ * and the main menu anywhere else.
+ */
+export function initialStateFor(pathname: string): AppState {
+  const runId = REPLAY_PATH.exec(pathname)?.[1];
+  return runId === undefined
+    ? initialState
+    : { name: 'storedReplay', runId, from: 'link', load: FETCHING };
+}
+
 export function isRunState(state: AppState): state is RunState {
   return (
     state.name === 'playing' ||
@@ -209,7 +235,7 @@ export function transition(state: AppState, event: AppEvent): AppState {
         return state.finished;
       }
       if (state.name === 'storedReplay') {
-        return { name: 'menu', panel: 'boards' };
+        return { name: 'menu', panel: state.from === 'boards' ? 'boards' : 'main' };
       }
       // The game goes on loading; Start again finds it further along.
       return state.name === 'loading' ? { name: 'heroSelect', daily: state.run.daily } : state;
@@ -293,9 +319,12 @@ export function transition(state: AppState, event: AppEvent): AppState {
         ? { ...state, time: event.time }
         : state;
     case 'watchRun':
-      return (state.name === 'menu' && state.panel === 'boards') ||
-        (state.name === 'storedReplay' && state.load.status === 'failed')
-        ? { name: 'storedReplay', runId: event.runId, load: { status: 'fetching' } }
+      if (state.name === 'menu' && state.panel === 'boards') {
+        return { name: 'storedReplay', runId: event.runId, from: 'boards', load: FETCHING };
+      }
+      // Trying again after a failure keeps where the replay was opened.
+      return state.name === 'storedReplay' && state.load.status === 'failed'
+        ? { ...state, runId: event.runId, load: FETCHING }
         : state;
     case 'replayFetched':
     case 'replayFailed':
