@@ -5,6 +5,7 @@ import type { JSX, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { AchievementsScreen } from '../AchievementsScreen';
+import { createUploadNews } from '../backend/upload-notices';
 import { BoardsScreen } from '../boards/BoardsScreen';
 import { KEY_SYMBOLS } from '../controls';
 import { EarnedToasts } from '../EarnedToasts';
@@ -25,6 +26,7 @@ import type { GameLoad } from '../state/game-loader';
 import type { GameAssets } from '../state/machine';
 import { DEFAULT_SETTINGS } from '../state/settings/schema';
 import { StoredReplayScreen } from '../StoredReplayScreen';
+import { UploadToasts } from '../UploadToasts';
 import { en, type Messages } from './en';
 import { createI18n, I18nProvider, LANGUAGE_NAMES } from './i18n';
 
@@ -189,6 +191,22 @@ describe('every text on screen comes from the dictionary', () => {
     });
 
     expect(screen.getAllByText(/Achievement unlocked/)).not.toHaveLength(0);
+    expect(foreignText()).toEqual([]);
+  });
+
+  it('in the toasts of the runs sent', () => {
+    const news = createUploadNews();
+    renderMarked(
+      <ToastProvider label={marked.t.common.notifications}>
+        <UploadToasts news={news} />
+      </ToastProvider>,
+    );
+    act(() => {
+      news.report({ stored: ['run-1', 'run-2'], refused: 3, left: 1 }, 'finished');
+      news.report({ stored: ['run-3'], refused: 1, left: 0 }, 'waiting');
+    });
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(4);
     expect(foreignText()).toEqual([]);
   });
 

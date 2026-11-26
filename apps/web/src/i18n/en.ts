@@ -359,6 +359,17 @@ function english(format: Format) {
       slower: (speed: number) => `Played at ${format.percent(speed)} speed, so only you see it.`,
       noRecord: 'Your best run of this board appears here once one is stored.',
     },
+    uploads: {
+      kept: 'Run kept on this device',
+      keptDetail: 'It goes to the boards once the game reaches the server.',
+      sent: (count: number) =>
+        `Sent ${format.number(count)} ${format.plural(count, { one: 'run', other: 'runs' })} that waited for the network.`,
+      refused: (count: number) =>
+        format.plural(count, {
+          one: 'The server could not confirm a run, so it is not on the boards.',
+          other: `The server could not confirm ${format.number(count)} runs, so they are not on the boards.`,
+        }),
+    },
     nickname: {
       title: 'Your nickname',
       description: 'Other players see it next to your scores.',
