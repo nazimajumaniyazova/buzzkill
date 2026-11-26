@@ -28,7 +28,8 @@ type EventName = keyof AnalyticsEvents;
 
 export interface Analytics {
   /** Counts an event. Never throws, never waits, and may do nothing at all. */
-  track<N extends EventName>(name: N, data: AnalyticsEvents[N]): void;
+  // A property, not a method: the shell hands it to the game view on its own.
+  readonly track: <N extends EventName>(name: N, data: AnalyticsEvents[N]) => void;
 }
 
 /** The two signals a browser gives of a player who does not want to be counted. */
