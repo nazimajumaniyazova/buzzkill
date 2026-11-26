@@ -298,6 +298,15 @@ export function App({
     state.name === 'storedReplay' && state.load.status === 'ready' ? state.load : null;
   const assets = isRunState(state) ? state.assets : (storedReady?.assets ?? null);
   const time = isRunState(state) ? state.time : (storedReady?.time ?? null);
+
+  // A stored replay counts as watched once it plays, once each time it opens (ADR-0019).
+  const playingStoredRun =
+    storedReady !== null && state.name === 'storedReplay' ? state.runId : null;
+  useEffect(() => {
+    if (playingStoredRun !== null) {
+      analytics.track('replay_watched', {});
+    }
+  }, [playingStoredRun, analytics]);
   const i18n = i18nFor(settings.language);
 
   // The achievements of this device (#163), in a store the shell does not subscribe to: their

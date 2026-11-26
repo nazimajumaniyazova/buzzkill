@@ -837,7 +837,8 @@ describe('App', () => {
       .mockResolvedValueOnce({ ok: false, problem: 'offline' })
       .mockResolvedValueOnce({ ok: true, replay: stored });
     const store = createAppStore({ name: 'menu', panel: 'boards' });
-    render(<App store={store} backend={null} fetchReplay={fetchReplay} />);
+    const track = vi.fn<Analytics['track']>();
+    render(<App store={store} backend={null} fetchReplay={fetchReplay} analytics={{ track }} />);
 
     act(() => {
       store.send({ type: 'watchRun', runId: RUN_ID });
@@ -854,6 +855,8 @@ describe('App', () => {
     // The game loads while the replay comes, then the replay plays at its time of day.
     expect(await screen.findByText('Replay of seed 31')).toBeInTheDocument();
     expect(fetchReplay.mock.calls).toEqual([[RUN_ID], [RUN_ID]]);
+    // Counted once it plays, not for the failed try (#223).
+    expect(track.mock.calls).toEqual([['replay_watched', {}]]);
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
 
     click('Leave the replay');
