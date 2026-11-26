@@ -1,8 +1,8 @@
 import type { Difficulty, HeroId } from '@buzzkill/game';
 
 /**
- * Where Umami Cloud collects events (ADR-0019): its documentation names this host for sending.
- * The owner checks it against the account's region when the account is made.
+ * Where Umami Cloud collects events (ADR-0019): the host its documentation names for sending. It
+ * names no other host for the EU region, whose choice applies to where the data is stored.
  */
 export const ANALYTICS_ENDPOINT = 'https://gateway.umami.is/api/send';
 
