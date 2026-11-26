@@ -11,6 +11,7 @@ import { ToastProvider } from '@buzzkill/ui';
 import { type JSX, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { AchievementsScreen } from './AchievementsScreen';
+import { type Analytics, createAnalytics } from './analytics/analytics';
 import { AnnouncerProvider, createAnnouncer } from './announcer';
 import { type AchievementSync, createAchievementSync } from './backend/achievement-sync';
 import { type Backend, createBackend } from './backend/client';
@@ -51,6 +52,7 @@ import {
   isRunState,
   type MenuPanel,
   replayPath,
+  type Run,
   type RunChoice,
 } from './state/machine';
 import { defaultSettings } from './state/settings/schema';
@@ -92,6 +94,11 @@ interface AppProps {
    * is given; a test gives a fake.
    */
   readonly fetchReplay?: (runId: string) => Promise<StoredReplay>;
+  /**
+   * What the game counts (ADR-0019). The app makes its own from the build's environment and the
+   * browser's privacy signals when none is given; a test gives a fake.
+   */
+  readonly analytics?: Analytics;
   /**
    * The sync of the device's achievements with the player's account (#221), or `null` without a
    * backend. The app makes its own from the backend when none is given; a test gives a fake.
@@ -144,6 +151,24 @@ async function fetchFromBackend(backend: Backend | null, runId: string): Promise
   } catch {
     return { ok: false, problem: 'offline' };
   }
+}
+
+/**
+ * The analytics of this page (ADR-0019): nothing counts without the build's website id, or under
+ * Do Not Track or Global Privacy Control, which are read here once.
+ */
+function browserAnalytics(): Analytics {
+  // Not in TypeScript's DOM types yet; only `true` means the player opted out.
+  const gpc: unknown = Reflect.get(window.navigator, 'globalPrivacyControl');
+  return createAnalytics({
+    env: import.meta.env,
+    hostname: window.location.hostname,
+    privacy: {
+      doNotTrack: window.navigator.doNotTrack,
+      globalPrivacyControl: typeof gpc === 'boolean' ? gpc : undefined,
+    },
+    fetch: (url, init) => window.fetch(url, init),
+  });
 }
 
 /** The queue of this build, or `null` when it has no backend (#220). */
@@ -239,6 +264,7 @@ export function App({
   backend: givenBackend,
   runQueue: givenRunQueue,
   fetchReplay: givenFetchReplay,
+  analytics: givenAnalytics,
   achievementSync: givenAchievementSync,
 }: AppProps): JSX.Element {
   // The page opens where its address says: the replay of a run at its link (#219).
@@ -247,6 +273,7 @@ export function App({
   const [runQueue] = useState(() =>
     givenRunQueue === undefined ? browserRunQueue(backend) : givenRunQueue,
   );
+  const [analytics] = useState(() => givenAnalytics ?? browserAnalytics());
   const [achievementSync] = useState(() =>
     givenAchievementSync !== undefined
       ? givenAchievementSync
@@ -274,6 +301,15 @@ export function App({
     state.name === 'storedReplay' && state.load.status === 'ready' ? state.load : null;
   const assets = isRunState(state) ? state.assets : (storedReady?.assets ?? null);
   const time = isRunState(state) ? state.time : (storedReady?.time ?? null);
+
+  // A stored replay counts as watched once it plays, once each time it opens (ADR-0019).
+  const playingStoredRun =
+    storedReady !== null && state.name === 'storedReplay' ? state.runId : null;
+  useEffect(() => {
+    if (playingStoredRun !== null) {
+      analytics.track('replay_watched', {});
+    }
+  }, [playingStoredRun, analytics]);
   const i18n = i18nFor(settings.language);
 
   // The achievements of this device (#163), in a store the shell does not subscribe to: their
@@ -474,27 +510,31 @@ export function App({
     // response to a gesture, and this click is one, even while the game is still loading.
     gameLoader.load();
     gameLoader.unlockAudio();
-    send({
-      type: 'play',
-      run:
-        daily === null
-          ? {
-              heroId: choice.heroId,
-              mode: choice.mode,
-              seed: seedForRun(window.location.search),
-              speed: settings.gameSpeed,
-              difficulty: settings.difficulty,
-              daily: null,
-            }
-          : {
-              heroId: choice.heroId,
-              mode: DAILY_RUN.mode,
-              seed: dailySeed(daily),
-              speed: settings.gameSpeed,
-              difficulty: DAILY_RUN.difficulty,
-              daily,
-            },
-    });
+    const run: Run =
+      daily === null
+        ? {
+            heroId: choice.heroId,
+            mode: choice.mode,
+            seed: seedForRun(window.location.search),
+            speed: settings.gameSpeed,
+            difficulty: settings.difficulty,
+            daily: null,
+          }
+        : {
+            heroId: choice.heroId,
+            mode: DAILY_RUN.mode,
+            seed: dailySeed(daily),
+            speed: settings.gameSpeed,
+            difficulty: DAILY_RUN.difficulty,
+            daily,
+          };
+    send({ type: 'play', run });
+    // Every play is a new run, Play again included.
+    const slower = run.speed < 1;
+    analytics.track('game_start', { difficulty: run.difficulty, hero: run.heroId, slower });
+    if (run.daily !== null) {
+      analytics.track('daily_played', {});
+    }
   };
 
   // The best score of a daily run on this device, kept when the run ends (#165).
@@ -726,6 +766,7 @@ export function App({
                 vibration={settings.vibration}
                 achievements={achievements.getState().progress}
                 onAchievements={onAchievements}
+                track={analytics.track}
                 onEvent={send}
               />
             </Suspense>
@@ -763,6 +804,7 @@ export function App({
                 }}
                 onWatch={() => {
                   send({ type: 'watchReplay' });
+                  analytics.track('replay_watched', {});
                 }}
                 onQuit={() => {
                   send({ type: 'quit' });

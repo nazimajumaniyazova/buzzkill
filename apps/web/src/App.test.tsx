@@ -13,6 +13,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
+import type { Analytics } from './analytics/analytics';
 import { App } from './App';
 import type { AchievementSync } from './backend/achievement-sync';
 import type { StoredReplay } from './backend/replays';
@@ -757,6 +758,34 @@ describe('App', () => {
     expect(screen.getByRole('dialog', { name: 'Game over' })).toBeInTheDocument();
   });
 
+  it('counts the start of each run, a daily run and a replay watched (#223)', async () => {
+    vi.stubGlobal('AudioContext', FakeAudioContext);
+    window.history.replaceState(null, '', '/?seed=7');
+    const track = vi.fn<Analytics['track']>();
+    render(<App analytics={{ track }} />);
+
+    await startRun();
+    expect(track.mock.calls).toEqual([
+      ['game_start', { difficulty: 'normal', hero: 'male', slower: false }],
+    ]);
+
+    click('Lose');
+    click('Watch the replay');
+    await screen.findByText('Replay of seed 7');
+    expect(track).toHaveBeenLastCalledWith('replay_watched', {});
+    click('Leave the replay');
+
+    track.mockClear();
+    click('Back to menu');
+    click('Daily challenge');
+    click('Start');
+    await gameView();
+    expect(track.mock.calls).toEqual([
+      ['game_start', { difficulty: 'normal', hero: 'male', slower: false }],
+      ['daily_played', {}],
+    ]);
+  });
+
   it('queues each finished run once and sends the queue, then again when back online (#220)', async () => {
     vi.stubGlobal('AudioContext', FakeAudioContext);
     window.history.replaceState(null, '', '/?seed=7');
@@ -808,7 +837,8 @@ describe('App', () => {
       .mockResolvedValueOnce({ ok: false, problem: 'offline' })
       .mockResolvedValueOnce({ ok: true, replay: stored });
     const store = createAppStore({ name: 'menu', panel: 'boards' });
-    render(<App store={store} backend={null} fetchReplay={fetchReplay} />);
+    const track = vi.fn<Analytics['track']>();
+    render(<App store={store} backend={null} fetchReplay={fetchReplay} analytics={{ track }} />);
 
     act(() => {
       store.send({ type: 'watchRun', runId: RUN_ID });
@@ -827,6 +857,8 @@ describe('App', () => {
     // The game loads while the replay comes, then the replay plays at its time of day.
     expect(await screen.findByText('Replay of seed 31')).toBeInTheDocument();
     expect(fetchReplay.mock.calls).toEqual([[RUN_ID], [RUN_ID]]);
+    // Counted once it plays, not for the failed try (#223).
+    expect(track.mock.calls).toEqual([['replay_watched', {}]]);
     expect(document.documentElement).toHaveAttribute('data-theme', 'night');
 
     click('Leave the replay');
