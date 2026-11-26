@@ -82,7 +82,7 @@ export function outcomeOf(status: number, body: unknown, retryAfter: string | nu
 }
 
 /** What one sending did. */
-interface FlushReport {
+export interface FlushReport {
   /** The ids of the runs stored, in the order sent. */
   readonly stored: readonly string[];
   /** How many runs were refused for good and given up. */
