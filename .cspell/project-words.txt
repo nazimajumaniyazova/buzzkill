@@ -66,6 +66,7 @@ subtag
 Supabase
 supavisor
 Tallbeard
+tanstack
 Turborepo
 typecheck
 typechecks

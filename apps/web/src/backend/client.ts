@@ -11,6 +11,8 @@ export type SupabaseModule = typeof Supabase;
 type Client = SupabaseClient<Database>;
 
 export interface Backend {
+  /** The project's URL and public key, for the requests that do not go through the client. */
+  readonly config: BackendConfig;
   /** The client, downloaded and made on the first call; a failed download is tried again. */
   client(): Promise<Client>;
   /** The player of this browser, through the client's auth. */
@@ -51,6 +53,7 @@ export function createBackend(
   };
 
   return {
+    config: { url, key },
     client,
     player: createPlayer(async () => (await client()).auth),
   };
