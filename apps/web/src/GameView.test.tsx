@@ -19,6 +19,7 @@ import {
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { Analytics } from './analytics/analytics';
 import { AnnouncerProvider, createAnnouncer } from './announcer';
 import { ErrorBoundary } from './ErrorBoundary';
 import { reportError } from './errors/report-error';
@@ -130,6 +131,7 @@ describe('GameView', () => {
   let onAchievements: ReturnType<
     typeof vi.fn<(progress: AchievementProgress, earned: readonly AchievementId[]) => void>
   >;
+  let track: ReturnType<typeof vi.fn<Analytics['track']>>;
 
   /** The events reported so far, by type. */
   const reported = (): GameEvent['type'][] => onEvent.mock.calls.map(([event]) => event.type);
@@ -165,6 +167,7 @@ describe('GameView', () => {
         vibration={props.vibration ?? true}
         achievements={props.achievements ?? noProgress()}
         onAchievements={onAchievements}
+        track={track}
         betweenLevels={props.betweenLevels ?? false}
         onEvent={onEvent}
       />,
@@ -187,6 +190,7 @@ describe('GameView', () => {
             vibration={next.vibration ?? props.vibration ?? true}
             achievements={next.achievements ?? props.achievements ?? noProgress()}
             onAchievements={onAchievements}
+            track={track}
             betweenLevels={next.betweenLevels ?? props.betweenLevels ?? false}
             onEvent={onEvent}
           />,
@@ -206,6 +210,7 @@ describe('GameView', () => {
     onEvent = vi.fn<(event: GameEvent) => void>();
     onAchievements =
       vi.fn<(progress: AchievementProgress, earned: readonly AchievementId[]) => void>();
+    track = vi.fn<Analytics['track']>();
   });
 
   afterEach(() => {
@@ -382,6 +387,26 @@ describe('GameView', () => {
       expect.objectContaining({ firstSwat: 1, swatter: 8 }),
       ['firstSwat'],
     );
+  });
+
+  it('counts the levels, the queen and a death for the analytics, marked slower (#223)', () => {
+    const frames = installFrames();
+    renderView({ run: { ...run, speed: 0.75 } });
+    frames.run(1);
+    const followers = vi.mocked(createGame).mock.lastCall?.[0].followers ?? [];
+    const events = createEventBus<GameEvents>();
+
+    for (const follow of followers) {
+      follow(events);
+    }
+    events.emit('levelStarted', { level: 2, mode: 'day' });
+    events.emit('playerHit', { livesLeft: 0, cause: 'day-2' });
+    events.emit('gameOver', { result: 'lost', score: 10 });
+
+    expect(track.mock.calls).toEqual([
+      ['level_reached', { level: 2, slower: true }],
+      ['death', { level: 2, cause: 'day-2', slower: true }],
+    ]);
   });
 
   it('plays the shot a little off its pitch, from the left, where the hero stands (#161)', () => {

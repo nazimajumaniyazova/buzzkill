@@ -35,6 +35,23 @@ The game engine was written by me; since then the project has been rebuilt and e
   property-based tests, and benchmarks compared with `main` on every pull request
   ([ADR-0012](docs/adr/0012-benchmarks-in-ci.md)).
 
+## What the game counts
+
+To balance the game, production builds count six events with Umami Cloud
+([ADR-0019](docs/adr/0019-analytics.md)):
+
+- a run started, with its difficulty, its hero and whether it plays at a slower speed;
+- each level reached after the first;
+- a death, with its level and what struck the hero;
+- the queen defeated;
+- a daily challenge played;
+- a replay watched.
+
+Nothing else is sent: no cookie, no identifier, nothing about the player, the device or the page
+they came from. Each event is one request from the game's own code, and the page loads no script
+from another site. Nothing is counted under Do Not Track or Global Privacy Control, or in
+development and preview builds.
+
 ## Documentation
 
 - [Architecture](docs/architecture.md): C4 diagrams, dependency rules between the packages, runtime
